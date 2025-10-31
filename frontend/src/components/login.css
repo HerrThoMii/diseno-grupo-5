@@ -5,6 +5,7 @@
   min-height: 100vh;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 20px;
+  font-family: 'Inter', sans-serif;
 }
 
 .login-card {
@@ -78,7 +79,7 @@
   padding: 0.75rem;
   border-radius: 5px;
   font-size: 1rem;
-  font-weight: 500;
+  font-weight: bold;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   margin-top: 1rem;
