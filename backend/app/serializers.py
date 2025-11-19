@@ -12,113 +12,239 @@ from .models import (
 class ProgramaActividadesSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProgramaActividades
-        fields = '__all__'
+        fields = [
+            'oidProgramaActividades',
+            'anio',
+            'objetivosEstrategicos'
+        ]
 
 
 class GrupoInvestigacionSerializer(serializers.ModelSerializer):
     class Meta:
         model = GrupoInvestigacion
-        fields = '__all__'
-        depth = 1
+        fields = [
+            'oidGrupoInvestigacion',
+            'nombre',
+            'facultadReginalAsignada',
+            'correo',
+            'organigrama',
+            'sigla',
+            'fuenteFinanciamiento',
+            'ProgramaActividades'
+        ]
 
 
 class InformeRendicionCuentasSerializer(serializers.ModelSerializer):
     class Meta:
         model = InformeRendicionCuentas
-        fields = '__all__'
+        fields = [
+            'oidInformeRendicionCuentas',
+            'periodoReportado',
+            'GrupoInvestigacion'
+        ]
 
 
 class ErogacionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Erogacion
-        fields = '__all__'
+        fields = [
+            'oidErogacion',
+            'egresos',
+            'ingresos',
+            'numero',
+            'tipoErogacion',
+            'InformeRendicionCuentas'
+        ]
 
 
 class ProyectoInvestigacionSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProyectoInvestigacion
-        fields = '__all__'
+        fields = [
+            'oidProyectoInvestigacion',
+            'codigoProyecto',
+            'descripcion',
+            'objectType',
+            'fechaFinalizacion',
+            'fechaInicio',
+            'nombre',
+            'tipoProyecto',
+            'logrosObtenidos',
+            'fuenteFinanciamiento',
+            'GrupoInvestigacion'
+        ]
 
 
 class LineaDeInvestigacionSerializer(serializers.ModelSerializer):
     class Meta:
         model = LineaDeInvestigacion
-        fields = '__all__'
+        fields = [
+            'oidLineaDeInvestigacion',
+            'nombre',
+            'descripcion',
+            'ProgramaActividades'
+        ]
 
 
 class ActividadSerializer(serializers.ModelSerializer):
     class Meta:
         model = Actividad
-        fields = '__all__'
+        fields = [
+            'oidActividad',
+            'descripcion',
+            'fechaFin',
+            'fechaInicio',
+            'nro',
+            'presupuestoAsignado',
+            'resultadosEsperados',
+            'LineaDeInvestigacion'
+        ]
 
 
 class PersonaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Persona
-        fields = '__all__'
+        fields = [
+            'oidpersona',
+            'nombre',
+            'correo',
+            'contrasena',
+            'apellido',
+            'horasSemanales',
+            'tipoDePersonal',
+            'GrupoInvestigacion'
+        ]
 
 
 class ActividadDocenteSerializer(serializers.ModelSerializer):
     class Meta:
         model = ActividadDocente
-        fields = '__all__'
+        fields = [
+            'oidActividadDocente',
+            'denominacionCursoCatedra',
+            'fechaPeriodoDictado',
+            'rolDesenpeniado'
+        ]
 
 
 class InvestigadorDocenteSerializer(serializers.ModelSerializer):
     class Meta:
         model = InvestigadorDocente
-        fields = '__all__'
+        fields = [
+            'oidinvestigadorDocente',
+            'gradoAcademico',
+            'persona',
+            'ActividadDocente'
+        ]
 
 
 class BecarioPersonalFormacionSerializer(serializers.ModelSerializer):
     class Meta:
         model = BecarioPersonalFormacion
-        fields = '__all__'
+        fields = [
+            'oidbecarioPersonalFormacioncol',
+            'tipoFormacion',
+            'fuenteFinanciamiento',
+            'persona'
+        ]
 
 
 class InvestigadorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Investigador
-        fields = '__all__'
+        fields = [
+            'oidInvestigador',
+            'tipoInvestigador',
+            'categoriaUtn',
+            'dedicacion',
+            'programaDeInsentivos',
+            'persona',
+            'GrupoInvestigacion'
+        ]
 
 
 class DocumentacionBibliotecaSerializer(serializers.ModelSerializer):
     class Meta:
         model = DocumentacionBiblioteca
-        fields = '__all__'
+        fields = [
+            'oidDocumentacionBiblioteca',
+            'anio',
+            'editorial',
+            'titulo',
+            'autor',
+            'GrupoInvestigacion'
+        ]
 
 
 class TrabajoPublicadoSerializer(serializers.ModelSerializer):
     class Meta:
         model = TrabajoPublicado
-        fields = '__all__'
+        fields = [
+            'oidTrabajoPublicado',
+            'autor',
+            'titulo',
+            'tipoTrabajoPublicado',
+            'GrupoInvestigacion'
+        ]
 
 
 class ActividadTransferenciaSerializer(serializers.ModelSerializer):
     class Meta:
         model = ActividadTransferencia
-        fields = '__all__'
+        fields = [
+            'oidActividadTransferencia',
+            'descripcion',
+            'denominacion',
+            'monto',
+            'nroActividadTransferencia',
+            'tipoActivdad',
+            'GrupoInvestigacion'
+        ]
 
 
 class ParteExternaSerializer(serializers.ModelSerializer):
     class Meta:
         model = ParteExterna
-        fields = '__all__'
+        fields = [
+            'oidParteExterna',
+            'descripcion',
+            'nombre',
+            'tipoParte',
+            'ActividadTransferencia'
+        ]
 
 
 class EquipamientoInfraestructuraSerializer(serializers.ModelSerializer):
     class Meta:
         model = EquipamientoInfraestructura
-        fields = '__all__'
+        fields = [
+            'oidEquipamientoInfraestructura',
+            'denominacion',
+            'descripcion',
+            'fechaIncoporacion',
+            'montoInvertido',
+            'GrupoInvestigacion'
+        ]
 
 
 class TrabajoPresentadoSerializer(serializers.ModelSerializer):
     class Meta:
         model = TrabajoPresentado
-        fields = '__all__'
+        fields = [
+            'oidTrabajoPresentado',
+            'ciudad',
+            'fechaInicio',
+            'nombreReunion',
+            'tituloTrabajo',
+            'GrupoInvestigacion'
+        ]
 
 
 class ActividadXPersonaSerializer(serializers.ModelSerializer):
     class Meta:
         model = ActividadXPersona
-        fields = '__all__'
+        fields = [
+            'oidActividadXPersona',
+            'Actividad',
+            'persona'
+        ]
