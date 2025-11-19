@@ -2,7 +2,7 @@ from django.db import models
 
 
 class ProgramaActividades(models.Model):
-    oidProgramaActividades = models.AutoField(primary_key=True)
+    oidProgramaActividades = models.AutoField(primary_key=True, unique=True)
     anio = models.IntegerField()
     objetivosEstrategicos = models.TextField()
 
@@ -11,7 +11,7 @@ class ProgramaActividades(models.Model):
 
 
 class GrupoInvestigacion(models.Model):
-    oidGrupoInvestigacion = models.AutoField(primary_key=True)
+    oidGrupoInvestigacion = models.AutoField(primary_key=True, unique=True)
     nombre = models.CharField(max_length=45)
     facultadReginalAsignada = models.TextField()
     correo = models.TextField()
@@ -27,7 +27,7 @@ class GrupoInvestigacion(models.Model):
 
 
 class InformeRendicionCuentas(models.Model):
-    oidInformeRendicionCuentas = models.AutoField(primary_key=True)
+    oidInformeRendicionCuentas = models.AutoField(primary_key=True, unique=True)
     periodoReportado = models.CharField(max_length=50)
     GrupoInvestigacion = models.ForeignKey(
         GrupoInvestigacion, on_delete=models.CASCADE
@@ -35,7 +35,7 @@ class InformeRendicionCuentas(models.Model):
 
 
 class Erogacion(models.Model):
-    oidErogacion = models.AutoField(primary_key=True)
+    oidErogacion = models.AutoField(primary_key=True, unique=True)
     egresos = models.FloatField()
     ingresos = models.FloatField()
     numero = models.IntegerField()
@@ -46,8 +46,8 @@ class Erogacion(models.Model):
 
 
 class ProyectoInvestigacion(models.Model):
-    oidProyectoInvestigacion = models.AutoField(primary_key=True)
-    codigoProyecto = models.CharField(max_length=50)
+    oidProyectoInvestigacion = models.AutoField(primary_key=True, unique=True)
+    codigoProyecto = models.CharField(max_length=50, unique=True)
     descripcion = models.CharField(max_length=50)
     objectType = models.CharField(max_length=45)
     fechaFinalizacion = models.DateField()
@@ -65,7 +65,7 @@ class ProyectoInvestigacion(models.Model):
 
 
 class LineaDeInvestigacion(models.Model):
-    oidLineaDeInvestigacion = models.AutoField(primary_key=True)
+    oidLineaDeInvestigacion = models.AutoField(primary_key=True, unique=True)
     nombre = models.CharField(max_length=45)
     descripcion = models.TextField()
     ProgramaActividades = models.ForeignKey(
@@ -75,7 +75,7 @@ class LineaDeInvestigacion(models.Model):
 
 
 class Actividad(models.Model):
-    oidActividad = models.AutoField(primary_key=True)
+    oidActividad = models.AutoField(primary_key=True, unique=True)
     descripcion = models.TextField()
     fechaFin = models.DateField()
     fechaInicio = models.DateField()
@@ -88,10 +88,10 @@ class Actividad(models.Model):
 
 
 class Persona(models.Model):
-    oidpersona = models.AutoField(primary_key=True)
+    oidpersona = models.AutoField(primary_key=True, unique=True)
     nombre = models.CharField(max_length=45)
     apellido = models.CharField(max_length=45)
-    correo = models.EmailField()
+    correo = models.EmailField(unique=True)
     contrasena = models.CharField(max_length=128)
     horasSemanales = models.IntegerField()
     tipoDePersonal = models.TextField()
@@ -104,14 +104,14 @@ class Persona(models.Model):
 
 
 class ActividadDocente(models.Model):
-    oidActividadDocente = models.AutoField(primary_key=True)
+    oidActividadDocente = models.AutoField(primary_key=True, unique=True)
     denominacionCursoCatedra = models.TextField()
     fechaPeriodoDictado = models.DateTimeField()
     rolDesenpeniado = models.TextField()
 
 
 class InvestigadorDocente(models.Model):
-    oidinvestigadorDocente = models.AutoField(primary_key=True)
+    oidinvestigadorDocente = models.AutoField(primary_key=True, unique=True)
     gradoAcademico = models.TextField()
     persona = models.OneToOneField(Persona, on_delete=models.CASCADE)
     ActividadDocente = models.ForeignKey(
@@ -120,14 +120,14 @@ class InvestigadorDocente(models.Model):
 
 
 class BecarioPersonalFormacion(models.Model):
-    oidbecarioPersonalFormacioncol = models.AutoField(primary_key=True)
+    oidbecarioPersonalFormacioncol = models.AutoField(primary_key=True, unique=True)
     tipoFormacion = models.TextField()
     fuenteFinanciamiento = models.TextField()
     persona = models.OneToOneField(Persona, on_delete=models.CASCADE)
 
 
 class Investigador(models.Model):
-    oidInvestigador = models.AutoField(primary_key=True)
+    oidInvestigador = models.AutoField(primary_key=True, unique=True)
     tipoInvestigador = models.TextField()
     categoriaUtn = models.TextField()
     dedicacion = models.TextField()
@@ -139,7 +139,7 @@ class Investigador(models.Model):
 
 
 class DocumentacionBiblioteca(models.Model):
-    oidDocumentacionBiblioteca = models.AutoField(primary_key=True)
+    oidDocumentacionBiblioteca = models.AutoField(primary_key=True, unique=True)
     anio = models.IntegerField()
     editorial = models.TextField()
     titulo = models.TextField()
@@ -150,7 +150,7 @@ class DocumentacionBiblioteca(models.Model):
 
 
 class TrabajoPublicado(models.Model):
-    oidTrabajoPublicado = models.AutoField(primary_key=True)
+    oidTrabajoPublicado = models.AutoField(primary_key=True, unique=True)
     autor = models.TextField()
     titulo = models.TextField()
     tipoTrabajoPublicado = models.TextField()
@@ -160,7 +160,7 @@ class TrabajoPublicado(models.Model):
 
 
 class ActividadTransferencia(models.Model):
-    oidActividadTransferencia = models.AutoField(primary_key=True)
+    oidActividadTransferencia = models.AutoField(primary_key=True, unique=True)
     descripcion = models.TextField()
     denominacion = models.TextField()
     monto = models.FloatField()
@@ -172,7 +172,7 @@ class ActividadTransferencia(models.Model):
 
 
 class ParteExterna(models.Model):
-    oidParteExterna = models.AutoField(primary_key=True)
+    oidParteExterna = models.AutoField(primary_key=True, unique=True)
     descripcion = models.TextField()
     nombre = models.CharField(max_length=45)
     tipoParte = models.TextField()
@@ -182,7 +182,7 @@ class ParteExterna(models.Model):
 
 
 class EquipamientoInfraestructura(models.Model):
-    oidEquipamientoInfraestructura = models.AutoField(primary_key=True)
+    oidEquipamientoInfraestructura = models.AutoField(primary_key=True, unique=True)
     denominacion = models.TextField()
     descripcion = models.TextField()
     fechaIncoporacion = models.DateField()
@@ -193,7 +193,7 @@ class EquipamientoInfraestructura(models.Model):
 
 
 class TrabajoPresentado(models.Model):
-    oidTrabajoPresentado = models.AutoField(primary_key=True)
+    oidTrabajoPresentado = models.AutoField(primary_key=True, unique=True)
     ciudad = models.TextField()
     fechaInicio = models.DateTimeField()
     nombreReunion = models.TextField()
@@ -204,10 +204,9 @@ class TrabajoPresentado(models.Model):
 
 
 class ActividadXPersona(models.Model):
-    oidActividadXPersona = models.AutoField(primary_key=True)
+    oidActividadXPersona = models.AutoField(primary_key=True, unique=True)
     Actividad = models.ForeignKey(Actividad, on_delete=models.CASCADE)
     persona = models.ForeignKey(Persona, on_delete=models.CASCADE)
 
     class Meta:
         unique_together = ("Actividad", "persona")
-
