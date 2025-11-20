@@ -1,22 +1,36 @@
-"""
-URL configuration for core project.
+from rest_framework.routers import DefaultRouter
+from .views import (
+    ProgramaActividadesViewSet, GrupoInvestigacionViewSet,
+    InformeRendicionCuentasViewSet, ErogacionViewSet,
+    ProyectoInvestigacionViewSet, LineaDeInvestigacionViewSet,
+    ActividadViewSet, PersonaViewSet, ActividadDocenteViewSet,
+    InvestigadorDocenteViewSet, BecarioPersonalFormacionViewSet,
+    InvestigadorViewSet, DocumentacionBibliotecaViewSet,
+    TrabajoPublicadoViewSet, ActividadTransferenciaViewSet,
+    ParteExternaViewSet, EquipamientoInfraestructuraViewSet,
+    TrabajoPresentadoViewSet, ActividadXPersonaViewSet
+)
 
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
-from django.contrib import admin
-from django.urls import path
+router = DefaultRouter()
 
-urlpatterns = [
-    path('admin/', admin.site.urls),
-]
+router.register(r'programa-actividades', ProgramaActividadesViewSet)
+router.register(r'grupos', GrupoInvestigacionViewSet)
+router.register(r'informes-rendicion', InformeRendicionCuentasViewSet)
+router.register(r'erogaciones', ErogacionViewSet)
+router.register(r'proyectos', ProyectoInvestigacionViewSet)
+router.register(r'lineas-investigacion', LineaDeInvestigacionViewSet)
+router.register(r'actividades', ActividadViewSet)
+router.register(r'personas', PersonaViewSet)
+router.register(r'actividades-docentes', ActividadDocenteViewSet)
+router.register(r'investigadores-docentes', InvestigadorDocenteViewSet)
+router.register(r'becarios', BecarioPersonalFormacionViewSet)
+router.register(r'investigadores', InvestigadorViewSet)
+router.register(r'documentacion', DocumentacionBibliotecaViewSet)
+router.register(r'trabajos-publicados', TrabajoPublicadoViewSet)
+router.register(r'actividades-transferencia', ActividadTransferenciaViewSet)
+router.register(r'partes-externas', ParteExternaViewSet)
+router.register(r'equipamiento', EquipamientoInfraestructuraViewSet)
+router.register(r'trabajos-presentados', TrabajoPresentadoViewSet)
+router.register(r'actividades-persona', ActividadXPersonaViewSet)
+
+urlpatterns = router.urls
