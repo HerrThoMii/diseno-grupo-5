@@ -9,6 +9,11 @@ from .models import (
 )
 
 
+class LoginSerializer(serializers.Serializer):
+    correo = serializers.EmailField()
+    contrasena = serializers.CharField(write_only=True, style={'input_type': 'password'})
+
+
 class ProgramaActividadesSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProgramaActividades

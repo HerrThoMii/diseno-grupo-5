@@ -1,21 +1,16 @@
 from django.contrib import admin
-from .models import (
-    ProgramaActividades, GrupoInvestigacion, InformeRendicionCuentas,
-    Erogacion, ProyectoInvestigacion, LineaDeInvestigacion, Actividad,
-    Persona, ActividadDocente, InvestigadorDocente,
-    BecarioPersonalFormacion, Investigador, DocumentacionBiblioteca,
-    TrabajoPublicado, ActividadTransferencia, ParteExterna,
-    EquipamientoInfraestructura, TrabajoPresentado, ActividadXPersona
-)
+from django.contrib.auth.hashers import make_password
+from .models import Persona
 
-models = [
-    ProgramaActividades, GrupoInvestigacion, InformeRendicionCuentas,
-    Erogacion, ProyectoInvestigacion, LineaDeInvestigacion, Actividad,
-    Persona, ActividadDocente, InvestigadorDocente,
-    BecarioPersonalFormacion, Investigador, DocumentacionBiblioteca,
-    TrabajoPublicado, ActividadTransferencia, ParteExterna,
-    EquipamientoInfraestructura, TrabajoPresentado, ActividadXPersona
-]
+# Register your models here.
 
-for m in models:
-    admin.site.register(m)
+@admin.register(Persona)
+class PersonaAdmin(admin.ModelAdmin):
+    list_display = ['oidpersona', 'nombre', 'apellido', 'correo', 'tipoDePersonal']
+    search_fields = ['nombre', 'apellido', 'correo']
+    list_filter = ['tipoDePersonal']
+
+    def save_model(self, request, obj, form, change):
+        if 'contrasena' in form.changed_data:
+            obj.contrasena = make_password(obj.contrsena)
+        super().save_model(request, obj, form, change)
