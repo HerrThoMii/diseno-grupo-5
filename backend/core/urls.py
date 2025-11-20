@@ -16,7 +16,15 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from app.views import (
+    login, perfil, actualizar_perfil, eliminar_persona, listar_personas
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/auth/login/', login, name='login'),
+    path('api/auth/personas/', listar_personas, name='listar_personas'),
+    path('api/auth/perfil/<int:oidpersona>/', perfil, name='perfil'),
+    path('api/auth/perfil/<int:oidpersona>/actualizar/', actualizar_perfil, name='actualizar_perfil'),
+    path('api/auth/persona/<int:oidpersona>/eliminar/', eliminar_persona, name='eliminar_persona'),
 ]
