@@ -5,7 +5,7 @@ from .models import (
     Persona, ActividadDocente, InvestigadorDocente, BecarioPersonalFormacion,
     Investigador, DocumentacionBiblioteca, TrabajoPublicado,
     ActividadTransferencia, ParteExterna, EquipamientoInfraestructura,
-    TrabajoPresentado, ActividadXPersona
+    TrabajoPresentado, ActividadXPersona, Patente, Registro
 )
 
 
@@ -37,6 +37,20 @@ class GrupoInvestigacionSerializer(serializers.ModelSerializer):
             'fuenteFinanciamiento',
             'ProgramaActividades'
         ]
+
+
+class PatenteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Patente
+        fields = '__all__'
+        read_only_fields = ['id']
+
+
+class RegistroSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Registro
+        fields = '__all__'
+        read_only_fields = ['id']
 
 
 class InformeRendicionCuentasSerializer(serializers.ModelSerializer):

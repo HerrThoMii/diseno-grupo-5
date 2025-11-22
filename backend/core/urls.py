@@ -18,12 +18,15 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from app.views import (
-    login, perfil, actualizar_perfil, eliminar_persona, listar_personas, TrabajoPublicadoViewSet, TrabajoPresentadoSerializer
+    login, perfil, actualizar_perfil, eliminar_persona, listar_personas, TrabajoPublicadoViewSet, TrabajoPresentadoSerializer,
+    PatenteViewSet, RegistroViewSet
 )
 
 router = DefaultRouter()
 router.register(r'trabajos-publicados', TrabajoPublicadoViewSet, basename='trabajo-publicado')
 router.register(r'trabajos-presentados', TrabajoPresentadoSerializer, basename='trabajo-presentado')
+router.register(r'patentes', PatenteViewSet, basename='patente')
+router.register(r'registros', RegistroViewSet, basename='registro')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
