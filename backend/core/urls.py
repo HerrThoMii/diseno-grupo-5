@@ -22,7 +22,7 @@ from app.views import (
 )
 
 router = DefaultRouter()
-router.register(r'trabajos', TrabajoPublicadoViewSet, basename='trabajo-publicado')
+router.register(r'trabajos-publicados', TrabajoPublicadoViewSet, basename='trabajo-publicado')
 router.register(r'trabajos-presentados', TrabajoPresentadoSerializer, basename='trabajo-presentado')
 
 urlpatterns = [
