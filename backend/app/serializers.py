@@ -184,13 +184,8 @@ class DocumentacionBibliotecaSerializer(serializers.ModelSerializer):
 class TrabajoPublicadoSerializer(serializers.ModelSerializer):
     class Meta:
         model = TrabajoPublicado
-        fields = [
-            'oidTrabajoPublicado',
-            'autor',
-            'titulo',
-            'tipoTrabajoPublicado',
-            'GrupoInvestigacion'
-        ]
+        fields = '__all__'
+        read_only_fields = ['id']
 
 
 class ActividadTransferenciaSerializer(serializers.ModelSerializer):
@@ -235,14 +230,8 @@ class EquipamientoInfraestructuraSerializer(serializers.ModelSerializer):
 class TrabajoPresentadoSerializer(serializers.ModelSerializer):
     class Meta:
         model = TrabajoPresentado
-        fields = [
-            'oidTrabajoPresentado',
-            'ciudad',
-            'fechaInicio',
-            'nombreReunion',
-            'tituloTrabajo',
-            'GrupoInvestigacion'
-        ]
+        fields = '__all__'
+        read_only_fields = ['id']
 
 
 class ActividadXPersonaSerializer(serializers.ModelSerializer):
