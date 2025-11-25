@@ -34,9 +34,14 @@
   transform: translateX(2px);
 }
 
-.sidebar-item:active {
+.sidebar-item.active {
   background-color: #d9b3e3;
   color: white;
+  border-color: #c49acc;
+}
+
+.sidebar-item.active:hover {
+  background-color: #cf9fdb;
 }
 
 .sidebar-icon {

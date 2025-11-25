@@ -1,12 +1,16 @@
 import React from 'react';
 import './MainContent.css';
 
-function MainContent({ userName = 'nombre del usuario' }) {
+function MainContent({ userName = 'nombre del usuario', activeSection = 'home' }) {
   return (
     <main className="main-content">
-      <div className="welcome-section">
-        <h1>Bienvenido, <span className="username">*{userName}*</span></h1>
-      </div>
+      {activeSection === 'home' ? (
+        <div className="welcome-section">
+          <h1>Bienvenido, <span className="username">*{userName}*</span></h1>
+        </div>
+      ) : (
+        <div>{/* Aquí irán otros componentes según la sección */}</div>
+      )}
     </main>
   );
 }

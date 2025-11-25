@@ -2,12 +2,12 @@ import React from 'react';
 import { FileText, BookOpen, Award, Users } from 'lucide-react';
 import './Sidebar.css';
 
-function Sidebar() {
+function Sidebar({ onNavigate, activeSection }) {
   const menuItems = [
-    { id: 1, label: 'Crear memoria anual', icon: FileText },
-    { id: 2, label: 'Trabajos realizados y publicados', icon: BookOpen },
-    { id: 3, label: 'Trabajos, registros y patentes', icon: Award },
-    { id: 4, label: 'Agregar grupo', icon: Users },
+    { id: 'memoria', label: 'Crear memoria anual', icon: FileText },
+    { id: 'trabajos', label: 'Trabajos realizados y publicados', icon: BookOpen },
+    { id: 'registros', label: 'Trabajos, registros y patentes', icon: Award },
+    { id: 'grupo', label: 'Agregar grupo', icon: Users },
   ];
 
   return (
@@ -16,7 +16,11 @@ function Sidebar() {
         {menuItems.map((item) => {
           const IconComponent = item.icon;
           return (
-            <button key={item.id} className="sidebar-item">
+            <button
+              key={item.id}
+              className={`sidebar-item ${activeSection === item.id ? 'active' : ''}`}
+              onClick={() => onNavigate(item.id)}
+            >
               <span className="sidebar-icon">
                 <IconComponent size={18} />
               </span>

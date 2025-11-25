@@ -30,9 +30,15 @@
 }
 
 .logo {
-  font-weight: bold;
-  font-size: 18px;
-  color: #333;
+  display: flex;
+  align-items: center;
+  height: 40px;
+  width: auto;
+  max-width: 150px;
+}
+
+.logo-black {
+  filter: brightness(0) saturate(100%);
 }
 
 .header-right {
