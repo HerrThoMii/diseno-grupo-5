@@ -25,6 +25,21 @@ class GrupoInvestigacion(models.Model):
     def __str__(self):
         return self.nombre
 
+class Patente(models.Model):
+    oidPatente = models.AutoField(primary_key=True, unique=True)
+    descripcion = models.TextField()
+    tipo = models.CharField(max_length=45)
+    GrupoInvestigacion = models.ForeignKey(
+        GrupoInvestigacion, on_delete=models.CASCADE
+    )
+
+class Registro(models.Model):
+    oidRegistro = models.AutoField(primary_key=True, unique=True)
+    descripcion = models.TextField()
+    tipoRegistro = models.TextField(max_length=45)
+    Patente = models.ForeignKey(
+        Patente, on_delete=models.CASCADE
+    )
 
 class InformeRendicionCuentas(models.Model):
     oidInformeRendicionCuentas = models.AutoField(primary_key=True, unique=True)
