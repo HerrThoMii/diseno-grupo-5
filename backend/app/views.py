@@ -1,17 +1,31 @@
 from django.shortcuts import render
-from rest_framework import status, viewsets
-from rest_framework.decorators import api_view, permission_classes, action
+from rest_framework import viewsets, status
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.authentication import TokenAuthentication
 from rest_framework.response import Response
-from rest_framework_simplejwt. tokens import RefreshToken
+from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.hashers import make_password, check_password
-from .models import Persona, TrabajoPublicado, TrabajoPresentado, Patente, Registro
-from .serializers import PersonaSerializer, LoginSerializer, TrabajoPublicadoSerializer, TrabajoPresentadoSerializer, PatenteSerializer, RegistroSerializer
+from .models import (
+    ProgramaActividades, GrupoInvestigacion, InformeRendicionCuentas,
+    Erogacion, ProyectoInvestigacion, LineaDeInvestigacion, Actividad,
+    Persona, ActividadDocente, InvestigadorDocente,
+    BecarioPersonalFormacion, Investigador, DocumentacionBiblioteca,
+    TrabajoPublicado, ActividadTransferencia, ParteExterna,
+    EquipamientoInfraestructura, TrabajoPresentado, ActividadXPersona
+)
+from .serializers import (
+    ProgramaActividadesSerializer, GrupoInvestigacionSerializer,
+    InformeRendicionCuentasSerializer, ErogacionSerializer,
+    ProyectoInvestigacionSerializer, LineaDeInvestigacionSerializer,
+    ActividadSerializer, PersonaSerializer, ActividadDocenteSerializer,
+    InvestigadorDocenteSerializer, BecarioPersonalFormacionSerializer,
+    InvestigadorSerializer, DocumentacionBibliotecaSerializer,
+    TrabajoPublicadoSerializer, ActividadTransferenciaSerializer,
+    ParteExternaSerializer, EquipamientoInfraestructuraSerializer,
+    TrabajoPresentadoSerializer, ActividadXPersonaSerializer, LoginSerializer
+)
 
 # Create your views here.
-
-# endpoint del login
 def get_token_for_user(persona):
     refresh = RefreshToken()
     refresh['oidpersona'] = persona.oidpersona
@@ -119,106 +133,97 @@ def listar_personas(request):
         'personas': serializer.data
     }, status=status.HTTP_200_OK)
 
-#endpoint trabajo publicado
+# ViewSets for models
+class ProgramaActividadesViewSet(viewsets.ModelViewSet):
+    queryset = ProgramaActividades.objects.all()
+    serializer_class = ProgramaActividadesSerializer
+
+
+class GrupoInvestigacionViewSet(viewsets.ModelViewSet):
+    queryset = GrupoInvestigacion.objects.all()
+    serializer_class = GrupoInvestigacionSerializer
+
+
+class InformeRendicionCuentasViewSet(viewsets.ModelViewSet):
+    queryset = InformeRendicionCuentas.objects.all()
+    serializer_class = InformeRendicionCuentasSerializer
+
+
+class ErogacionViewSet(viewsets.ModelViewSet):
+    queryset = Erogacion.objects.all()
+    serializer_class = ErogacionSerializer
+
+
+class ProyectoInvestigacionViewSet(viewsets.ModelViewSet):
+    queryset = ProyectoInvestigacion.objects.all()
+    serializer_class = ProyectoInvestigacionSerializer
+
+
+class LineaDeInvestigacionViewSet(viewsets.ModelViewSet):
+    queryset = LineaDeInvestigacion.objects.all()
+    serializer_class = LineaDeInvestigacionSerializer
+
+
+class ActividadViewSet(viewsets.ModelViewSet):
+    queryset = Actividad.objects.all()
+    serializer_class = ActividadSerializer
+
+
+class PersonaViewSet(viewsets.ModelViewSet):
+    queryset = Persona.objects.all()
+    serializer_class = PersonaSerializer
+
+
+class ActividadDocenteViewSet(viewsets.ModelViewSet):
+    queryset = ActividadDocente.objects.all()
+    serializer_class = ActividadDocenteSerializer
+
+
+class InvestigadorDocenteViewSet(viewsets.ModelViewSet):
+    queryset = InvestigadorDocente.objects.all()
+    serializer_class = InvestigadorDocenteSerializer
+
+
+class BecarioPersonalFormacionViewSet(viewsets.ModelViewSet):
+    queryset = BecarioPersonalFormacion.objects.all()
+    serializer_class = BecarioPersonalFormacionSerializer
+
+
+class InvestigadorViewSet(viewsets.ModelViewSet):
+    queryset = Investigador.objects.all()
+    serializer_class = InvestigadorSerializer
+
+
+class DocumentacionBibliotecaViewSet(viewsets.ModelViewSet):
+    queryset = DocumentacionBiblioteca.objects.all()
+    serializer_class = DocumentacionBibliotecaSerializer
+
+
 class TrabajoPublicadoViewSet(viewsets.ModelViewSet):
     queryset = TrabajoPublicado.objects.all()
     serializer_class = TrabajoPublicadoSerializer
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
 
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    
-    def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-        return Response(serializer.data)
-    
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        self.perform_destroy(instance)
-        return Response(status=status.HTTP_204_NO_CONTENT)
-    
-#endpoint trabajo presentado
+
+class ActividadTransferenciaViewSet(viewsets.ModelViewSet):
+    queryset = ActividadTransferencia.objects.all()
+    serializer_class = ActividadTransferenciaSerializer
+
+
+class ParteExternaViewSet(viewsets.ModelViewSet):
+    queryset = ParteExterna.objects.all()
+    serializer_class = ParteExternaSerializer
+
+
+class EquipamientoInfraestructuraViewSet(viewsets.ModelViewSet):
+    queryset = EquipamientoInfraestructura.objects.all()
+    serializer_class = EquipamientoInfraestructuraSerializer
+
+
 class TrabajoPresentadoViewSet(viewsets.ModelViewSet):
-    queryset = TrabajoPresentado.object.all()
+    queryset = TrabajoPresentado.objects.all()
     serializer_class = TrabajoPresentadoSerializer
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
-    
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    
-    def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-        return Response(serializer.data)
-    
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        self.perform_destroy(instance)
-        return Response(status=status.HTTP_204_NO_CONTENT)
-    
-#endpoint patente
-class PatenteViewSet(viewsets.ModelViewSet):
-    queryset = Patente.objects.all()
-    serializer_class = PatenteSerializer
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
 
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    
-    def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-        return Response(serializer.data)
-    
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        self.perform_destroy(instance)
-        return Response(status=status.HTTP_204_NO_CONTENT)
 
-#endpoint registro
-class RegistroViewSet(viewsets.ModelViewSet):
-    queryset = Registro.objects.all()
-    serializer_class = RegistroSerializer
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
-    
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    
-    def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-        return Response(serializer.data)
-    
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        self.perform_destroy(instance)
-        return Response(status=status.HTTP_204_NO_CONTENT)
+class ActividadXPersonaViewSet(viewsets.ModelViewSet):
+    queryset = ActividadXPersona.objects.all()
+    serializer_class = ActividadXPersonaSerializer
