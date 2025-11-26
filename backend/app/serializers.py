@@ -5,8 +5,13 @@ from .models import (
     Persona, ActividadDocente, InvestigadorDocente, BecarioPersonalFormacion,
     Investigador, DocumentacionBiblioteca, TrabajoPublicado,
     ActividadTransferencia, ParteExterna, EquipamientoInfraestructura,
-    TrabajoPresentado, ActividadXPersona
+    TrabajoPresentado, ActividadXPersona, Patente, Registro
 )
+
+
+class LoginSerializer(serializers.Serializer):
+    correo = serializers.EmailField()
+    contrasena = serializers.CharField(write_only=True, style={'input_type': 'password'})
 
 
 class ProgramaActividadesSerializer(serializers.ModelSerializer):
@@ -32,6 +37,20 @@ class GrupoInvestigacionSerializer(serializers.ModelSerializer):
             'fuenteFinanciamiento',
             'ProgramaActividades'
         ]
+
+
+class PatenteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Patente
+        fields = '__all__'
+        read_only_fields = ['id']
+
+
+class RegistroSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Registro
+        fields = '__all__'
+        read_only_fields = ['id']
 
 
 class InformeRendicionCuentasSerializer(serializers.ModelSerializer):
@@ -179,13 +198,8 @@ class DocumentacionBibliotecaSerializer(serializers.ModelSerializer):
 class TrabajoPublicadoSerializer(serializers.ModelSerializer):
     class Meta:
         model = TrabajoPublicado
-        fields = [
-            'oidTrabajoPublicado',
-            'autor',
-            'titulo',
-            'tipoTrabajoPublicado',
-            'GrupoInvestigacion'
-        ]
+        fields = '__all__'
+        read_only_fields = ['id']
 
 
 class ActividadTransferenciaSerializer(serializers.ModelSerializer):
@@ -230,14 +244,8 @@ class EquipamientoInfraestructuraSerializer(serializers.ModelSerializer):
 class TrabajoPresentadoSerializer(serializers.ModelSerializer):
     class Meta:
         model = TrabajoPresentado
-        fields = [
-            'oidTrabajoPresentado',
-            'ciudad',
-            'fechaInicio',
-            'nombreReunion',
-            'tituloTrabajo',
-            'GrupoInvestigacion'
-        ]
+        fields = '__all__'
+        read_only_fields = ['id']
 
 
 class ActividadXPersonaSerializer(serializers.ModelSerializer):
