@@ -5,7 +5,7 @@ import Header from './Header';
 import Sidebar from './Sidebar';
 import Footer from './Footer';
 
-function Dashboard({ userName = 'nombre del usuario' }) {
+function Dashboard({ userName = 'nombre del usuario', onLogout = () => {} }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
@@ -33,7 +33,7 @@ function Dashboard({ userName = 'nombre del usuario' }) {
 
   return (
     <div className="dashboard">
-      <Header onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
+      <Header onMenuToggle={() => setSidebarOpen(!sidebarOpen)} onLogout={onLogout} />
       <div className="dashboard-container">
         {sidebarOpen && (
           <Sidebar 

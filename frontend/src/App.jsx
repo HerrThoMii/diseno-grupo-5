@@ -24,6 +24,11 @@ function App() {
     setIsAuthenticated(true);
   };
 
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setUserName('nombre del usuario');
+  };
+
   if (!isAuthenticated) {
     return (
       <BrowserRouter>
@@ -39,7 +44,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route element={<Dashboard userName={userName} />}>
+        <Route element={<Dashboard userName={userName} onLogout={handleLogout} />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/trabajos" element={<TrabajosPage />} />
           <Route path="/memoria" element={<MemoriaPage />} />
