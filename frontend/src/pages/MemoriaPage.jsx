@@ -1,13 +1,11 @@
 import React from 'react';
+import MemoriaAnual from '../components/MemoriaAnual';
 import './Page.css';
 
 function MemoriaPage() {
   return (
-    <div className="page-container">
-      <div className="page-content">
-        <h1>Crear Memoria Anual</h1>
-        <p>Sección en desarrollo</p>
-      </div>
+    <div className="page-container-full">
+      <MemoriaAnual />
     </div>
   );
 }
