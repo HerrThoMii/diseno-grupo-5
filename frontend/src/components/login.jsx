@@ -1,13 +1,17 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Eye, EyeOff } from 'lucide-react';
 import './login.css';
 
-const Login = () => {
+const Login = ({ onLogin = () => {} }) => {
+    const navigate = useNavigate();
     const [formData, setFormData] = useState({
         email: '',
         password:''
     });
     const [errors, setErrors] = useState({});
     const [isLoading, setIsLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -59,7 +63,7 @@ const Login = () => {
             await new Promise(resolve => setTimeout(resolve, 1000))
 
             // login exitoso
-            alert('login exitoso');
+            onLogin(formData.email.split('@')[0]);
         } catch (error) {
             console.error('Error en login:', error);
             setErrors({ general: 'Error al iniciar sesion. Intenta nuevamente.'});
@@ -97,15 +101,24 @@ const Login = () => {
                 </div>
                 <div className="form-group">
                     <label htmlFor="password">Contraseña</label>
-                    <input
-                    type="password"
-                    id="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    className={errors.password ? 'error' : ''}
-                    placeholder="Ingresa tu contraseña"
-                    />
+                    <div className="password-input-container">
+                        <input
+                        type={showPassword ? "text" : "password"}
+                        id="password"
+                        name="password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        className={errors.password ? 'error' : ''}
+                        placeholder="Ingrese su contraseña"
+                        />
+                        <button
+                            type="button"
+                            className="password-toggle"
+                            onClick={() => setShowPassword(!showPassword)}
+                        >
+                            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                        </button>
+                    </div>
                     {errors.password && (
                     <span className="error-message">{errors.password}</span>
                     )}
@@ -119,9 +132,18 @@ const Login = () => {
                 </button>
                 </form>
                 <div className="login-footer">
-                <p>¿No tienes cuenta? <a href="/register">Regístrate aquí</a></p>
-                <p><a href="/forgot-password">¿Olvidaste tu contraseña?</a></p>
+                    <p><a href="#">¿Olvidaste tu contraseña?</a></p>
                 </div>
+                <div className="login-divider">
+                    <span>o</span>
+                </div>
+                <button 
+                    type="button" 
+                    className="register-button"
+                    onClick={() => navigate('/register')}
+                >
+                    Registrarse
+                </button>
             </div>
         </div>
     )
