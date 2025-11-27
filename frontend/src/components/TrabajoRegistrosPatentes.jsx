@@ -1,8 +1,14 @@
 import React, { useState } from 'react';
 import './TrabajoRegistrosPatentes.css';
 import { Search, Plus } from 'lucide-react';
+import AgregarRegistroModal from './AgregarRegistroModal';
+import AgregarPatenteModal from './AgregarPatenteModal';
 
 const TrabajoRegistrosPatentes = () => {
+  // Estados para modales
+  const [showRegistroModal, setShowRegistroModal] = useState(false);
+  const [showPatenteModal, setShowPatenteModal] = useState(false);
+  
   // Estados para búsqueda y filtros
   const [trabajoSearch, setTrabajoSearch] = useState('');
   const [registroSearch, setRegistroSearch] = useState('');
@@ -46,6 +52,17 @@ const TrabajoRegistrosPatentes = () => {
   // Opciones para dropdowns
   const tiposRegistro = ['Patente Nacional', 'Patente Internacional', 'Registro Marcario'];
   const tiposPatente = ['Patente Activa', 'Patente en Trámite', 'Patente Expirada'];
+
+  // Handlers para agregar registro y patente
+  const handleAddRegistro = (nuevoRegistro) => {
+    setRegistros(prev => [...prev, nuevoRegistro]);
+    setShowRegistroModal(false);
+  };
+
+  const handleAddPatente = (nuevaPatente) => {
+    setPatentes(prev => [...prev, nuevaPatente]);
+    setShowPatenteModal(false);
+  };
 
   return (
     <div className="trp-container">
@@ -110,7 +127,7 @@ const TrabajoRegistrosPatentes = () => {
                 onChange={(e) => setRegistroSearch(e.target.value)}
                 className="trp-input"
               />
-              <button className="trp-btn-add" title="Agregar registro">
+              <button className="trp-btn-add" title="Agregar registro" onClick={() => setShowRegistroModal(true)}>
                 <Plus size={18} />
               </button>
             </div>
@@ -158,7 +175,7 @@ const TrabajoRegistrosPatentes = () => {
                 onChange={(e) => setPatenteSearch(e.target.value)}
                 className="trp-input"
               />
-              <button className="trp-btn-add" title="Agregar patente">
+              <button className="trp-btn-add" title="Agregar patente" onClick={() => setShowPatenteModal(true)}>
                 <Plus size={18} />
               </button>
             </div>
@@ -193,6 +210,18 @@ const TrabajoRegistrosPatentes = () => {
           </div>
         </section>
       </div>
+
+      <AgregarRegistroModal 
+        isOpen={showRegistroModal}
+        onClose={() => setShowRegistroModal(false)}
+        onAdd={handleAddRegistro}
+      />
+
+      <AgregarPatenteModal 
+        isOpen={showPatenteModal}
+        onClose={() => setShowPatenteModal(false)}
+        onAdd={handleAddPatente}
+      />
     </div>
   );
 };
