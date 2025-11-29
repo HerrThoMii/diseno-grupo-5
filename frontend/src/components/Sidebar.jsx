@@ -2,7 +2,7 @@ import React from 'react';
 import { FileText, BookOpen, Award, Users } from 'lucide-react';
 import './Sidebar.css';
 
-function Sidebar({ onNavigate, activeSection }) {
+function Sidebar({ onNavigate, activeSection, isOpen = true }) {
   const menuItems = [
     { id: 'memoria', label: 'Crear memoria anual', icon: FileText },
     { id: 'trabajos', label: 'Trabajos realizados y publicados', icon: BookOpen },
@@ -11,7 +11,7 @@ function Sidebar({ onNavigate, activeSection }) {
   ];
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar ${!isOpen ? 'sidebar-collapsed' : ''}`}>
       <nav className="sidebar-nav">
         {menuItems.map((item) => {
           const IconComponent = item.icon;
@@ -20,6 +20,7 @@ function Sidebar({ onNavigate, activeSection }) {
               key={item.id}
               className={`sidebar-item ${activeSection === item.id ? 'active' : ''}`}
               onClick={() => onNavigate(item.id)}
+              title={item.label}
             >
               <span className="sidebar-icon">
                 <IconComponent size={18} />
