@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
-import { login } from '../utils/auth';
 import './login.css';
 
 const Login = ({ onLogin = () => {} }) => {
@@ -57,12 +56,17 @@ const Login = ({ onLogin = () => {} }) => {
         setIsLoading(true);
 
         try {
-            const data = await login(formData.email, formData.password);
-            const userName = data.user?.name || data.user?.email?.split('@')[0] || 'Usuario';
-            onLogin(userName);
+            // aca llamada de api
+            console.log('Datos de login:', formData);
+
+            // simular llamada
+            await new Promise(resolve => setTimeout(resolve, 1000))
+
+            // login exitoso
+            onLogin(formData.email.split('@')[0]);
         } catch (error) {
-            console.error('Error en login', error);
-            setErrors({ general: error.message || 'Error al iniciar sesión. Intenta nuevamente.'});
+            console.error('Error en login:', error);
+            setErrors({ general: 'Error al iniciar sesion. Intenta nuevamente.'});
         } finally {
             setIsLoading(false);
         }
