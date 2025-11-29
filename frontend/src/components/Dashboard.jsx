@@ -33,14 +33,17 @@ function Dashboard({ userName = 'nombre del usuario', onLogout = () => {} }) {
 
   return (
     <div className="dashboard">
-      <Header onMenuToggle={() => setSidebarOpen(!sidebarOpen)} onLogout={onLogout} />
+      <Header 
+        onMenuToggle={() => setSidebarOpen(!sidebarOpen)} 
+        onLogout={onLogout}
+        userName={userName}
+      />
       <div className="dashboard-container">
-        {sidebarOpen && (
-          <Sidebar 
-            onNavigate={handleNavigate} 
-            activeSection={getActiveSection()}
-          />
-        )}
+        <Sidebar 
+          onNavigate={handleNavigate} 
+          activeSection={getActiveSection()}
+          isOpen={sidebarOpen}
+        />
         <Outlet />
       </div>
       <Footer />

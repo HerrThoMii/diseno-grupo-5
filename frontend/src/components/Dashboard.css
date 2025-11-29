@@ -9,6 +9,13 @@
   display: flex;
   flex: 1;
   overflow: hidden;
+  width: 100%;
+  min-width: 0;
+}
+
+.dashboard-container > * {
+  display: flex;
+  flex-direction: column;
 }
 
 @media (max-width: 768px) {

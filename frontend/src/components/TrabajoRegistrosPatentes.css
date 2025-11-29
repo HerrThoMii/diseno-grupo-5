@@ -1,10 +1,14 @@
 .trp-container {
+  flex: 1;
   padding: 20px;
   background-color: #f5f5f5;
   border-radius: 8px;
   display: flex;
   flex-direction: column;
   gap: 24px;
+  overflow-y: auto;
+  width: 100%;
+  min-width: 0;
 }
 
 .trp-section {
