@@ -78,10 +78,100 @@ export const getUser = () => {
   return userStr ? JSON.parse(userStr) : null;
 };
 
+// Función para obtener el perfil completo del usuario desde el backend
+export const getPerfil = async (oidpersona) => {
+  const token = getAccessToken();
+  
+  if (!token) {
+    throw new Error('No hay sesión activa');
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/perfil/${oidpersona}/`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error('Error al obtener el perfil');
+    }
+
+    const data = await response.json();
+    return data.persona || data;
+  } catch (error) {
+    console.error('Error obteniendo perfil:', error);
+    throw error;
+  }
+};
+
+// Función para actualizar el perfil del usuario
+export const actualizarPerfil = async (oidpersona, perfilData) => {
+  const token = getAccessToken();
+  
+  if (!token) {
+    throw new Error('No hay sesión activa');
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/perfil/${oidpersona}/actualizar/`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(perfilData)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Error al actualizar el perfil');
+    }
+
+    const data = await response.json();
+    
+    // Actualizar datos en localStorage
+    if (data.persona) {
+      localStorage.setItem('user', JSON.stringify(data.persona));
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error actualizando perfil:', error);
+    throw error;
+  }
+};
+
+// Función para obtener opciones de perfil
+export const getOpcionesPerfil = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/opciones-perfil/`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error('Error al obtener opciones de perfil');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error obteniendo opciones:', error);
+    throw error;
+  }
+};
+
 export default {
   login,
   logout,
   getAccessToken,
   isAuthenticated,
-  getUser
+  getUser,
+  getPerfil,
+  actualizarPerfil,
+  getOpcionesPerfil
 };

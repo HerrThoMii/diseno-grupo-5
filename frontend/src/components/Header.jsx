@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import './Header.css';
 import PerfilModal from './PerfilModal';
 
-function Header({ onLogout = () => {}, onMenuToggle = () => {}, userName = 'Usuario', userData = null }) {
+function Header({ onLogout = () => {}, onMenuToggle = () => {}, userName = 'Usuario', userData = null, onUpdateUserData = () => {} }) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showPerfilModal, setShowPerfilModal] = useState(false);
   const navigate = useNavigate();
@@ -68,6 +68,7 @@ function Header({ onLogout = () => {}, onMenuToggle = () => {}, userName = 'Usua
         isOpen={showPerfilModal} 
         onClose={() => setShowPerfilModal(false)} 
         userData={userData}
+        onUpdateUserData={onUpdateUserData}
       />
     </header>
   );
