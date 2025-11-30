@@ -11,7 +11,9 @@ from app.views import (
     TrabajoPublicadoViewSet, ActividadTransferenciaViewSet,
     ParteExternaViewSet, EquipamientoInfraestructuraViewSet,
     TrabajoPresentadoViewSet, ActividadXPersonaViewSet,
-    login, perfil, actualizar_perfil, eliminar_persona, listar_personas, refresh_token, RegistroViewSet, PatenteViewSet, AutorViewSet, TipoTrabajoPublicadoViewSet, TipoDeRegistroViewSet
+    login, perfil, actualizar_perfil, eliminar_persona, listar_personas, refresh_token, RegistroViewSet, PatenteViewSet, AutorViewSet, TipoTrabajoPublicadoViewSet, TipoDeRegistroViewSet,
+    MemoriaAnualViewSet, IntegranteMemoriaViewSet, TrabajoMemoriaViewSet,
+    ActividadMemoriaViewSet, PublicacionMemoriaViewSet, PatenteMemoriaViewSet, ProyectoMemoriaViewSet
 )
 
 

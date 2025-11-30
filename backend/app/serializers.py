@@ -5,7 +5,9 @@ from .models import (
     Persona, ActividadDocente, InvestigadorDocente, BecarioPersonalFormacion,
     Investigador, DocumentacionBiblioteca, TrabajoPublicado, Autor, TipoTrabajoPublicado,
     ActividadTransferencia, ParteExterna, EquipamientoInfraestructura,
-    TrabajoPresentado, ActividadXPersona, Patente, TipoDeRegistro, Registro
+    TrabajoPresentado, ActividadXPersona, Patente, TipoDeRegistro, Registro,
+    MemoriaAnual, IntegranteMemoria, TrabajoMemoria, ActividadMemoria,
+    PublicacionMemoria, PatenteMemoria, ProyectoMemoria
 )
 
 
