@@ -11,7 +11,9 @@ from .models import (
     Persona, ActividadDocente, InvestigadorDocente,
     BecarioPersonalFormacion, Investigador, DocumentacionBiblioteca,
     TrabajoPublicado, ActividadTransferencia, ParteExterna,
-    EquipamientoInfraestructura, TrabajoPresentado, ActividadXPersona
+    EquipamientoInfraestructura, TrabajoPresentado, ActividadXPersona,
+    MemoriaAnual, IntegranteMemoria, TrabajoMemoria, ActividadMemoria,
+    PublicacionMemoria, PatenteMemoria, ProyectoMemoria
 )
 from .serializers import (
     ProgramaActividadesSerializer, GrupoInvestigacionSerializer,
@@ -22,7 +24,10 @@ from .serializers import (
     InvestigadorSerializer, DocumentacionBibliotecaSerializer,
     TrabajoPublicadoSerializer, ActividadTransferenciaSerializer,
     ParteExternaSerializer, EquipamientoInfraestructuraSerializer,
-    TrabajoPresentadoSerializer, ActividadXPersonaSerializer, LoginSerializer
+    TrabajoPresentadoSerializer, ActividadXPersonaSerializer, LoginSerializer,
+    MemoriaAnualSerializer, IntegranteMemoriaSerializer, TrabajoMemoriaSerializer,
+    ActividadMemoriaSerializer, PublicacionMemoriaSerializer, PatenteMemoriaSerializer,
+    ProyectoMemoriaSerializer
 )
 
 # Create your views here.
@@ -71,6 +76,51 @@ def login(request):
         'persona': serializer.data,
         'tokens': tokens
     }, status = status.HTTP_200_OK)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def register(request):
+    data = request.data.copy()
+    
+    # Validar campos requeridos
+    required_fields = ['nombre', 'apellido', 'correo', 'contrasena', 'GrupoInvestigacion']
+    for field in required_fields:
+        if field not in data:
+            return Response(
+                {'error': f'El campo {field} es requerido'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    
+    # Verificar si el correo ya existe
+    if Persona.objects.filter(correo=data['correo']).exists():
+        return Response(
+            {'error': 'El correo ya está registrado'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Hashear la contraseña
+    data['contrasena'] = make_password(data['contrasena'])
+    
+    # Valores por defecto si no se proporcionan
+    if 'horasSemanales' not in data:
+        data['horasSemanales'] = 0
+    if 'tipoDePersonal' not in data:
+        data['tipoDePersonal'] = 'Investigador'
+    
+    # Crear el usuario
+    serializer = PersonaSerializer(data=data)
+    
+    if serializer.is_valid():
+        persona = serializer.save()
+        tokens = get_token_for_user(persona)
+        
+        return Response({
+            'mensaje': 'Registro exitoso',
+            'persona': serializer.data,
+            'tokens': tokens
+        }, status=status.HTTP_201_CREATED)
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -227,3 +277,113 @@ class TrabajoPresentadoViewSet(viewsets.ModelViewSet):
 class ActividadXPersonaViewSet(viewsets.ModelViewSet):
     queryset = ActividadXPersona.objects.all()
     serializer_class = ActividadXPersonaSerializer
+
+
+# ViewSets para Memoria Anual
+
+class MemoriaAnualViewSet(viewsets.ModelViewSet):
+    queryset = MemoriaAnual.objects.all()
+    serializer_class = MemoriaAnualSerializer
+    # permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = MemoriaAnual.objects.all()
+        grupo_id = self.request.query_params.get('grupo', None)
+        anio = self.request.query_params.get('anio', None)
+        
+        if grupo_id:
+            queryset = queryset.filter(GrupoInvestigacion_id=grupo_id)
+        if anio:
+            queryset = queryset.filter(anio=anio)
+        
+        return queryset
+
+
+class IntegranteMemoriaViewSet(viewsets.ModelViewSet):
+    queryset = IntegranteMemoria.objects.all()
+    serializer_class = IntegranteMemoriaSerializer
+    # permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = IntegranteMemoria.objects.all()
+        memoria_id = self.request.query_params.get('memoria', None)
+        
+        if memoria_id:
+            queryset = queryset.filter(MemoriaAnual_id=memoria_id)
+        
+        return queryset
+
+
+class TrabajoMemoriaViewSet(viewsets.ModelViewSet):
+    queryset = TrabajoMemoria.objects.all()
+    serializer_class = TrabajoMemoriaSerializer
+    # permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = TrabajoMemoria.objects.all()
+        memoria_id = self.request.query_params.get('memoria', None)
+        
+        if memoria_id:
+            queryset = queryset.filter(MemoriaAnual_id=memoria_id)
+        
+        return queryset
+
+
+class ActividadMemoriaViewSet(viewsets.ModelViewSet):
+    queryset = ActividadMemoria.objects.all()
+    serializer_class = ActividadMemoriaSerializer
+    # permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = ActividadMemoria.objects.all()
+        memoria_id = self.request.query_params.get('memoria', None)
+        
+        if memoria_id:
+            queryset = queryset.filter(MemoriaAnual_id=memoria_id)
+        
+        return queryset
+
+
+class PublicacionMemoriaViewSet(viewsets.ModelViewSet):
+    queryset = PublicacionMemoria.objects.all()
+    serializer_class = PublicacionMemoriaSerializer
+    # permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = PublicacionMemoria.objects.all()
+        memoria_id = self.request.query_params.get('memoria', None)
+        
+        if memoria_id:
+            queryset = queryset.filter(MemoriaAnual_id=memoria_id)
+        
+        return queryset
+
+
+class PatenteMemoriaViewSet(viewsets.ModelViewSet):
+    queryset = PatenteMemoria.objects.all()
+    serializer_class = PatenteMemoriaSerializer
+    # permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = PatenteMemoria.objects.all()
+        memoria_id = self.request.query_params.get('memoria', None)
+        
+        if memoria_id:
+            queryset = queryset.filter(MemoriaAnual_id=memoria_id)
+        
+        return queryset
+
+
+class ProyectoMemoriaViewSet(viewsets.ModelViewSet):
+    queryset = ProyectoMemoria.objects.all()
+    serializer_class = ProyectoMemoriaSerializer
+    # permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = ProyectoMemoria.objects.all()
+        memoria_id = self.request.query_params.get('memoria', None)
+        
+        if memoria_id:
+            queryset = queryset.filter(MemoriaAnual_id=memoria_id)
+        
+        return queryset

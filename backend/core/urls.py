@@ -11,7 +11,10 @@ from app.views import (
     TrabajoPublicadoViewSet, ActividadTransferenciaViewSet,
     ParteExternaViewSet, EquipamientoInfraestructuraViewSet,
     TrabajoPresentadoViewSet, ActividadXPersonaViewSet,
-    login, perfil, actualizar_perfil, eliminar_persona, listar_personas
+    login, register, perfil, actualizar_perfil, eliminar_persona, listar_personas,
+    MemoriaAnualViewSet, IntegranteMemoriaViewSet, TrabajoMemoriaViewSet,
+    ActividadMemoriaViewSet, PublicacionMemoriaViewSet, PatenteMemoriaViewSet,
+    ProyectoMemoriaViewSet
 )
 
 router = DefaultRouter()
@@ -36,10 +39,20 @@ router.register(r'equipamiento', EquipamientoInfraestructuraViewSet)
 router.register(r'trabajos-presentados', TrabajoPresentadoViewSet)
 router.register(r'actividades-persona', ActividadXPersonaViewSet)
 
+# Rutas para Memoria Anual
+router.register(r'memorias', MemoriaAnualViewSet)
+router.register(r'memorias-integrantes', IntegranteMemoriaViewSet)
+router.register(r'memorias-trabajos', TrabajoMemoriaViewSet)
+router.register(r'memorias-actividades', ActividadMemoriaViewSet)
+router.register(r'memorias-publicaciones', PublicacionMemoriaViewSet)
+router.register(r'memorias-patentes', PatenteMemoriaViewSet)
+router.register(r'memorias-proyectos', ProyectoMemoriaViewSet)
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
     path('api/auth/login/', login, name='login'),
+    path('api/auth/register/', register, name='register'),
     path('api/auth/personas/', listar_personas, name='listar_personas'),
     path('api/auth/perfil/<int:oidpersona>/', perfil, name='perfil'),
     path('api/auth/perfil/<int:oidpersona>/actualizar/', actualizar_perfil, name='actualizar_perfil'),
