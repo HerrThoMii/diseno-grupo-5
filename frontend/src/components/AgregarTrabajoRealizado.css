@@ -1,0 +1,122 @@
+/* Clean, responsive styles for AgregarTrabajoRealizado component */
+.atr-author-actions {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
+}
+
+.atr-btn-add {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #7c3aed; /* app primary */
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 8px;
+  transition: background-color 120ms ease, transform 120ms ease;
+}
+.atr-btn-add:hover {
+  background: rgba(124,58,237,0.08);
+  transform: translateY(-1px);
+}
+
+.atr-new-author {
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px dashed #e5e7eb;
+  border-radius: 8px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: nowrap; /* prefer horizontal layout */
+  overflow: hidden;
+}
+
+.atr-input {
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  outline: none;
+  min-width: 140px;
+  flex: 2 1 140px; /* inputs grow more to be wider horizontally */
+  font-size: 14px;
+}
+.atr-input:focus { box-shadow: 0 0 0 3px rgba(147,197,253,0.12); border-color:#93c5fd; }
+
+.atr-btn-primary {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); /* app gradient */
+  color: #ffffff;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(16,24,40,0.06);
+  flex: 0 0 auto; /* don't let button shrink inputs */
+}
+.atr-btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* Make the add button larger and prevent it from shrinking the inputs */
+.atr-btn-primary { min-width: 130px; padding: 10px 14px; font-size: 14px; }
+
+/* Smaller lateral padding for the helper's Add button */
+.atr-new-author .atr-btn-primary { padding: 8px 10px; min-width: 100px; }
+
+/* Compact note: push to the right, smaller text, keep on one line */
+.atr-note {
+  margin-left: auto;
+  white-space: nowrap;
+  font-size: 11px;
+  color: #6b7280;
+  opacity: 0.9;
+}
+
+.atr-btn-small { padding: 6px 10px; font-size: 14px; }
+
+.atr-note { display:none; }
+
+.atr-btn-cancel-mini {
+  background: transparent;
+  border: 1px solid #e5e7eb;
+  color: #374151;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.atr-btn-cancel-mini:hover { background: #f3f4f6; }
+
+.atr-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display:flex; align-items:center; justify-content:center; z-index:1000;
+}
+.atr-modal {
+  background:#fff; border-radius:12px; width:90%; max-width:760px; max-height:90vh; overflow:auto; box-shadow:0 10px 40px rgba(0,0,0,0.15);
+}
+.atr-header { display:flex; justify-content:space-between; align-items:center; padding:1.25rem 1.5rem; border-bottom:1px solid #e5e7eb; }
+
+/* Form layout: labels on the left, inputs on the right for wide screens */
+.atr-form { padding:1.25rem 1.5rem; }
+.atr-form-group { margin-bottom:1rem; display:flex; flex-direction:row; align-items:center; gap:0.75rem; }
+.atr-form-group label { min-width: 140px; font-weight:600; }
+.atr-form-group input, .atr-form-group select { padding:0.6rem; border:2px solid #e5e7eb; border-radius:8px; flex:1 1 auto; min-width:0; }
+.atr-form-group input:focus, .atr-form-group select:focus { outline:none; border-color:#7c3aed; box-shadow:0 0 0 3px rgba(124,58,237,0.08); }
+.atr-form-group input.error, .atr-form-group select.error { border-color:#ef4444; }
+.atr-error { color:#ef4444; font-size:0.85rem; }
+
+.atr-buttons { display:flex; gap:1rem; margin-top:1rem; }
+.atr-btn-cancel, .atr-btn-submit { flex:1; padding:0.7rem; border-radius:8px; border:none; cursor:pointer; font-weight:600; }
+.atr-btn-cancel { background:#f3f4f6; }
+.atr-btn-submit { background:linear-gradient(135deg,#7c3aed 0%,#6d28d9 100%); color:white; }
+.atr-submit-error { color:#ef4444; margin-top:0.5rem; }
+
+@media (max-width: 760px) {
+  .atr-new-author { flex-direction: column; align-items: stretch; }
+  .atr-input { width: 100%; flex: none; }
+  .atr-form-group { flex-direction: column; align-items: stretch; }
+  .atr-form-group label { min-width: auto; }
+  .atr-modal { max-width: 95%; }
+  /* note removed */
+}
+
+@media (max-width:480px) { .atr-form { padding:1rem; } }

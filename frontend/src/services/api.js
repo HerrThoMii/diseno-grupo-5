@@ -1,257 +1,155 @@
-import axios from 'axios';
+import { authenticatedFetch } from '../utils/auth';
 
-const API_BASE_URL = 'http://localhost:8000/api';
+export async function crearTrabajoPublicado(data) {
+    const response = await authenticatedFetch('http://localhost:8000/api/trabajos-publicados/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
 
-// Crear instancia de axios con configuración base
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Interceptor para agregar token de autenticación si existe
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    const json = await response.json().catch(() => null);
+    if (!response.ok) {
+        const err = json ? JSON.stringify(json) : `HTTP ${response.status}`;
+        throw new Error(err);
     }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
 
-// ========== Servicios de Autenticación ==========
+    return json;
+}
 
-export const authService = {
-  login: async (correo, contrasena) => {
-    const response = await api.post('/auth/login/', { correo, contrasena });
-    if (response.data.tokens) {
-      localStorage.setItem('access_token', response.data.tokens.access);
-      localStorage.setItem('refresh_token', response.data.tokens.refresh);
+export async function listarTrabajosPublicados() {
+    const response = await authenticatedFetch('http://localhost:8000/api/trabajos-publicados/');
+    const json = await response.json().catch(() => null);
+    if (!response.ok) {
+        const err = json ? JSON.stringify(json) : `HTTP ${response.status}`;
+        throw new Error(err);
     }
-    return response.data;
-  },
+    return json;
+}
 
-  logout: () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-  },
+export async function crearPatente(data) {
+    const response = await fetch('http://localhost:8000/api/patentes/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+    const json = await response.json().catch(() => null);
+    if (!response.ok) {
+        const err = json ? JSON.stringify(json) : `HTTP ${response.status}`;
+        throw new Error(err);
+    }
+    return json;
+}
 
-  isAuthenticated: () => {
-    return !!localStorage.getItem('access_token');
-  },
-};
+export async function listarGrupos() {
+    const response = await authenticatedFetch('http://localhost:8000/api/grupos/');
+    const json = await response.json().catch(() => null);
+    if (!response.ok) {
+        const err = json ? JSON.stringify(json) : `HTTP ${response.status}`;
+        throw new Error(err);
+    }
+    return json;
+}
 
-// ========== Servicios de Memoria Anual ==========
 
-export const memoriaAnualService = {
-  // Obtener todas las memorias anuales
-  getAll: async () => {
-    const response = await api.get('/memorias-anuales/');
-    return response.data;
-  },
 
-  // Obtener una memoria anual por ID
-  getById: async (id) => {
-    const response = await api.get(`/memorias-anuales/${id}/`);
-    return response.data;
-  },
+export async function crearRegistro(data) {
+        const response = await fetch('http://localhost:8000/api/registros/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+    const json = await response.json().catch(() => null);
+    if (!response.ok) {
+        // throw the parsed json (if any) so the caller can display validation errors
+        const err = json ? JSON.stringify(json) : `HTTP ${response.status}`;
+        throw new Error(err);
+    }
+    return json;
+}
 
-  // Crear nueva memoria anual
-  create: async (data) => {
-    const response = await api.post('/memorias-anuales/', data);
-    return response.data;
-  },
+export async function listarRegistros() {
+        const response = await fetch('http://localhost:8000/api/registros/');
+        const json = await response.json().catch(() => null);
+        if (!response.ok) {
+            const err = json ? JSON.stringify(json) : `HTTP ${response.status}`;
+            throw new Error(err);
+        }
+        return json;
+}
+export async function listarPatentes() {
+        const response = await fetch('http://localhost:8000/api/patentes/');
+        const json = await response.json().catch(() => null);
+        if (!response.ok) {
+            const err = json ? JSON.stringify(json) : `HTTP ${response.status}`;
+            throw new Error(err);
+        }
+        return json;
+}
 
-  // Actualizar memoria anual
-  update: async (id, data) => {
-    const response = await api.put(`/memorias-anuales/${id}/`, data);
-    return response.data;
-  },
+export async function listarTipoRegistros() {
+    const response = await fetch('http://localhost:8000/api/tipo-registros/');
+    const json = await response.json().catch(() => null);
+    if (!response.ok) {
+        const err = json ? JSON.stringify(json) : `HTTP ${response.status}`;
+        throw new Error(err);
+    }
+    return json;
+}
 
-  // Eliminar memoria anual
-  delete: async (id) => {
-    const response = await api.delete(`/memorias-anuales/${id}/`);
-    return response.data;
-  },
-};
+export async function crearTrabajoPresentado(data) {
+    const response = await fetch('http://localhost:8000/api/trabajos-presentados/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+    const json = await response.json().catch(() => null);
+    if (!response.ok) {
+        const err = json ? JSON.stringify(json) : `HTTP ${response.status}`;
+        throw new Error(err);
+    }
+    return json;
+}
 
-// ========== Servicios de Integrantes ==========
+export async function listarTrabajosPresentados() {
+    const response = await fetch('http://localhost:8000/api/trabajos-presentados/');
+    const json = await response.json().catch(() => null);
+    if (!response.ok) {
+        const err = json ? JSON.stringify(json) : `HTTP ${response.status}`;
+        throw new Error(err);
+    }
+    return json;
+}
 
-export const integranteService = {
-  getAll: async () => {
-    const response = await api.get('/integrantes-memoria/');
-    return response.data;
-  },
+export async function listarAutores() {
+    const response = await authenticatedFetch('http://localhost:8000/api/autores/');
+    const json = await response.json().catch(() => null);
+    if (!response.ok) {
+        const err = json ? JSON.stringify(json) : `HTTP ${response.status}`;
+        throw new Error(err);
+    }
+    return json;
+}
 
-  getByMemoriaId: async (memoriaId) => {
-    const response = await api.get(`/integrantes-memoria/?memoria=${memoriaId}`);
-    return response.data;
-  },
+export async function crearAutor(data) {
+    const response = await authenticatedFetch('http://localhost:8000/api/autores/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+    const json = await response.json().catch(() => null);
+    if (!response.ok) {
+        const err = json ? JSON.stringify(json) : `HTTP ${response.status}`;
+        throw new Error(err);
+    }
+    return json;
+}
 
-  create: async (data) => {
-    const response = await api.post('/integrantes-memoria/', data);
-    return response.data;
-  },
-
-  update: async (id, data) => {
-    const response = await api.put(`/integrantes-memoria/${id}/`, data);
-    return response.data;
-  },
-
-  delete: async (id) => {
-    const response = await api.delete(`/integrantes-memoria/${id}/`);
-    return response.data;
-  },
-};
-
-// ========== Servicios de Trabajos ==========
-
-export const trabajoService = {
-  getAll: async () => {
-    const response = await api.get('/trabajos-memoria/');
-    return response.data;
-  },
-
-  getByMemoriaId: async (memoriaId) => {
-    const response = await api.get(`/trabajos-memoria/?memoria=${memoriaId}`);
-    return response.data;
-  },
-
-  create: async (data) => {
-    const response = await api.post('/trabajos-memoria/', data);
-    return response.data;
-  },
-
-  update: async (id, data) => {
-    const response = await api.put(`/trabajos-memoria/${id}/`, data);
-    return response.data;
-  },
-
-  delete: async (id) => {
-    const response = await api.delete(`/trabajos-memoria/${id}/`);
-    return response.data;
-  },
-};
-
-// ========== Servicios de Actividades ==========
-
-export const actividadService = {
-  getAll: async () => {
-    const response = await api.get('/actividades-memoria/');
-    return response.data;
-  },
-
-  getByMemoriaId: async (memoriaId) => {
-    const response = await api.get(`/actividades-memoria/?memoria=${memoriaId}`);
-    return response.data;
-  },
-
-  create: async (data) => {
-    const response = await api.post('/actividades-memoria/', data);
-    return response.data;
-  },
-
-  update: async (id, data) => {
-    const response = await api.put(`/actividades-memoria/${id}/`, data);
-    return response.data;
-  },
-
-  delete: async (id) => {
-    const response = await api.delete(`/actividades-memoria/${id}/`);
-    return response.data;
-  },
-};
-
-// ========== Servicios de Publicaciones ==========
-
-export const publicacionService = {
-  getAll: async () => {
-    const response = await api.get('/publicaciones-memoria/');
-    return response.data;
-  },
-
-  getByMemoriaId: async (memoriaId) => {
-    const response = await api.get(`/publicaciones-memoria/?memoria=${memoriaId}`);
-    return response.data;
-  },
-
-  create: async (data) => {
-    const response = await api.post('/publicaciones-memoria/', data);
-    return response.data;
-  },
-
-  update: async (id, data) => {
-    const response = await api.put(`/publicaciones-memoria/${id}/`, data);
-    return response.data;
-  },
-
-  delete: async (id) => {
-    const response = await api.delete(`/publicaciones-memoria/${id}/`);
-    return response.data;
-  },
-};
-
-// ========== Servicios de Patentes ==========
-
-export const patenteService = {
-  getAll: async () => {
-    const response = await api.get('/patentes-memoria/');
-    return response.data;
-  },
-
-  getByMemoriaId: async (memoriaId) => {
-    const response = await api.get(`/patentes-memoria/?memoria=${memoriaId}`);
-    return response.data;
-  },
-
-  create: async (data) => {
-    const response = await api.post('/patentes-memoria/', data);
-    return response.data;
-  },
-
-  update: async (id, data) => {
-    const response = await api.put(`/patentes-memoria/${id}/`, data);
-    return response.data;
-  },
-
-  delete: async (id) => {
-    const response = await api.delete(`/patentes-memoria/${id}/`);
-    return response.data;
-  },
-};
-
-// ========== Servicios de Proyectos ==========
-
-export const proyectoService = {
-  getAll: async () => {
-    const response = await api.get('/proyectos-memoria/');
-    return response.data;
-  },
-
-  getByMemoriaId: async (memoriaId) => {
-    const response = await api.get(`/proyectos-memoria/?memoria=${memoriaId}`);
-    return response.data;
-  },
-
-  create: async (data) => {
-    const response = await api.post('/proyectos-memoria/', data);
-    return response.data;
-  },
-
-  update: async (id, data) => {
-    const response = await api.put(`/proyectos-memoria/${id}/`, data);
-    return response.data;
-  },
-
-  delete: async (id) => {
-    const response = await api.delete(`/proyectos-memoria/${id}/`);
-    return response.data;
-  },
-};
-
-export default api;
+export async function listarTiposTrabajoPublicado() {
+    const response = await authenticatedFetch('http://localhost:8000/api/tipo-trabajos-publicados/');
+    const json = await response.json().catch(() => null);
+    if (!response.ok) {
+        const err = json ? JSON.stringify(json) : `HTTP ${response.status}`;
+        throw new Error(err);
+    }
+    return json;
+}

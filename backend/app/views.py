@@ -10,11 +10,10 @@ from .models import (
     Erogacion, ProyectoInvestigacion, LineaDeInvestigacion, Actividad,
     Persona, ActividadDocente, InvestigadorDocente,
     BecarioPersonalFormacion, Investigador, DocumentacionBiblioteca,
-    TrabajoPublicado, ActividadTransferencia, ParteExterna,
-    EquipamientoInfraestructura, TrabajoPresentado, ActividadXPersona,
-    MemoriaAnual, IntegranteMemoria, TrabajoMemoria, ActividadMemoria,
-    PublicacionMemoria, PatenteMemoria, ProyectoMemoria
+    Autor, TipoTrabajoPublicado, TrabajoPublicado, ActividadTransferencia, ParteExterna,
+    EquipamientoInfraestructura, TrabajoPresentado, ActividadXPersona, Patente, TipoDeRegistro, Registro
 )
+
 from .serializers import (
     ProgramaActividadesSerializer, GrupoInvestigacionSerializer,
     InformeRendicionCuentasSerializer, ErogacionSerializer,
@@ -24,15 +23,15 @@ from .serializers import (
     InvestigadorSerializer, DocumentacionBibliotecaSerializer,
     TrabajoPublicadoSerializer, ActividadTransferenciaSerializer,
     ParteExternaSerializer, EquipamientoInfraestructuraSerializer,
-    TrabajoPresentadoSerializer, ActividadXPersonaSerializer, LoginSerializer,
-    MemoriaAnualSerializer, IntegranteMemoriaSerializer, TrabajoMemoriaSerializer,
-    ActividadMemoriaSerializer, PublicacionMemoriaSerializer, PatenteMemoriaSerializer,
-    ProyectoMemoriaSerializer
+    TrabajoPresentadoSerializer, ActividadXPersonaSerializer, LoginSerializer, PatenteSerializer, TipoDeRegistroSerializer, RegistroSerializer,
+    AutorSerializer, TipoTrabajoPublicadoSerializer
 )
 
 # Create your views here.
 def get_token_for_user(persona):
-    refresh = RefreshToken()
+    # Attach tokens to the persona model using for_user so standard claims are present
+    # and also include a custom 'oidpersona' claim (used by our custom auth class).
+    refresh = RefreshToken.for_user(persona)
     refresh['oidpersona'] = persona.oidpersona
     refresh['correo'] = persona.correo
     refresh['nombre'] = persona.nombre
@@ -76,6 +75,23 @@ def login(request):
         'persona': serializer.data,
         'tokens': tokens
     }, status = status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def refresh_token(request):
+    # Expecting body { "refresh": "<refresh token>" }
+    refresh_token = request.data.get('refresh')
+    if not refresh_token:
+        return Response({'error': 'Missing refresh token'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        token = RefreshToken(refresh_token)
+        # produce a fresh access token
+        access = str(token.access_token)
+        return Response({'access': access}, status=status.HTTP_200_OK)
+    except Exception:
+        return Response({'error': 'Invalid refresh token'}, status=status.HTTP_401_UNAUTHORIZED)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -147,6 +163,7 @@ class ProgramaActividadesViewSet(viewsets.ModelViewSet):
 class GrupoInvestigacionViewSet(viewsets.ModelViewSet):
     queryset = GrupoInvestigacion.objects.all()
     serializer_class = GrupoInvestigacionSerializer
+    permission_classes = [AllowAny]
 
 
 class InformeRendicionCuentasViewSet(viewsets.ModelViewSet):
@@ -234,45 +251,27 @@ class ActividadXPersonaViewSet(viewsets.ModelViewSet):
     serializer_class = ActividadXPersonaSerializer
 
 
-# ViewSets para Memoria Anual
-
-class MemoriaAnualViewSet(viewsets.ModelViewSet):
-    queryset = MemoriaAnual.objects.all()
-    serializer_class = MemoriaAnualSerializer
-    permission_classes = [AllowAny]  # Cambiar según necesidades
+class PatenteViewSet(viewsets.ModelViewSet):
+    queryset = Patente.objects.all()
+    serializer_class = PatenteSerializer
 
 
-class IntegranteMemoriaViewSet(viewsets.ModelViewSet):
-    queryset = IntegranteMemoria.objects.all()
-    serializer_class = IntegranteMemoriaSerializer
+class AutorViewSet(viewsets.ModelViewSet):
+    queryset = Autor.objects.all()
+    serializer_class = AutorSerializer
     permission_classes = [AllowAny]
 
 
-class TrabajoMemoriaViewSet(viewsets.ModelViewSet):
-    queryset = TrabajoMemoria.objects.all()
-    serializer_class = TrabajoMemoriaSerializer
+class TipoTrabajoPublicadoViewSet(viewsets.ModelViewSet):
+    queryset = TipoTrabajoPublicado.objects.all()
+    serializer_class = TipoTrabajoPublicadoSerializer
     permission_classes = [AllowAny]
 
-
-class ActividadMemoriaViewSet(viewsets.ModelViewSet):
-    queryset = ActividadMemoria.objects.all()
-    serializer_class = ActividadMemoriaSerializer
-    permission_classes = [AllowAny]
+class RegistroViewSet(viewsets.ModelViewSet):
+    queryset = Registro.objects.all()
+    serializer_class = RegistroSerializer
 
 
-class PublicacionMemoriaViewSet(viewsets.ModelViewSet):
-    queryset = PublicacionMemoria.objects.all()
-    serializer_class = PublicacionMemoriaSerializer
-    permission_classes = [AllowAny]
-
-
-class PatenteMemoriaViewSet(viewsets.ModelViewSet):
-    queryset = PatenteMemoria.objects.all()
-    serializer_class = PatenteMemoriaSerializer
-    permission_classes = [AllowAny]
-
-
-class ProyectoMemoriaViewSet(viewsets.ModelViewSet):
-    queryset = ProyectoMemoria.objects.all()
-    serializer_class = ProyectoMemoriaSerializer
-    permission_classes = [AllowAny]
+class TipoDeRegistroViewSet(viewsets.ModelViewSet):
+    queryset = TipoDeRegistro.objects.all()
+    serializer_class = TipoDeRegistroSerializer
