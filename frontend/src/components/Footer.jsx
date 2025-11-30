@@ -1,37 +1,31 @@
-import React, { useState } from 'react';
-import ContactoModal from './ContactoModal';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import './Footer.css';
 
 function Footer() {
-  const [showContactoModal, setShowContactoModal] = useState(false);
+  const navigate = useNavigate();
+
+  const handleAboutClick = () => {
+    navigate('/acerca-de');
+  };
 
   return (
-    <>
-      <footer className="footer">
-        <div className="footer-content">
-          <div className="footer-left">
-            <p className="footer-copyright">© 2025 Universidad Tecnológica Nacional</p>
-          </div>
-          <div className="footer-right">
-            <button 
-              className="footer-link-btn" 
-              onClick={() => setShowContactoModal(true)}
-            >
-              Contacto
-            </button>
-            <span className="footer-separator">|</span>
-            <a href="#" className="footer-link">Políticas de Privacidad</a>
-            <span className="footer-separator">|</span>
-            <a href="#" className="footer-link">Términos y Condiciones</a>
-          </div>
+    <footer className="footer">
+      <div className="footer-content">
+        <div className="footer-info">
+          <p className="footer-copyright">© 2025 Universidad Tecnológica Nacional - Facultad Regional La Plata</p>
+          <p className="footer-detail">Comisión S32 | Diseño de Sistemas de Información</p>
         </div>
-      </footer>
-      
-      <ContactoModal 
-        isOpen={showContactoModal} 
-        onClose={() => setShowContactoModal(false)} 
-      />
-    </>
+        <div className="footer-right">
+          <button 
+            className="footer-link-btn" 
+            onClick={handleAboutClick}
+          >
+            Acerca de Nosotros
+          </button>
+        </div>
+      </div>
+    </footer>
   );
 }
 

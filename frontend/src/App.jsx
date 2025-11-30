@@ -1,5 +1,5 @@
 import './App.css'
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './components/login'
 import Register from './components/register'
@@ -7,8 +7,9 @@ import Dashboard from './components/Dashboard'
 import HomePage from './pages/HomePage'
 import TrabajosPage from './pages/TrabajosPage'
 import MemoriaPage from './pages/MemoriaPage'
-import TrabajoRegistrosPatentes from './components/TrabajoRegistrosPatentes'
+import RegistrosPage from './pages/RegistrosPage'
 import GrupoPage from './pages/GrupoPage'
+import AcercaDePage from './pages/AcercaDePage'
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -48,8 +49,9 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/trabajos" element={<TrabajosPage />} />
           <Route path="/memoria" element={<MemoriaPage />} />
-          <Route path="/registros" element={<TrabajoRegistrosPatentes />} />
+          <Route path="/registros" element={<RegistrosPage />} />
           <Route path="/grupo" element={<GrupoPage />} />
+          <Route path="/acerca-de" element={<AcercaDePage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
