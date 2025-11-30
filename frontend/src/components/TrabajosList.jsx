@@ -1,57 +1,33 @@
 import React, { useState } from 'react';
 import { Search, Plus } from 'lucide-react';
 import './TrabajosList.css';
+import AgregarTrabajoRealizado from './AgregarTrabajoRealizado';
 
 function TrabajosList() {
   const [activeTab, setActiveTab] = useState('realizados');
   const [searchTerm, setSearchTerm] = useState('');
 
+  // sample data shaped like backend model `TrabajoPublicado`: { id, autor, titulo, tipoTrabajoPublicado }
   const trabajosRealizados = [
-    {
-      id: 1,
-      nombre: 'Trabajo 1',
-      titulo: 'Investigación en IA',
-      issn: 'ISSN-001',
-      editorial: 'Editorial A',
-      pais: 'Argentina'
-    },
-    {
-      id: 2,
-      nombre: 'Trabajo 2',
-      titulo: 'Machine Learning',
-      issn: 'ISSN-002',
-      editorial: 'Editorial B',
-      pais: 'Chile'
-    },
+    { id: 1, autor: 'Revista A', titulo: 'Investigación en IA', tipoTrabajoPublicado: 'Artículo' },
+    { id: 2, autor: 'Revista B', titulo: 'Machine Learning', tipoTrabajoPublicado: 'Artículo' },
   ];
 
   const trabajosPublicados = [
-    {
-      id: 1,
-      nombre: 'Paper 1',
-      titulo: 'Cloud Computing',
-      issn: 'ISSN-003',
-      editorial: 'IEEE',
-      pais: 'USA'
-    },
-    {
-      id: 2,
-      nombre: 'Paper 2',
-      titulo: 'Blockchain Technology',
-      issn: 'ISSN-004',
-      editorial: 'ACM',
-      pais: 'Canadá'
-    },
+    { id: 1, autor: 'IEEE', titulo: 'Cloud Computing', tipoTrabajoPublicado: 'Artículo' },
+    { id: 2, autor: 'ACM', titulo: 'Blockchain Technology', tipoTrabajoPublicado: 'Artículo' },
   ];
 
-  const trabajos = activeTab === 'realizados' ? trabajosRealizados : trabajosPublicados;
+  const [showAgregarRealizado, setShowAgregarRealizado] = useState(false);
+  const [realizadosState, setRealizadosState] = useState(trabajosRealizados);
+  const trabajos = activeTab === 'realizados' ? realizadosState : trabajosPublicados;
 
   const filteredTrabajos = trabajos.filter(trabajo =>
-    trabajo.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    trabajo.titulo.toLowerCase().includes(searchTerm.toLowerCase())
+    (trabajo.autor || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (trabajo.titulo || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  return (
+  return (<>
     <div className="trabajos-container">
       <div className="trabajos-header">
         <h2>Trabajos Realizados y Publicados</h2>
@@ -86,7 +62,7 @@ function TrabajosList() {
           <button className="search-button">
             <Search size={18} />
           </button>
-          <button className="add-button" title="Agregar nuevo trabajo">
+          <button className="add-button" title="Agregar nuevo trabajo" onClick={() => setShowAgregarRealizado(true)}>
             <Plus size={18} />
           </button>
         </div>
@@ -125,7 +101,12 @@ function TrabajosList() {
         </div>
       </div>
     </div>
-  );
+    <AgregarTrabajoRealizado
+      isOpen={showAgregarRealizado}
+      onClose={() => setShowAgregarRealizado(false)}
+      onAdd={(item) => { setRealizadosState(prev => [...prev, item]); setShowAgregarRealizado(false); }}
+    />
+  </>);
 }
 
 export default TrabajosList;

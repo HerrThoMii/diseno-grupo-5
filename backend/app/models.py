@@ -32,14 +32,28 @@ class Patente(models.Model):
     GrupoInvestigacion = models.ForeignKey(
         GrupoInvestigacion, on_delete=models.CASCADE
     )
+    numero = models.CharField(max_length=100, blank=True)
+    fecha = models.DateField(null=True, blank=True)
+    inventor = models.CharField(max_length=200, blank=True)
+
+class TipoDeRegistro(models.Model):
+    oidTipoDeRegistro = models.AutoField(primary_key=True, unique=True)
+    nombre = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.nombre
+
 
 class Registro(models.Model):
     oidRegistro = models.AutoField(primary_key=True, unique=True)
     descripcion = models.TextField()
-    tipoRegistro = models.TextField(max_length=45)
+    TipoDeRegistro = models.ForeignKey(
+        TipoDeRegistro, on_delete=models.CASCADE
+    )
     Patente = models.ForeignKey(
         Patente, on_delete=models.CASCADE
     )
+
 
 class InformeRendicionCuentas(models.Model):
     oidInformeRendicionCuentas = models.AutoField(primary_key=True, unique=True)
@@ -88,7 +102,6 @@ class LineaDeInvestigacion(models.Model):
     )
 
 
-
 class Actividad(models.Model):
     oidActividad = models.AutoField(primary_key=True, unique=True)
     descripcion = models.TextField()
@@ -101,6 +114,10 @@ class Actividad(models.Model):
         LineaDeInvestigacion, on_delete=models.CASCADE
     )
 
+class TipoDePersonal(models.Model):
+    nombre = models.CharField(max_length=100)
+    def __str__(self):
+        return self.nombre
 
 class Persona(models.Model):
     oidpersona = models.AutoField(primary_key=True, unique=True)
@@ -109,7 +126,7 @@ class Persona(models.Model):
     correo = models.EmailField(unique=True)
     contrasena = models.CharField(max_length=128)
     horasSemanales = models.IntegerField()
-    tipoDePersonal = models.TextField()
+    tipoDePersonal = models.ForeignKey(TipoDePersonal, on_delete=models.SET_NULL, null=True, blank=True)
     GrupoInvestigacion = models.ForeignKey(
         GrupoInvestigacion, on_delete=models.CASCADE
     )
@@ -164,11 +181,30 @@ class DocumentacionBiblioteca(models.Model):
     )
 
 
+class Autor(models.Model):
+    oidAutor = models.AutoField(primary_key=True, unique=True)
+    nombre = models.CharField(max_length=45)
+    apellido = models.CharField(max_length=45)
+
+
+class TipoTrabajoPublicado(models.Model):
+    oidTipoTrabajoPublicado = models.AutoField(primary_key=True, unique=True)
+    nombre = models.CharField(max_length=100)
+
 class TrabajoPublicado(models.Model):
     oidTrabajoPublicado = models.AutoField(primary_key=True, unique=True)
-    autor = models.TextField()
     titulo = models.TextField()
-    tipoTrabajoPublicado = models.TextField()
+    ISSN = models.CharField(max_length=55)
+    editorial = models.CharField(max_length=255)
+    nombreRevista = models.CharField(max_length=255)
+    pais = models.CharField(max_length=255)
+    estado = models.CharField(max_length=55, default='Realizado')
+    tipoTrabajoPublicado = models.ForeignKey(
+        TipoTrabajoPublicado, on_delete=models.CASCADE
+    )
+    Autor = models.ForeignKey(
+        Autor, on_delete=models.CASCADE
+    )
     GrupoInvestigacion = models.ForeignKey(
         GrupoInvestigacion, on_delete=models.CASCADE
     )

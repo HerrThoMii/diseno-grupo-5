@@ -10,9 +10,10 @@ from .models import (
     Erogacion, ProyectoInvestigacion, LineaDeInvestigacion, Actividad,
     Persona, ActividadDocente, InvestigadorDocente,
     BecarioPersonalFormacion, Investigador, DocumentacionBiblioteca,
-    TrabajoPublicado, ActividadTransferencia, ParteExterna,
-    EquipamientoInfraestructura, TrabajoPresentado, ActividadXPersona
+    Autor, TipoTrabajoPublicado, TrabajoPublicado, ActividadTransferencia, ParteExterna,
+    EquipamientoInfraestructura, TrabajoPresentado, ActividadXPersona, Patente, TipoDeRegistro, Registro
 )
+
 from .serializers import (
     ProgramaActividadesSerializer, GrupoInvestigacionSerializer,
     InformeRendicionCuentasSerializer, ErogacionSerializer,
@@ -22,12 +23,15 @@ from .serializers import (
     InvestigadorSerializer, DocumentacionBibliotecaSerializer,
     TrabajoPublicadoSerializer, ActividadTransferenciaSerializer,
     ParteExternaSerializer, EquipamientoInfraestructuraSerializer,
-    TrabajoPresentadoSerializer, ActividadXPersonaSerializer, LoginSerializer
+    TrabajoPresentadoSerializer, ActividadXPersonaSerializer, LoginSerializer, PatenteSerializer, TipoDeRegistroSerializer, RegistroSerializer,
+    AutorSerializer, TipoTrabajoPublicadoSerializer
 )
 
 # Create your views here.
 def get_token_for_user(persona):
-    refresh = RefreshToken()
+    # Attach tokens to the persona model using for_user so standard claims are present
+    # and also include a custom 'oidpersona' claim (used by our custom auth class).
+    refresh = RefreshToken.for_user(persona)
     refresh['oidpersona'] = persona.oidpersona
     refresh['correo'] = persona.correo
     refresh['nombre'] = persona.nombre
@@ -71,6 +75,23 @@ def login(request):
         'persona': serializer.data,
         'tokens': tokens
     }, status = status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def refresh_token(request):
+    # Expecting body { "refresh": "<refresh token>" }
+    refresh_token = request.data.get('refresh')
+    if not refresh_token:
+        return Response({'error': 'Missing refresh token'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        token = RefreshToken(refresh_token)
+        # produce a fresh access token
+        access = str(token.access_token)
+        return Response({'access': access}, status=status.HTTP_200_OK)
+    except Exception:
+        return Response({'error': 'Invalid refresh token'}, status=status.HTTP_401_UNAUTHORIZED)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -142,6 +163,7 @@ class ProgramaActividadesViewSet(viewsets.ModelViewSet):
 class GrupoInvestigacionViewSet(viewsets.ModelViewSet):
     queryset = GrupoInvestigacion.objects.all()
     serializer_class = GrupoInvestigacionSerializer
+    permission_classes = [AllowAny]
 
 
 class InformeRendicionCuentasViewSet(viewsets.ModelViewSet):
@@ -227,3 +249,29 @@ class TrabajoPresentadoViewSet(viewsets.ModelViewSet):
 class ActividadXPersonaViewSet(viewsets.ModelViewSet):
     queryset = ActividadXPersona.objects.all()
     serializer_class = ActividadXPersonaSerializer
+
+
+class PatenteViewSet(viewsets.ModelViewSet):
+    queryset = Patente.objects.all()
+    serializer_class = PatenteSerializer
+
+
+class AutorViewSet(viewsets.ModelViewSet):
+    queryset = Autor.objects.all()
+    serializer_class = AutorSerializer
+    permission_classes = [AllowAny]
+
+
+class TipoTrabajoPublicadoViewSet(viewsets.ModelViewSet):
+    queryset = TipoTrabajoPublicado.objects.all()
+    serializer_class = TipoTrabajoPublicadoSerializer
+    permission_classes = [AllowAny]
+
+class RegistroViewSet(viewsets.ModelViewSet):
+    queryset = Registro.objects.all()
+    serializer_class = RegistroSerializer
+
+
+class TipoDeRegistroViewSet(viewsets.ModelViewSet):
+    queryset = TipoDeRegistro.objects.all()
+    serializer_class = TipoDeRegistroSerializer
