@@ -5,7 +5,9 @@ from .models import (
     Persona, ActividadDocente, InvestigadorDocente, BecarioPersonalFormacion,
     Investigador, DocumentacionBiblioteca, TrabajoPublicado,
     ActividadTransferencia, ParteExterna, EquipamientoInfraestructura,
-    TrabajoPresentado, ActividadXPersona, Patente, Registro
+    TrabajoPresentado, ActividadXPersona, Patente, Registro,
+    MemoriaAnual, IntegranteMemoria, TrabajoMemoria, ActividadMemoria,
+    PublicacionMemoria, PatenteMemoria, ProyectoMemoria
 )
 
 
@@ -256,3 +258,54 @@ class ActividadXPersonaSerializer(serializers.ModelSerializer):
             'Actividad',
             'persona'
         ]
+
+
+# Serializers para Memoria Anual
+
+class IntegranteMemoriaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = IntegranteMemoria
+        fields = '__all__'
+
+
+class TrabajoMemoriaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TrabajoMemoria
+        fields = '__all__'
+
+
+class ActividadMemoriaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ActividadMemoria
+        fields = '__all__'
+
+
+class PublicacionMemoriaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PublicacionMemoria
+        fields = '__all__'
+
+
+class PatenteMemoriaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PatenteMemoria
+        fields = '__all__'
+
+
+class ProyectoMemoriaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProyectoMemoria
+        fields = '__all__'
+
+
+class MemoriaAnualSerializer(serializers.ModelSerializer):
+    integrantes = IntegranteMemoriaSerializer(many=True, read_only=True)
+    trabajos = TrabajoMemoriaSerializer(many=True, read_only=True)
+    actividades = ActividadMemoriaSerializer(many=True, read_only=True)
+    publicaciones = PublicacionMemoriaSerializer(many=True, read_only=True)
+    patentes = PatenteMemoriaSerializer(many=True, read_only=True)
+    proyectos = ProyectoMemoriaSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = MemoriaAnual
+        fields = '__all__'

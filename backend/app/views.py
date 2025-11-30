@@ -11,7 +11,9 @@ from .models import (
     Persona, ActividadDocente, InvestigadorDocente,
     BecarioPersonalFormacion, Investigador, DocumentacionBiblioteca,
     TrabajoPublicado, ActividadTransferencia, ParteExterna,
-    EquipamientoInfraestructura, TrabajoPresentado, ActividadXPersona
+    EquipamientoInfraestructura, TrabajoPresentado, ActividadXPersona,
+    MemoriaAnual, IntegranteMemoria, TrabajoMemoria, ActividadMemoria,
+    PublicacionMemoria, PatenteMemoria, ProyectoMemoria
 )
 from .serializers import (
     ProgramaActividadesSerializer, GrupoInvestigacionSerializer,
@@ -22,7 +24,10 @@ from .serializers import (
     InvestigadorSerializer, DocumentacionBibliotecaSerializer,
     TrabajoPublicadoSerializer, ActividadTransferenciaSerializer,
     ParteExternaSerializer, EquipamientoInfraestructuraSerializer,
-    TrabajoPresentadoSerializer, ActividadXPersonaSerializer, LoginSerializer
+    TrabajoPresentadoSerializer, ActividadXPersonaSerializer, LoginSerializer,
+    MemoriaAnualSerializer, IntegranteMemoriaSerializer, TrabajoMemoriaSerializer,
+    ActividadMemoriaSerializer, PublicacionMemoriaSerializer, PatenteMemoriaSerializer,
+    ProyectoMemoriaSerializer
 )
 
 # Create your views here.
@@ -227,3 +232,47 @@ class TrabajoPresentadoViewSet(viewsets.ModelViewSet):
 class ActividadXPersonaViewSet(viewsets.ModelViewSet):
     queryset = ActividadXPersona.objects.all()
     serializer_class = ActividadXPersonaSerializer
+
+
+# ViewSets para Memoria Anual
+
+class MemoriaAnualViewSet(viewsets.ModelViewSet):
+    queryset = MemoriaAnual.objects.all()
+    serializer_class = MemoriaAnualSerializer
+    permission_classes = [AllowAny]  # Cambiar según necesidades
+
+
+class IntegranteMemoriaViewSet(viewsets.ModelViewSet):
+    queryset = IntegranteMemoria.objects.all()
+    serializer_class = IntegranteMemoriaSerializer
+    permission_classes = [AllowAny]
+
+
+class TrabajoMemoriaViewSet(viewsets.ModelViewSet):
+    queryset = TrabajoMemoria.objects.all()
+    serializer_class = TrabajoMemoriaSerializer
+    permission_classes = [AllowAny]
+
+
+class ActividadMemoriaViewSet(viewsets.ModelViewSet):
+    queryset = ActividadMemoria.objects.all()
+    serializer_class = ActividadMemoriaSerializer
+    permission_classes = [AllowAny]
+
+
+class PublicacionMemoriaViewSet(viewsets.ModelViewSet):
+    queryset = PublicacionMemoria.objects.all()
+    serializer_class = PublicacionMemoriaSerializer
+    permission_classes = [AllowAny]
+
+
+class PatenteMemoriaViewSet(viewsets.ModelViewSet):
+    queryset = PatenteMemoria.objects.all()
+    serializer_class = PatenteMemoriaSerializer
+    permission_classes = [AllowAny]
+
+
+class ProyectoMemoriaViewSet(viewsets.ModelViewSet):
+    queryset = ProyectoMemoria.objects.all()
+    serializer_class = ProyectoMemoriaSerializer
+    permission_classes = [AllowAny]
