@@ -1,11 +1,19 @@
 import React, { useState } from 'react';
 import './MemoriaAnual.css';
-import { ChevronDown, Plus, Trash2, Edit } from 'lucide-react';
+import { ChevronDown, Plus, Trash2, Edit, Search } from 'lucide-react';
 
 const MemoriaAnual = () => {
   const [activeTab, setActiveTab] = useState('general');
   const [editingIndex, setEditingIndex] = useState({ integrantes: null, trabajos: null, proyectos: null });
   const [modalField, setModalField] = useState({ show: false, index: null, field: '', value: '', title: '', type: '' });
+  const [searchTerms, setSearchTerms] = useState({
+    integrantes: '',
+    trabajos: '',
+    actividades: '',
+    publicaciones: '',
+    patentes: '',
+    proyectos: '',
+  });
   const [formData, setFormData] = useState({
     memorias: [],
     integrantes: [],
@@ -160,6 +168,67 @@ const handleAddIntegrante = () => {
     setFormData({ ...formData, publicaciones: updated });
   };
 
+  // Funciones de filtrado para cada sección
+  const filterIntegrantes = () => {
+    if (!searchTerms.integrantes.trim()) return formData.integrantes;
+    const term = searchTerms.integrantes.toLowerCase();
+    return formData.integrantes.filter(integrante =>
+      integrante.nombre.toLowerCase().includes(term) ||
+      integrante.apellido.toLowerCase().includes(term) ||
+      integrante.rol.toLowerCase().includes(term)
+    );
+  };
+
+  const filterTrabajos = () => {
+    if (!searchTerms.trabajos.trim()) return formData.trabajos;
+    const term = searchTerms.trabajos.toLowerCase();
+    return formData.trabajos.filter(trabajo =>
+      trabajo.ciudad.toLowerCase().includes(term) ||
+      trabajo.reunion.toLowerCase().includes(term) ||
+      trabajo.titulo.toLowerCase().includes(term)
+    );
+  };
+
+  const filterActividades = () => {
+    if (!searchTerms.actividades.trim()) return formData.actividades;
+    const term = searchTerms.actividades.toLowerCase();
+    return formData.actividades.filter(actividad =>
+      actividad.titulo.toLowerCase().includes(term) ||
+      actividad.tipo.toLowerCase().includes(term) ||
+      actividad.descripcion.toLowerCase().includes(term)
+    );
+  };
+
+  const filterPublicaciones = () => {
+    if (!searchTerms.publicaciones.trim()) return formData.publicaciones;
+    const term = searchTerms.publicaciones.toLowerCase();
+    return formData.publicaciones.filter(publicacion =>
+      publicacion.titulo.toLowerCase().includes(term) ||
+      publicacion.autor.toLowerCase().includes(term) ||
+      publicacion.revista.toLowerCase().includes(term)
+    );
+  };
+
+  const filterPatentes = () => {
+    if (!searchTerms.patentes.trim()) return formData.patentes;
+    const term = searchTerms.patentes.toLowerCase();
+    return formData.patentes.filter(patente =>
+      patente.titulo.toLowerCase().includes(term) ||
+      patente.numero.toLowerCase().includes(term) ||
+      patente.estado.toLowerCase().includes(term)
+    );
+  };
+
+  const filterProyectos = () => {
+    if (!searchTerms.proyectos.trim()) return formData.proyectos;
+    const term = searchTerms.proyectos.toLowerCase();
+    return formData.proyectos.filter(proyecto =>
+      proyecto.nombre.toLowerCase().includes(term) ||
+      proyecto.estado.toLowerCase().includes(term) ||
+      proyecto.responsable.toLowerCase().includes(term)
+    );
+  };
+
   const handleAddPatente = () => {
     setFormData({
       ...formData,
@@ -271,6 +340,18 @@ const handleAddIntegrante = () => {
 
           {activeTab === 'integrantes' && (
             <div className="tab-content">
+              <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '4px', padding: '8px' }}>
+                  <Search size={18} style={{ marginRight: '8px', color: '#666' }} />
+                  <input
+                    type="text"
+                    placeholder="Buscar integrante por nombre, apellido o rol..."
+                    value={searchTerms.integrantes}
+                    onChange={(e) => setSearchTerms({...searchTerms, integrantes: e.target.value})}
+                    style={{ border: 'none', outline: 'none', flex: 1, fontSize: '14px' }}
+                  />
+                </div>
+              </div>
               <button className="btn-add" onClick={handleAddIntegrante}>
                 <Plus size={18} /> Agregar Integrante
               </button>
@@ -285,61 +366,81 @@ const handleAddIntegrante = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {formData.integrantes.map((integrante, index) => (
-                    <tr key={index}>
-                      <td>
-                        <input
-                          type="text"
-                          value={integrante.nombre}
-                          onChange={(e) => handleIntegranteChange(index, 'nombre', e.target.value)}
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="text"
-                          value={integrante.apellido}
-                          onChange={(e) => handleIntegranteChange(index, 'apellido', e.target.value)}
-                        />
-                      </td>
-                      <td>
-                        <select
-                          value={integrante.rol}
-                          onChange={(e) => handleIntegranteChange(index, 'rol', e.target.value)}
-                        >
-                          <option value="">Seleccionar rol</option>
-                          <option value="Investigador">Investigador</option>
-                          <option value="Investigador Docente">Investigador Docente</option>
-                          <option value="Becario">Becario</option>
-                          <option value="Personal de Apoyo">Personal de Apoyo</option>
-                        </select>
-                      </td>
-                      <td>
-                        <input
-                          type="number"
-                          value={integrante.horas}
-                          onChange={(e) => handleIntegranteChange(index, 'horas', e.target.value)}
-                        />
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                          <button 
-                            className="btn-edit" 
-                            onClick={() => setEditingIndex({ ...editingIndex, integrantes: index })}
-                            title="Editar"
-                          >
-                            <Edit size={16} />
-                          </button>
-                          <button 
-                            className="btn-delete" 
-                            onClick={() => handleRemoveIntegrante(index)}
-                            title="Eliminar"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
+                  {filterIntegrantes().length > 0 ? (
+                    filterIntegrantes().map((integrante, index) => {
+                      const originalIndex = formData.integrantes.indexOf(integrante);
+                      return (
+                        <tr key={originalIndex}>
+                          <td>
+                            <input
+                              type="text"
+                              value={integrante.nombre}
+                              onChange={(e) => handleIntegranteChange(originalIndex, 'nombre', e.target.value)}
+                            />
+                          </td>
+                          <td>
+                            <input
+                              type="text"
+                              value={integrante.apellido}
+                              onChange={(e) => handleIntegranteChange(originalIndex, 'apellido', e.target.value)}
+                            />
+                          </td>
+                          <td>
+                            <select
+                              value={integrante.rol}
+                              onChange={(e) => handleIntegranteChange(originalIndex, 'rol', e.target.value)}
+                            >
+                              <option value="">Seleccionar rol</option>
+                              <option value="Investigador">Investigador</option>
+                              <option value="Investigador Docente">Investigador Docente</option>
+                              <option value="Becario">Becario</option>
+                              <option value="Personal de Apoyo">Personal de Apoyo</option>
+                            </select>
+                          </td>
+                          <td>
+                            <input
+                              type="number"
+                              value={integrante.horas}
+                              onChange={(e) => handleIntegranteChange(originalIndex, 'horas', e.target.value)}
+                            />
+                          </td>
+                          <td>
+                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                              <button 
+                                className="btn-edit" 
+                                onClick={() => setEditingIndex({ ...editingIndex, integrantes: originalIndex })}
+                                title="Editar"
+                              >
+                                <Edit size={16} />
+                              </button>
+                              <button 
+                                className="btn-delete" 
+                                onClick={() => handleRemoveIntegrante(originalIndex)}
+                                title="Eliminar"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  ) : (
+                    <tr>
+                      <td colSpan="5" style={{ textAlign: 'center', padding: '20px' }}>
+                        {searchTerms.integrantes.trim() ? (
+                          <div>
+                            <p style={{ marginBottom: '10px' }}>No se encontraron resultados para "{searchTerms.integrantes}"</p>
+                            <button className="btn-add" onClick={handleAddIntegrante}>
+                              <Plus size={18} /> Agregar Nuevo Integrante
+                            </button>
+                          </div>
+                        ) : (
+                          <p>No hay integrantes registrados</p>
+                        )}
                       </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>
@@ -347,6 +448,18 @@ const handleAddIntegrante = () => {
 
           {activeTab === 'trabajos' && (
             <div className="tab-content">
+              <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '4px', padding: '8px' }}>
+                  <Search size={18} style={{ marginRight: '8px', color: '#666' }} />
+                  <input
+                    type="text"
+                    placeholder="Buscar trabajo por ciudad, reunión o título..."
+                    value={searchTerms.trabajos}
+                    onChange={(e) => setSearchTerms({...searchTerms, trabajos: e.target.value})}
+                    style={{ border: 'none', outline: 'none', flex: 1, fontSize: '14px' }}
+                  />
+                </div>
+              </div>
               <button className="btn-add" onClick={handleAddTrabajo}>
                 <Plus size={18} /> Agregar Trabajo
               </button>
@@ -361,71 +474,91 @@ const handleAddIntegrante = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {formData.trabajos.map((trabajo, index) => (
-                    <tr key={index}>
-                      <td>
-                        <select
-                          value={trabajo.ciudad}
-                          onChange={(e) => handleTrabajoChange(index, 'ciudad', e.target.value)}
-                        >
-                          <option value="">Seleccionar ciudad</option>
-                          <option value="Buenos Aires">Buenos Aires</option>
-                          <option value="Córdoba">Córdoba</option>
-                          <option value="Rosario">Rosario</option>
-                          <option value="Mendoza">Mendoza</option>
-                          <option value="San Miguel de Tucumán">San Miguel de Tucumán</option>
-                          <option value="La Plata">La Plata</option>
-                          <option value="Mar del Plata">Mar del Plata</option>
-                          <option value="Salta">Salta</option>
-                          <option value="Santa Fe">Santa Fe</option>
-                          <option value="San Juan">San Juan</option>
-                          <option value="Resistencia">Resistencia</option>
-                          <option value="Neuquén">Neuquén</option>
-                          <option value="Posadas">Posadas</option>
-                          <option value="Bahía Blanca">Bahía Blanca</option>
-                        </select>
-                      </td>
-                      <td>
-                        <input
-                          type="date"
-                          value={trabajo.fecha}
-                          onChange={(e) => handleTrabajoChange(index, 'fecha', e.target.value)}
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="text"
-                          value={trabajo.reunion}
-                          onChange={(e) => handleTrabajoChange(index, 'reunion', e.target.value)}
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="text"
-                          value={trabajo.titulo}
-                          onChange={(e) => handleTrabajoChange(index, 'titulo', e.target.value)}
-                        />
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                          <button 
-                            className="btn-edit" 
-                            onClick={() => setEditingIndex({ ...editingIndex, trabajos: index })}
-                            title="Editar"
-                          >
-                            <Edit size={16} />
-                          </button>
-                          <button 
-                            className="btn-delete" 
-                            onClick={() => handleRemoveTrabajo(index)}
-                            title="Eliminar"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
+                  {filterTrabajos().length > 0 ? (
+                    filterTrabajos().map((trabajo, index) => {
+                      const originalIndex = formData.trabajos.indexOf(trabajo);
+                      return (
+                        <tr key={originalIndex}>
+                          <td>
+                            <select
+                              value={trabajo.ciudad}
+                              onChange={(e) => handleTrabajoChange(originalIndex, 'ciudad', e.target.value)}
+                            >
+                              <option value="">Seleccionar ciudad</option>
+                              <option value="Buenos Aires">Buenos Aires</option>
+                              <option value="Córdoba">Córdoba</option>
+                              <option value="Rosario">Rosario</option>
+                              <option value="Mendoza">Mendoza</option>
+                              <option value="San Miguel de Tucumán">San Miguel de Tucumán</option>
+                              <option value="La Plata">La Plata</option>
+                              <option value="Mar del Plata">Mar del Plata</option>
+                              <option value="Salta">Salta</option>
+                              <option value="Santa Fe">Santa Fe</option>
+                              <option value="San Juan">San Juan</option>
+                              <option value="Resistencia">Resistencia</option>
+                              <option value="Neuquén">Neuquén</option>
+                              <option value="Posadas">Posadas</option>
+                              <option value="Bahía Blanca">Bahía Blanca</option>
+                            </select>
+                          </td>
+                          <td>
+                            <input
+                              type="date"
+                              value={trabajo.fecha}
+                              onChange={(e) => handleTrabajoChange(originalIndex, 'fecha', e.target.value)}
+                            />
+                          </td>
+                          <td>
+                            <input
+                              type="text"
+                              value={trabajo.reunion}
+                              onChange={(e) => handleTrabajoChange(originalIndex, 'reunion', e.target.value)}
+                            />
+                          </td>
+                          <td>
+                            <input
+                              type="text"
+                              value={trabajo.titulo}
+                              onChange={(e) => handleTrabajoChange(originalIndex, 'titulo', e.target.value)}
+                            />
+                          </td>
+                          <td>
+                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                              <button 
+                                className="btn-edit" 
+                                onClick={() => setEditingIndex({ ...editingIndex, trabajos: originalIndex })}
+                                title="Editar"
+                              >
+                                <Edit size={16} />
+                              </button>
+                              <button 
+                                className="btn-delete" 
+                                onClick={() => handleRemoveTrabajo(originalIndex)}
+                                title="Eliminar"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  ) : (
+                    <tr>
+                      <td colSpan="5" style={{ textAlign: 'center', padding: '20px' }}>
+                        {searchTerms.trabajos.trim() ? (
+                          <div>
+                            <p style={{ marginBottom: '10px' }}>No se encontraron resultados para "{searchTerms.trabajos}"</p>
+                            <button className="btn-add" onClick={handleAddTrabajo}>
+                              <Plus size={18} /> Agregar Nuevo Trabajo
+                            </button>
+                          </div>
+                        ) : (
+                          <p>No hay trabajos registrados</p>
+                        )}
                       </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>
@@ -433,6 +566,18 @@ const handleAddIntegrante = () => {
 
         {activeTab === 'actividades' && (
           <div className="tab-content">
+            <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'center' }}>
+              <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '4px', padding: '8px' }}>
+                <Search size={18} style={{ marginRight: '8px', color: '#666' }} />
+                <input
+                  type="text"
+                  placeholder="Buscar actividad por título, tipo o descripción..."
+                  value={searchTerms.actividades}
+                  onChange={(e) => setSearchTerms({...searchTerms, actividades: e.target.value})}
+                  style={{ border: 'none', outline: 'none', flex: 1, fontSize: '14px' }}
+                />
+              </div>
+            </div>
             <button className="btn-add" onClick={handleAddActividad}>
               <Plus size={18} /> Agregar Actividad
             </button>
@@ -446,60 +591,80 @@ const handleAddIntegrante = () => {
                 </tr>
               </thead>
               <tbody>
-                {formData.actividades.map((actividad, index) => (
-                  <tr key={index}>
-                    <td>
-                      <button
-                        type="button"
-                        className="btn-field-edit"
-                        onClick={() => openFieldModal(index, 'descripcion', actividad.descripcion, actividad.titulo, 'actividad')}
-                      >
-                        {actividad.titulo || 'Descripción'}
-                      </button>
-                    </td>
-                    <td>
-                      <input
-                        type="date"
-                        value={actividad.fecha}
-                        onChange={(e) => handleActividadChange(index, 'fecha', e.target.value)}
-                      />
-                    </td>
-                    <td>
-                      <select
-                        value={actividad.tipo}
-                        onChange={(e) => handleActividadChange(index, 'tipo', e.target.value)}
-                      >
-                        <option value="">Seleccionar tipo</option>
-                        <option value="Congreso">Congreso</option>
-                        <option value="Seminario">Seminario</option>
-                        <option value="Taller">Taller</option>
-                        <option value="Conferencia">Conferencia</option>
-                        <option value="Curso">Curso</option>
-                        <option value="Otro">Otro</option>
-                      </select>
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                        <button
-                          type="button"
-                          className="btn-edit"
-                          onClick={() => setEditingIndex(editingIndex === index ? null : index)}
-                          title="Editar"
-                        >
-                          <Edit size={16} />
-                        </button>
-                        <button
-                          type="button"
-                          className="btn-delete"
-                          onClick={() => handleRemoveActividad(index)}
-                          title="Eliminar"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
+                {filterActividades().length > 0 ? (
+                  filterActividades().map((actividad, index) => {
+                    const originalIndex = formData.actividades.indexOf(actividad);
+                    return (
+                      <tr key={originalIndex}>
+                        <td>
+                          <button
+                            type="button"
+                            className="btn-field-edit"
+                            onClick={() => openFieldModal(originalIndex, 'descripcion', actividad.descripcion, actividad.titulo, 'actividad')}
+                          >
+                            {actividad.titulo || 'Descripción'}
+                          </button>
+                        </td>
+                        <td>
+                          <input
+                            type="date"
+                            value={actividad.fecha}
+                            onChange={(e) => handleActividadChange(originalIndex, 'fecha', e.target.value)}
+                          />
+                        </td>
+                        <td>
+                          <select
+                            value={actividad.tipo}
+                            onChange={(e) => handleActividadChange(originalIndex, 'tipo', e.target.value)}
+                          >
+                            <option value="">Seleccionar tipo</option>
+                            <option value="Congreso">Congreso</option>
+                            <option value="Seminario">Seminario</option>
+                            <option value="Taller">Taller</option>
+                            <option value="Conferencia">Conferencia</option>
+                            <option value="Curso">Curso</option>
+                            <option value="Otro">Otro</option>
+                          </select>
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                            <button
+                              type="button"
+                              className="btn-edit"
+                              onClick={() => setEditingIndex(editingIndex === originalIndex ? null : originalIndex)}
+                              title="Editar"
+                            >
+                              <Edit size={16} />
+                            </button>
+                            <button
+                              type="button"
+                              className="btn-delete"
+                              onClick={() => handleRemoveActividad(originalIndex)}
+                              title="Eliminar"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan="4" style={{ textAlign: 'center', padding: '20px' }}>
+                      {searchTerms.actividades.trim() ? (
+                        <div>
+                          <p style={{ marginBottom: '10px' }}>No se encontraron resultados para "{searchTerms.actividades}"</p>
+                          <button className="btn-add" onClick={handleAddActividad}>
+                            <Plus size={18} /> Agregar Nueva Actividad
+                          </button>
+                        </div>
+                      ) : (
+                        <p>No hay actividades registradas</p>
+                      )}
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
@@ -507,6 +672,18 @@ const handleAddIntegrante = () => {
 
         {activeTab === 'publicaciones' && (
           <div className="tab-content">
+            <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'center' }}>
+              <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '4px', padding: '8px' }}>
+                <Search size={18} style={{ marginRight: '8px', color: '#666' }} />
+                <input
+                  type="text"
+                  placeholder="Buscar publicación por título, autor o revista..."
+                  value={searchTerms.publicaciones}
+                  onChange={(e) => setSearchTerms({...searchTerms, publicaciones: e.target.value})}
+                  style={{ border: 'none', outline: 'none', flex: 1, fontSize: '14px' }}
+                />
+              </div>
+            </div>
             <button className="btn-add" onClick={handleAddPublicacion}>
               <Plus size={18} /> Agregar Publicación
             </button>
@@ -521,62 +698,82 @@ const handleAddIntegrante = () => {
                 </tr>
               </thead>
               <tbody>
-                {formData.publicaciones.map((publicacion, index) => (
-                  <tr key={index}>
-                    <td>
-                      <input
-                        type="text"
-                        value={publicacion.titulo}
-                        onChange={(e) => handlePublicacionChange(index, 'titulo', e.target.value)}
-                        placeholder="Título"
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="text"
-                        value={publicacion.autor}
-                        onChange={(e) => handlePublicacionChange(index, 'autor', e.target.value)}
-                        placeholder="Autor"
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="text"
-                        value={publicacion.revista}
-                        onChange={(e) => handlePublicacionChange(index, 'revista', e.target.value)}
-                        placeholder="Revista"
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="number"
-                        value={publicacion.anio}
-                        onChange={(e) => handlePublicacionChange(index, 'anio', e.target.value)}
-                        placeholder="Año"
-                      />
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                        <button
-                          type="button"
-                          className="btn-edit"
-                          onClick={() => setEditingIndex(editingIndex === index ? null : index)}
-                          title="Editar"
-                        >
-                          <Edit size={16} />
-                        </button>
-                        <button
-                          type="button"
-                          className="btn-delete"
-                          onClick={() => handleRemovePublicacion(index)}
-                          title="Eliminar"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
+                {filterPublicaciones().length > 0 ? (
+                  filterPublicaciones().map((publicacion, index) => {
+                    const originalIndex = formData.publicaciones.indexOf(publicacion);
+                    return (
+                      <tr key={originalIndex}>
+                        <td>
+                          <input
+                            type="text"
+                            value={publicacion.titulo}
+                            onChange={(e) => handlePublicacionChange(originalIndex, 'titulo', e.target.value)}
+                            placeholder="Título"
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="text"
+                            value={publicacion.autor}
+                            onChange={(e) => handlePublicacionChange(originalIndex, 'autor', e.target.value)}
+                            placeholder="Autor"
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="text"
+                            value={publicacion.revista}
+                            onChange={(e) => handlePublicacionChange(originalIndex, 'revista', e.target.value)}
+                            placeholder="Revista"
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="number"
+                            value={publicacion.anio}
+                            onChange={(e) => handlePublicacionChange(originalIndex, 'anio', e.target.value)}
+                            placeholder="Año"
+                          />
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                            <button
+                              type="button"
+                              className="btn-edit"
+                              onClick={() => setEditingIndex(editingIndex === originalIndex ? null : originalIndex)}
+                              title="Editar"
+                            >
+                              <Edit size={16} />
+                            </button>
+                            <button
+                              type="button"
+                              className="btn-delete"
+                              onClick={() => handleRemovePublicacion(originalIndex)}
+                              title="Eliminar"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan="5" style={{ textAlign: 'center', padding: '20px' }}>
+                      {searchTerms.publicaciones.trim() ? (
+                        <div>
+                          <p style={{ marginBottom: '10px' }}>No se encontraron resultados para "{searchTerms.publicaciones}"</p>
+                          <button className="btn-add" onClick={handleAddPublicacion}>
+                            <Plus size={18} /> Agregar Nueva Publicación
+                          </button>
+                        </div>
+                      ) : (
+                        <p>No hay publicaciones registradas</p>
+                      )}
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
@@ -584,6 +781,18 @@ const handleAddIntegrante = () => {
 
           {activeTab === 'patentes' && (
             <div className="tab-content">
+              <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '4px', padding: '8px' }}>
+                  <Search size={18} style={{ marginRight: '8px', color: '#666' }} />
+                  <input
+                    type="text"
+                    placeholder="Buscar patente por título, número o estado..."
+                    value={searchTerms.patentes}
+                    onChange={(e) => setSearchTerms({...searchTerms, patentes: e.target.value})}
+                    style={{ border: 'none', outline: 'none', flex: 1, fontSize: '14px' }}
+                  />
+                </div>
+              </div>
               <button className="btn-add" onClick={handleAddPatente}>
                 <Plus size={18} /> Agregar Patente
               </button>
@@ -598,61 +807,81 @@ const handleAddIntegrante = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {formData.patentes.map((patente, index) => (
-                    <tr key={index}>
-                      <td>
-                        <input
-                          type="text"
-                          value={patente.titulo}
-                          onChange={(e) => handlePatenteChange(index, 'titulo', e.target.value)}
-                          placeholder="Título"
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="text"
-                          value={patente.numero}
-                          onChange={(e) => handlePatenteChange(index, 'numero', e.target.value)}
-                          placeholder="Número"
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="date"
-                          value={patente.fecha}
-                          onChange={(e) => handlePatenteChange(index, 'fecha', e.target.value)}
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="text"
-                          value={patente.estado}
-                          onChange={(e) => handlePatenteChange(index, 'estado', e.target.value)}
-                          placeholder="Estado"
-                        />
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                          <button
-                            type="button"
-                            className="btn-edit"
-                            onClick={() => setEditingIndex(editingIndex === index ? null : index)}
-                            title="Editar"
-                          >
-                            <Edit size={16} />
-                          </button>
-                          <button
-                            type="button"
-                            className="btn-delete"
-                            onClick={() => handleRemovePatente(index)}
-                            title="Eliminar"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
+                  {filterPatentes().length > 0 ? (
+                    filterPatentes().map((patente, index) => {
+                      const originalIndex = formData.patentes.indexOf(patente);
+                      return (
+                        <tr key={originalIndex}>
+                          <td>
+                            <input
+                              type="text"
+                              value={patente.titulo}
+                              onChange={(e) => handlePatenteChange(originalIndex, 'titulo', e.target.value)}
+                              placeholder="Título"
+                            />
+                          </td>
+                          <td>
+                            <input
+                              type="text"
+                              value={patente.numero}
+                              onChange={(e) => handlePatenteChange(originalIndex, 'numero', e.target.value)}
+                              placeholder="Número"
+                            />
+                          </td>
+                          <td>
+                            <input
+                              type="date"
+                              value={patente.fecha}
+                              onChange={(e) => handlePatenteChange(originalIndex, 'fecha', e.target.value)}
+                            />
+                          </td>
+                          <td>
+                            <input
+                              type="text"
+                              value={patente.estado}
+                              onChange={(e) => handlePatenteChange(originalIndex, 'estado', e.target.value)}
+                              placeholder="Estado"
+                            />
+                          </td>
+                          <td>
+                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                              <button
+                                type="button"
+                                className="btn-edit"
+                                onClick={() => setEditingIndex(editingIndex === originalIndex ? null : originalIndex)}
+                                title="Editar"
+                              >
+                                <Edit size={16} />
+                              </button>
+                              <button
+                                type="button"
+                                className="btn-delete"
+                                onClick={() => handleRemovePatente(originalIndex)}
+                                title="Eliminar"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  ) : (
+                    <tr>
+                      <td colSpan="5" style={{ textAlign: 'center', padding: '20px' }}>
+                        {searchTerms.patentes.trim() ? (
+                          <div>
+                            <p style={{ marginBottom: '10px' }}>No se encontraron resultados para "{searchTerms.patentes}"</p>
+                            <button className="btn-add" onClick={handleAddPatente}>
+                              <Plus size={18} /> Agregar Nueva Patente
+                            </button>
+                          </div>
+                        ) : (
+                          <p>No hay patentes registradas</p>
+                        )}
                       </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>
@@ -660,6 +889,18 @@ const handleAddIntegrante = () => {
 
           {activeTab === 'proyectos' && (
             <div className="tab-content">
+              <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '4px', padding: '8px' }}>
+                  <Search size={18} style={{ marginRight: '8px', color: '#666' }} />
+                  <input
+                    type="text"
+                    placeholder="Buscar proyecto por nombre, estado o responsable..."
+                    value={searchTerms.proyectos}
+                    onChange={(e) => setSearchTerms({...searchTerms, proyectos: e.target.value})}
+                    style={{ border: 'none', outline: 'none', flex: 1, fontSize: '14px' }}
+                  />
+                </div>
+              </div>
               <button className="btn-add" onClick={handleAddProyecto}>
                 <Plus size={18} /> Agregar Proyecto
               </button>
@@ -679,99 +920,119 @@ const handleAddIntegrante = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {formData.proyectos.map((proyecto, index) => (
-                    <tr key={index}>
-                      <td>
-                        <input
-                          type="text"
-                          value={proyecto.nombre}
-                          onChange={(e) => handleProyectoChange(index, 'nombre', e.target.value)}
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="text"
-                          value={proyecto.estado}
-                          onChange={(e) => handleProyectoChange(index, 'estado', e.target.value)}
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="date"
-                          value={proyecto.inicio}
-                          onChange={(e) => handleProyectoChange(index, 'inicio', e.target.value)}
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="date"
-                          value={proyecto.fin}
-                          onChange={(e) => handleProyectoChange(index, 'fin', e.target.value)}
-                        />
-                      </td>
-                      <td>
-                        <button
-                          type="button"
-                          className="btn-field-edit"
-                          onClick={() => openFieldModal(index, 'responsable', proyecto.responsable, proyecto.responsableTitulo)}
-                        >
-                          {proyecto.responsableTitulo || 'Responsable'}
-                        </button>
-                      </td>
-                      <td>
-                        <input
-                          type="text"
-                          value={proyecto.presupuesto}
-                          onChange={(e) => handleProyectoChange(index, 'presupuesto', e.target.value)}
-                        />
-                      </td>
-                      <td>
-                        <button
-                          type="button"
-                          className="btn-field-edit"
-                          onClick={() => openFieldModal(index, 'colaboradores', proyecto.colaboradores, proyecto.colaboradoresTitulo)}
-                        >
-                          {proyecto.colaboradoresTitulo || 'Colaboradores'}
-                        </button>
-                      </td>
-                      <td>
-                        <button
-                          type="button"
-                          className="btn-field-edit"
-                          onClick={() => openFieldModal(index, 'objetivos', proyecto.objetivos, proyecto.objetivosTitulo)}
-                        >
-                          {proyecto.objetivosTitulo || 'Objetivos'}
-                        </button>
-                      </td>
-                      <td>
-                        <button
-                          type="button"
-                          className="btn-field-edit"
-                          onClick={() => openFieldModal(index, 'resultados', proyecto.resultados, proyecto.resultadosTitulo)}
-                        >
-                          {proyecto.resultadosTitulo || 'Resultados'}
-                        </button>
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                          <button 
-                            className="btn-edit" 
-                            onClick={() => setEditingIndex({ ...editingIndex, proyectos: index })}
-                            title="Editar"
-                          >
-                            <Edit size={16} />
-                          </button>
-                          <button 
-                            className="btn-delete" 
-                            onClick={() => handleRemoveProyecto(index)}
-                            title="Eliminar"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
+                  {filterProyectos().length > 0 ? (
+                    filterProyectos().map((proyecto, index) => {
+                      const originalIndex = formData.proyectos.indexOf(proyecto);
+                      return (
+                        <tr key={originalIndex}>
+                          <td>
+                            <input
+                              type="text"
+                              value={proyecto.nombre}
+                              onChange={(e) => handleProyectoChange(originalIndex, 'nombre', e.target.value)}
+                            />
+                          </td>
+                          <td>
+                            <input
+                              type="text"
+                              value={proyecto.estado}
+                              onChange={(e) => handleProyectoChange(originalIndex, 'estado', e.target.value)}
+                            />
+                          </td>
+                          <td>
+                            <input
+                              type="date"
+                              value={proyecto.inicio}
+                              onChange={(e) => handleProyectoChange(originalIndex, 'inicio', e.target.value)}
+                            />
+                          </td>
+                          <td>
+                            <input
+                              type="date"
+                              value={proyecto.fin}
+                              onChange={(e) => handleProyectoChange(originalIndex, 'fin', e.target.value)}
+                            />
+                          </td>
+                          <td>
+                            <button
+                              type="button"
+                              className="btn-field-edit"
+                              onClick={() => openFieldModal(originalIndex, 'responsable', proyecto.responsable, proyecto.responsableTitulo)}
+                            >
+                              {proyecto.responsableTitulo || 'Responsable'}
+                            </button>
+                          </td>
+                          <td>
+                            <input
+                              type="text"
+                              value={proyecto.presupuesto}
+                              onChange={(e) => handleProyectoChange(originalIndex, 'presupuesto', e.target.value)}
+                            />
+                          </td>
+                          <td>
+                            <button
+                              type="button"
+                              className="btn-field-edit"
+                              onClick={() => openFieldModal(originalIndex, 'colaboradores', proyecto.colaboradores, proyecto.colaboradoresTitulo)}
+                            >
+                              {proyecto.colaboradoresTitulo || 'Colaboradores'}
+                            </button>
+                          </td>
+                          <td>
+                            <button
+                              type="button"
+                              className="btn-field-edit"
+                              onClick={() => openFieldModal(originalIndex, 'objetivos', proyecto.objetivos, proyecto.objetivosTitulo)}
+                            >
+                              {proyecto.objetivosTitulo || 'Objetivos'}
+                            </button>
+                          </td>
+                          <td>
+                            <button
+                              type="button"
+                              className="btn-field-edit"
+                              onClick={() => openFieldModal(originalIndex, 'resultados', proyecto.resultados, proyecto.resultadosTitulo)}
+                            >
+                              {proyecto.resultadosTitulo || 'Resultados'}
+                            </button>
+                          </td>
+                          <td>
+                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                              <button 
+                                className="btn-edit" 
+                                onClick={() => setEditingIndex({ ...editingIndex, proyectos: originalIndex })}
+                                title="Editar"
+                              >
+                                <Edit size={16} />
+                              </button>
+                              <button 
+                                className="btn-delete" 
+                                onClick={() => handleRemoveProyecto(originalIndex)}
+                                title="Eliminar"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  ) : (
+                    <tr>
+                      <td colSpan="10" style={{ textAlign: 'center', padding: '20px' }}>
+                        {searchTerms.proyectos.trim() ? (
+                          <div>
+                            <p style={{ marginBottom: '10px' }}>No se encontraron resultados para "{searchTerms.proyectos}"</p>
+                            <button className="btn-add" onClick={handleAddProyecto}>
+                              <Plus size={18} /> Agregar Nuevo Proyecto
+                            </button>
+                          </div>
+                        ) : (
+                          <p>No hay proyectos registrados</p>
+                        )}
                       </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>
