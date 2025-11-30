@@ -68,13 +68,52 @@
   border-color: #d0d0d0;
 }
 
+.grupo-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+  border-bottom: 2px solid #e8d4f8;
+  padding-bottom: 8px;
+}
+
 .grupo-card h3 {
   font-size: 16px;
   font-weight: 600;
   color: #333;
-  margin: 0 0 12px 0;
-  border-bottom: 2px solid #e8d4f8;
-  padding-bottom: 8px;
+  margin: 0;
+  flex: 1;
+}
+
+.grupo-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-edit-grupo,
+.btn-delete-grupo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background-color: #333;
+  color: white;
+}
+
+.btn-edit-grupo:hover {
+  background-color: #555;
+  transform: scale(1.05);
+}
+
+.btn-delete-grupo:hover {
+  background-color: #dc2626;
+  transform: scale(1.05);
 }
 
 .grupo-card p {

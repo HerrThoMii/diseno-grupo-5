@@ -1,17 +1,20 @@
 import React, { useState } from 'react';
 import { Menu, User, ChevronDown, UserCircle } from 'lucide-react';
 import './Header.css';
+import PerfilModal from './PerfilModal';
 
-function Header({ onLogout = () => {}, onMenuToggle = () => {}, userName = 'Usuario' }) {
+function Header({ onLogout = () => {}, onMenuToggle = () => {}, userName = 'Usuario', userData = null }) {
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showPerfilModal, setShowPerfilModal] = useState(false);
   
   // Logo UTN en color negro
   const utnLogoUrl = 'https://www.utn.edu.ar/images/04-LOGO-UTN-WEB-NEG-BAJADA.png';
 
   const handleOptionClick = (option) => {
     setShowDropdown(false);
-    // Aquí irían las navegaciones o acciones según la opción
-    console.log('Opción seleccionada:', option);
+    if (option === 'perfil') {
+      setShowPerfilModal(true);
+    }
   };
 
   return (
@@ -25,7 +28,11 @@ function Header({ onLogout = () => {}, onMenuToggle = () => {}, userName = 'Usua
       <div className="header-right">
         <div className="user-card" onClick={() => setShowDropdown(!showDropdown)}>
           <div className="user-avatar">
-            <User size={20} />
+            {userData?.imagenPerfil ? (
+              <img src={userData.imagenPerfil} alt="Perfil" className="user-avatar-image" />
+            ) : (
+              <User size={20} />
+            )}
           </div>
           <span className="user-name">{userName}</span>
           <ChevronDown size={18} className={`user-chevron ${showDropdown ? 'rotated' : ''}`} />
@@ -44,6 +51,12 @@ function Header({ onLogout = () => {}, onMenuToggle = () => {}, userName = 'Usua
           )}
         </div>
       </div>
+      
+      <PerfilModal 
+        isOpen={showPerfilModal} 
+        onClose={() => setShowPerfilModal(false)} 
+        userData={userData}
+      />
     </header>
   );
 }

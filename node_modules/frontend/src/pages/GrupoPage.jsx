@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Edit, Trash2 } from 'lucide-react';
 import AgregarGrupoModal from '../components/AgregarGrupoModal';
 import './Page.css';
 import './GrupoPage.css';
@@ -21,6 +22,18 @@ function GrupoPage() {
     alert('Grupo agregado exitosamente');
   };
 
+  const handleDeleteGrupo = (id) => {
+    if (window.confirm('¿Está seguro de eliminar este grupo?')) {
+      setGrupos(grupos.filter(g => g.id !== id));
+    }
+  };
+
+  const handleEditGrupo = (id) => {
+    console.log('Editar grupo:', id);
+    // Implementar lógica para editar grupo
+    // Se podría abrir el modal con los datos del grupo a editar
+  };
+
   return (
     <div className="page-container">
       <div className="page-content">
@@ -40,7 +53,25 @@ function GrupoPage() {
             <div className="grupos-grid">
               {grupos.map((grupo) => (
                 <div key={grupo.id} className="grupo-card">
-                  <h3>{grupo.nombreGrupo}</h3>
+                  <div className="grupo-card-header">
+                    <h3>{grupo.nombreGrupo}</h3>
+                    <div className="grupo-actions">
+                      <button 
+                        className="btn-edit-grupo"
+                        onClick={() => handleEditGrupo(grupo.id)}
+                        title="Editar grupo"
+                      >
+                        <Edit size={16} />
+                      </button>
+                      <button 
+                        className="btn-delete-grupo"
+                        onClick={() => handleDeleteGrupo(grupo.id)}
+                        title="Eliminar grupo"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
                   <p><strong>Siglas:</strong> {grupo.siglasGrupo}</p>
                   <p><strong>Correo:</strong> {grupo.correo}</p>
                   <p><strong>Facultad:</strong> {grupo.facultad}</p>

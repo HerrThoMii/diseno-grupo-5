@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import './TrabajoRegistrosPatentes.css';
-import { Search, Plus } from 'lucide-react';
+import { Search, Plus, Edit, Trash2 } from 'lucide-react';
 import AgregarRegistroModal from './AgregarRegistroModal';
 import AgregarPatenteModal from './AgregarPatenteModal';
+import AgregarTrabajoModal from './AgregarTrabajoModal';
 
 const TrabajoRegistrosPatentes = () => {
   // Estados para modales
+  const [showTrabajoModal, setShowTrabajoModal] = useState(false);
   const [showRegistroModal, setShowRegistroModal] = useState(false);
   const [showPatenteModal, setShowPatenteModal] = useState(false);
   
@@ -54,6 +56,11 @@ const TrabajoRegistrosPatentes = () => {
   const tiposPatente = ['Patente Activa', 'Patente en Trámite', 'Patente Expirada'];
 
   // Handlers para agregar registro y patente
+  const handleAddTrabajo = (nuevoTrabajo) => {
+    setTrabajos(prev => [...prev, nuevoTrabajo]);
+    setShowTrabajoModal(false);
+  };
+
   const handleAddRegistro = (nuevoRegistro) => {
     setRegistros(prev => [...prev, nuevoRegistro]);
     setShowRegistroModal(false);
@@ -62,6 +69,39 @@ const TrabajoRegistrosPatentes = () => {
   const handleAddPatente = (nuevaPatente) => {
     setPatentes(prev => [...prev, nuevaPatente]);
     setShowPatenteModal(false);
+  };
+
+  const handleDeleteTrabajo = (id) => {
+    if (window.confirm('¿Está seguro de eliminar este trabajo?')) {
+      setTrabajos(prev => prev.filter(t => t.id !== id));
+    }
+  };
+
+  const handleEditTrabajo = (id) => {
+    console.log('Editar trabajo:', id);
+    // Implementar lógica de edición
+  };
+
+  const handleDeleteRegistro = (id) => {
+    if (window.confirm('¿Está seguro de eliminar este registro?')) {
+      setRegistros(prev => prev.filter(r => r.id !== id));
+    }
+  };
+
+  const handleEditRegistro = (id) => {
+    console.log('Editar registro:', id);
+    // Implementar lógica de edición
+  };
+
+  const handleDeletePatente = (id) => {
+    if (window.confirm('¿Está seguro de eliminar esta patente?')) {
+      setPatentes(prev => prev.filter(p => p.id !== id));
+    }
+  };
+
+  const handleEditPatente = (id) => {
+    console.log('Editar patente:', id);
+    // Implementar lógica de edición
   };
 
   return (
@@ -79,7 +119,7 @@ const TrabajoRegistrosPatentes = () => {
               onChange={(e) => setTrabajoSearch(e.target.value)}
               className="trp-input"
             />
-            <button className="trp-btn-add" title="Agregar trabajo">
+            <button className="trp-btn-add" title="Agregar trabajo" onClick={() => setShowTrabajoModal(true)}>
               <Plus size={20} />
             </button>
           </div>
@@ -92,6 +132,7 @@ const TrabajoRegistrosPatentes = () => {
               <th>Fecha Inicio</th>
               <th>Nombre de la Reunión</th>
               <th>Título Trabajo</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -102,11 +143,29 @@ const TrabajoRegistrosPatentes = () => {
                   <td>{trabajo.fechaInicio}</td>
                   <td>{trabajo.nombreReunion}</td>
                   <td>{trabajo.titulo}</td>
+                  <td>
+                    <div className="trp-action-buttons">
+                      <button 
+                        className="trp-btn-edit"
+                        onClick={() => handleEditTrabajo(trabajo.id)}
+                        title="Editar"
+                      >
+                        <Edit size={16} />
+                      </button>
+                      <button 
+                        className="trp-btn-delete"
+                        onClick={() => handleDeleteTrabajo(trabajo.id)}
+                        title="Eliminar"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="4" className="trp-empty">No hay trabajos</td>
+                <td colSpan="5" className="trp-empty">No hay trabajos</td>
               </tr>
             )}
           </tbody>
@@ -153,6 +212,22 @@ const TrabajoRegistrosPatentes = () => {
                   <div className="trp-item-info">
                     <strong>{registro.nombre}</strong>
                     <small>{registro.tipo} • {registro.fecha}</small>
+                  </div>
+                  <div className="trp-action-buttons">
+                    <button 
+                      className="trp-btn-edit"
+                      onClick={() => handleEditRegistro(registro.id)}
+                      title="Editar"
+                    >
+                      <Edit size={16} />
+                    </button>
+                    <button 
+                      className="trp-btn-delete"
+                      onClick={() => handleDeleteRegistro(registro.id)}
+                      title="Eliminar"
+                    >
+                      <Trash2 size={16} />
+                    </button>
                   </div>
                 </div>
               ))
@@ -202,6 +277,22 @@ const TrabajoRegistrosPatentes = () => {
                     <strong>{patente.numero}</strong>
                     <small>{patente.tipo} • {patente.fecha}</small>
                   </div>
+                  <div className="trp-action-buttons">
+                    <button 
+                      className="trp-btn-edit"
+                      onClick={() => handleEditPatente(patente.id)}
+                      title="Editar"
+                    >
+                      <Edit size={16} />
+                    </button>
+                    <button 
+                      className="trp-btn-delete"
+                      onClick={() => handleDeletePatente(patente.id)}
+                      title="Eliminar"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </div>
               ))
             ) : (
@@ -210,6 +301,12 @@ const TrabajoRegistrosPatentes = () => {
           </div>
         </section>
       </div>
+
+      <AgregarTrabajoModal
+        isOpen={showTrabajoModal}
+        onClose={() => setShowTrabajoModal(false)}
+        onAdd={handleAddTrabajo}
+      />
 
       <AgregarRegistroModal 
         isOpen={showRegistroModal}

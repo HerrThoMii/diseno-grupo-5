@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
-import { Search, Plus } from 'lucide-react';
+import { Search, Plus, Edit, Trash2 } from 'lucide-react';
 import './TrabajosList.css';
+import AgregarTrabajoRealizadoModal from './AgregarTrabajoRealizadoModal';
+import AgregarTrabajoPublicadoModal from './AgregarTrabajoPublicadoModal';
 
 function TrabajosList() {
   const [activeTab, setActiveTab] = useState('realizados');
   const [searchTerm, setSearchTerm] = useState('');
+  const [showRealizadoModal, setShowRealizadoModal] = useState(false);
+  const [showPublicadoModal, setShowPublicadoModal] = useState(false);
 
-  const trabajosRealizados = [
+  const [trabajosRealizados, setTrabajosRealizados] = useState([
     {
       id: 1,
       nombre: 'Trabajo 1',
@@ -23,9 +27,9 @@ function TrabajosList() {
       editorial: 'Editorial B',
       pais: 'Chile'
     },
-  ];
+  ]);
 
-  const trabajosPublicados = [
+  const [trabajosPublicados, setTrabajosPublicados] = useState([
     {
       id: 1,
       nombre: 'Paper 1',
@@ -42,7 +46,39 @@ function TrabajosList() {
       editorial: 'ACM',
       pais: 'Canadá'
     },
-  ];
+  ]);
+
+  const handleAddRealizado = (nuevoTrabajo) => {
+    setTrabajosRealizados(prev => [...prev, nuevoTrabajo]);
+    setShowRealizadoModal(false);
+  };
+
+  const handleAddPublicado = (nuevoTrabajo) => {
+    setTrabajosPublicados(prev => [...prev, nuevoTrabajo]);
+    setShowPublicadoModal(false);
+  };
+
+  const handleDeleteRealizado = (id) => {
+    if (window.confirm('¿Está seguro de eliminar este trabajo?')) {
+      setTrabajosRealizados(prev => prev.filter(trabajo => trabajo.id !== id));
+    }
+  };
+
+  const handleDeletePublicado = (id) => {
+    if (window.confirm('¿Está seguro de eliminar este trabajo?')) {
+      setTrabajosPublicados(prev => prev.filter(trabajo => trabajo.id !== id));
+    }
+  };
+
+  const handleEditRealizado = (id) => {
+    console.log('Editar trabajo realizado:', id);
+    // Aquí se implementaría la lógica para editar
+  };
+
+  const handleEditPublicado = (id) => {
+    console.log('Editar trabajo publicado:', id);
+    // Aquí se implementaría la lógica para editar
+  };
 
   const trabajos = activeTab === 'realizados' ? trabajosRealizados : trabajosPublicados;
 
@@ -86,7 +122,11 @@ function TrabajosList() {
           <button className="search-button">
             <Search size={18} />
           </button>
-          <button className="add-button" title="Agregar nuevo trabajo">
+          <button 
+            className="add-button" 
+            title={activeTab === 'realizados' ? 'Agregar trabajo realizado' : 'Agregar trabajo publicado'}
+            onClick={() => activeTab === 'realizados' ? setShowRealizadoModal(true) : setShowPublicadoModal(true)}
+          >
             <Plus size={18} />
           </button>
         </div>
@@ -100,6 +140,7 @@ function TrabajosList() {
                 <th>ISSN</th>
                 <th>Editorial</th>
                 <th>País</th>
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -111,11 +152,29 @@ function TrabajosList() {
                     <td>{trabajo.issn}</td>
                     <td>{trabajo.editorial}</td>
                     <td>{trabajo.pais}</td>
+                    <td>
+                      <div className="action-buttons">
+                        <button 
+                          className="btn-edit"
+                          onClick={() => activeTab === 'realizados' ? handleEditRealizado(trabajo.id) : handleEditPublicado(trabajo.id)}
+                          title="Editar"
+                        >
+                          <Edit size={16} />
+                        </button>
+                        <button 
+                          className="btn-delete"
+                          onClick={() => activeTab === 'realizados' ? handleDeleteRealizado(trabajo.id) : handleDeletePublicado(trabajo.id)}
+                          title="Eliminar"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="5" className="empty-message">
+                  <td colSpan="6" className="empty-message">
                     No hay trabajos para mostrar
                   </td>
                 </tr>
@@ -124,6 +183,18 @@ function TrabajosList() {
           </table>
         </div>
       </div>
+
+      <AgregarTrabajoRealizadoModal
+        isOpen={showRealizadoModal}
+        onClose={() => setShowRealizadoModal(false)}
+        onAdd={handleAddRealizado}
+      />
+
+      <AgregarTrabajoPublicadoModal
+        isOpen={showPublicadoModal}
+        onClose={() => setShowPublicadoModal(false)}
+        onAdd={handleAddPublicado}
+      />
     </div>
   );
 }
