@@ -3,9 +3,9 @@ from .models import (
     ProgramaActividades, GrupoInvestigacion, InformeRendicionCuentas,
     Erogacion, ProyectoInvestigacion, LineaDeInvestigacion, Actividad,
     Persona, ActividadDocente, InvestigadorDocente, BecarioPersonalFormacion,
-    Investigador, DocumentacionBiblioteca, TrabajoPublicado,
+    Investigador, DocumentacionBiblioteca, TrabajoPublicado, Autor, TipoTrabajoPublicado,
     ActividadTransferencia, ParteExterna, EquipamientoInfraestructura,
-    TrabajoPresentado, ActividadXPersona, Patente, Registro
+    TrabajoPresentado, ActividadXPersona, Patente, TipoDeRegistro, Registro
 )
 
 
@@ -46,11 +46,32 @@ class PatenteSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
 
 
+class TipoDeRegistroSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TipoDeRegistro
+        fields = '__all__'
+        read_only_fields = ['id']
+
+
 class RegistroSerializer(serializers.ModelSerializer):
     class Meta:
         model = Registro
         fields = '__all__'
         read_only_fields = ['id']
+
+
+class AutorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Autor
+        fields = '__all__'
+        read_only_fields = ['oidAutor']
+
+
+class TipoTrabajoPublicadoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TipoTrabajoPublicado
+        fields = '__all__'
+        read_only_fields = ['oidTipoTrabajoPublicado']
 
 
 class InformeRendicionCuentasSerializer(serializers.ModelSerializer):
@@ -199,7 +220,8 @@ class TrabajoPublicadoSerializer(serializers.ModelSerializer):
     class Meta:
         model = TrabajoPublicado
         fields = '__all__'
-        read_only_fields = ['id']
+        # estado is managed by backend and defaults to 'Realizado' — treat it as read-only for clients
+        read_only_fields = ['id', 'estado']
 
 
 class ActividadTransferenciaSerializer(serializers.ModelSerializer):
