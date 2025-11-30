@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import './login.css';
+import RecuperarPasswordModal from './RecuperarPasswordModal';
 
 const Login = ({ onLogin = () => {} }) => {
     const navigate = useNavigate();
@@ -12,6 +13,7 @@ const Login = ({ onLogin = () => {} }) => {
     const [errors, setErrors] = useState({});
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [showRecuperarModal, setShowRecuperarModal] = useState(false);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -132,7 +134,17 @@ const Login = ({ onLogin = () => {} }) => {
                 </button>
                 </form>
                 <div className="login-footer">
-                    <p><a href="#">¿Olvidaste tu contraseña?</a></p>
+                    <p>
+                        <a 
+                            href="#" 
+                            onClick={(e) => {
+                                e.preventDefault();
+                                setShowRecuperarModal(true);
+                            }}
+                        >
+                            ¿Olvidaste tu contraseña?
+                        </a>
+                    </p>
                 </div>
                 <div className="login-divider">
                     <span>o</span>
@@ -145,6 +157,11 @@ const Login = ({ onLogin = () => {} }) => {
                     Registrarse
                 </button>
             </div>
+
+            <RecuperarPasswordModal 
+                isOpen={showRecuperarModal}
+                onClose={() => setShowRecuperarModal(false)}
+            />
         </div>
     )
 };
