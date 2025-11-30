@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import './login.css';
 import RecuperarPasswordModal from './RecuperarPasswordModal';
+import { login as apiLogin } from '../services/api';
 
 const Login = ({ onLogin = () => {} }) => {
     const navigate = useNavigate();
@@ -58,17 +59,24 @@ const Login = ({ onLogin = () => {} }) => {
         setIsLoading(true);
 
         try {
-            // aca llamada de api
-            console.log('Datos de login:', formData);
-
-            // simular llamada
-            await new Promise(resolve => setTimeout(resolve, 1000))
-
-            // login exitoso
-            onLogin(formData.email.split('@')[0]);
+            console.log('Iniciando proceso de login...');
+            console.log('Email:', formData.email);
+            
+            // Llamada al API de login
+            const response = await apiLogin(formData.email, formData.password);
+            
+            console.log('Login exitoso!');
+            console.log('Usuario:', response.persona);
+            
+            // Login exitoso - llamar al callback con el nombre del usuario
+            const userName = response.persona.nombre || formData.email.split('@')[0];
+            onLogin(userName);
+            
         } catch (error) {
             console.error('Error en login:', error);
-            setErrors({ general: 'Error al iniciar sesion. Intenta nuevamente.'});
+            setErrors({ 
+                general: error.message || 'Error al iniciar sesión. Verifica tus credenciales.'
+            });
         } finally {
             setIsLoading(false);
         }
@@ -146,16 +154,6 @@ const Login = ({ onLogin = () => {} }) => {
                         </a>
                     </p>
                 </div>
-                <div className="login-divider">
-                    <span>o</span>
-                </div>
-                <button 
-                    type="button" 
-                    className="register-button"
-                    onClick={() => navigate('/register')}
-                >
-                    Registrarse
-                </button>
             </div>
 
             <RecuperarPasswordModal 

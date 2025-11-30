@@ -1,13 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './MemoriaAnual.css';
 import { ChevronDown, Plus, Trash2, Edit } from 'lucide-react';
 
+const API_BASE_URL = 'http://127.0.0.1:8000/api';
+
 const MemoriaAnual = () => {
   const [activeTab, setActiveTab] = useState('general');
+  const [memoriaId, setMemoriaId] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [editingIndex, setEditingIndex] = useState({ integrantes: null, trabajos: null, proyectos: null });
   const [modalField, setModalField] = useState({ show: false, index: null, field: '', value: '', title: '', type: '' });
   const [formData, setFormData] = useState({
-    memorias: [],
+    ano: '',
+    grupo: '',
+    director: '',
+    vicedirector: '',
     integrantes: [],
     trabajos: [],
     actividades: [],
@@ -26,158 +33,486 @@ const MemoriaAnual = () => {
     { id: 'proyectos', label: 'Proyectos' },
   ];
 
-  const handleAddMemoria = () => {
-    setFormData({
-      ...formData,
-      memorias: [...formData.memorias, { ano: '', grupo: '', director: '', vicedirector: '' }],
-    });
+  // Cargar datos al montar el componente
+  useEffect(() => {
+    loadMemoriaData();
+  }, []);
+
+  // Función para cargar todos los datos de la memoria
+  const loadMemoriaData = async () => {
+    try {
+      setLoading(true);
+      
+      // Primero obtenemos la memoria más reciente o creamos una nueva
+      const memoriasRes = await fetch(`${API_BASE_URL}/memorias/`);
+      const memorias = await memoriasRes.json();
+      
+      let currentMemoria;
+      if (memorias.length > 0) {
+        currentMemoria = memorias[0]; // Tomar la primera memoria
+        setMemoriaId(currentMemoria.oidMemoriaAnual);
+        
+        // Cargar todos los datos relacionados
+        await Promise.all([
+          loadIntegrantes(currentMemoria.oidMemoriaAnual),
+          loadTrabajos(currentMemoria.oidMemoriaAnual),
+          loadActividades(currentMemoria.oidMemoriaAnual),
+          loadPublicaciones(currentMemoria.oidMemoriaAnual),
+          loadPatentes(currentMemoria.oidMemoriaAnual),
+          loadProyectos(currentMemoria.oidMemoriaAnual)
+        ]);
+        
+        setFormData(prev => ({
+          ...prev,
+          ano: currentMemoria.anio,
+          grupo: currentMemoria.GrupoInvestigacion,
+          director: currentMemoria.director,
+          vicedirector: currentMemoria.vicedirector
+        }));
+      }
+      
+      console.log('Datos de memoria cargados exitosamente');
+    } catch (error) {
+      console.error('Error cargando datos de memoria:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleRemoveMemoria = (index) => {
-    setFormData({
-      ...formData,
-      memorias: formData.memorias.filter((_, i) => i !== index),
-    });
+  const loadIntegrantes = async (memoriaId) => {
+    const res = await fetch(`${API_BASE_URL}/memorias-integrantes/?memoria=${memoriaId}`);
+    const data = await res.json();
+    setFormData(prev => ({ ...prev, integrantes: data }));
   };
 
-  const handleMemoriaChange = (index, field, value) => {
-    const updated = [...formData.memorias];
-    updated[index][field] = value;
-    setFormData({ ...formData, memorias: updated });
+  const loadTrabajos = async (memoriaId) => {
+    const res = await fetch(`${API_BASE_URL}/memorias-trabajos/?memoria=${memoriaId}`);
+    const data = await res.json();
+    setFormData(prev => ({ ...prev, trabajos: data }));
   };
 
-const handleAddIntegrante = () => {
-    setFormData({
-      ...formData,
-      integrantes: [...formData.integrantes, { nombre: '', apellido: '', rol: '', horas: '' }],
-    });
+  const loadActividades = async (memoriaId) => {
+    const res = await fetch(`${API_BASE_URL}/memorias-actividades/?memoria=${memoriaId}`);
+    const data = await res.json();
+    setFormData(prev => ({ ...prev, actividades: data }));
   };
 
-  const handleRemoveIntegrante = (index) => {
-    setFormData({
-      ...formData,
-      integrantes: formData.integrantes.filter((_, i) => i !== index),
-    });
+  const loadPublicaciones = async (memoriaId) => {
+    const res = await fetch(`${API_BASE_URL}/memorias-publicaciones/?memoria=${memoriaId}`);
+    const data = await res.json();
+    setFormData(prev => ({ ...prev, publicaciones: data }));
   };
 
-  const handleIntegranteChange = (index, field, value) => {
-    const updated = [...formData.integrantes];
-    updated[index][field] = value;
-    setFormData({ ...formData, integrantes: updated });
+  const loadPatentes = async (memoriaId) => {
+    const res = await fetch(`${API_BASE_URL}/memorias-patentes/?memoria=${memoriaId}`);
+    const data = await res.json();
+    setFormData(prev => ({ ...prev, patentes: data }));
   };
 
-  const handleAddTrabajo = () => {
-    setFormData({
-      ...formData,
-      trabajos: [...formData.trabajos, { ciudad: '', fecha: '', reunion: '', titulo: '' }],
-    });
+  const loadProyectos = async (memoriaId) => {
+    const res = await fetch(`${API_BASE_URL}/memorias-proyectos/?memoria=${memoriaId}`);
+    const data = await res.json();
+    setFormData(prev => ({ ...prev, proyectos: data }));
   };
 
-  const handleRemoveTrabajo = (index) => {
-    setFormData({
-      ...formData,
-      trabajos: formData.trabajos.filter((_, i) => i !== index),
-    });
+  // Handlers para Integrantes
+  const handleAddIntegrante = async () => {
+    if (!memoriaId) {
+      alert('Primero debes crear una memoria anual en la pestaña General');
+      return;
+    }
+
+    const nuevoIntegrante = {
+      MemoriaAnual: memoriaId,
+      persona: 1, // Temporal, deberías obtener esto de un selector
+      rol: 'Investigador',
+      horasSemanales: 40
+    };
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/memorias-integrantes/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(nuevoIntegrante)
+      });
+      const data = await res.json();
+      setFormData(prev => ({ ...prev, integrantes: [...prev.integrantes, data] }));
+      console.log('Integrante agregado:', data);
+    } catch (error) {
+      console.error('Error agregando integrante:', error);
+    }
   };
 
-  const handleTrabajoChange = (index, field, value) => {
-    const updated = [...formData.trabajos];
-    updated[index][field] = value;
-    setFormData({ ...formData, trabajos: updated });
+  const handleRemoveIntegrante = async (id) => {
+    if (!window.confirm('¿Estás seguro de eliminar este integrante?')) return;
+
+    try {
+      await fetch(`${API_BASE_URL}/memorias-integrantes/${id}/`, {
+        method: 'DELETE'
+      });
+      setFormData(prev => ({
+        ...prev,
+        integrantes: prev.integrantes.filter(i => i.oidIntegranteMemoria !== id)
+      }));
+      console.log('Integrante eliminado');
+    } catch (error) {
+      console.error('Error eliminando integrante:', error);
+    }
   };
 
-  const handleAddProyecto = () => {
-    setFormData({
-      ...formData,
-      proyectos: [...formData.proyectos, { 
-        nombre: '', 
-        estado: '', 
-        inicio: '', 
-        fin: '', 
-        responsable: '', 
-        responsableTitulo: '',
-        presupuesto: '', 
-        colaboradores: '', 
-        colaboradoresTitulo: '',
-        objetivos: '', 
-        objetivosTitulo: '',
-        resultados: '',
-        resultadosTitulo: ''
-      }],
-    });
+  const handleIntegranteChange = async (id, field, value) => {
+    const integrante = formData.integrantes.find(i => i.oidIntegranteMemoria === id);
+    const updated = { ...integrante, [field]: value };
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/memorias-integrantes/${id}/`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated)
+      });
+      const data = await res.json();
+      setFormData(prev => ({
+        ...prev,
+        integrantes: prev.integrantes.map(i => i.oidIntegranteMemoria === id ? data : i)
+      }));
+    } catch (error) {
+      console.error('Error actualizando integrante:', error);
+    }
   };
 
-  const handleRemoveProyecto = (index) => {
-    setFormData({
-      ...formData,
-      proyectos: formData.proyectos.filter((_, i) => i !== index),
-    });
+  // Handlers para Trabajos
+  const handleAddTrabajo = async () => {
+    if (!memoriaId) {
+      alert('Primero debes crear una memoria anual en la pestaña General');
+      return;
+    }
+
+    const nuevoTrabajo = {
+      MemoriaAnual: memoriaId,
+      ciudad: 'Buenos Aires',
+      fecha: new Date().toISOString().split('T')[0],
+      nombreReunion: '',
+      titulo: ''
+    };
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/memorias-trabajos/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(nuevoTrabajo)
+      });
+      const data = await res.json();
+      setFormData(prev => ({ ...prev, trabajos: [...prev.trabajos, data] }));
+      console.log('Trabajo agregado:', data);
+    } catch (error) {
+      console.error('Error agregando trabajo:', error);
+    }
   };
 
-  const handleProyectoChange = (index, field, value) => {
-    const updated = [...formData.proyectos];
-    updated[index][field] = value;
-    setFormData({ ...formData, proyectos: updated });
+  const handleRemoveTrabajo = async (id) => {
+    if (!window.confirm('¿Estás seguro de eliminar este trabajo?')) return;
+
+    try {
+      await fetch(`${API_BASE_URL}/memorias-trabajos/${id}/`, {
+        method: 'DELETE'
+      });
+      setFormData(prev => ({
+        ...prev,
+        trabajos: prev.trabajos.filter(t => t.oidTrabajoMemoria !== id)
+      }));
+      console.log('Trabajo eliminado');
+    } catch (error) {
+      console.error('Error eliminando trabajo:', error);
+    }
   };
 
-  const handleAddActividad = () => {
-    setFormData({
-      ...formData,
-      actividades: [...formData.actividades, { titulo: '', descripcion: '', fecha: '', tipo: '' }],
-    });
+  const handleTrabajoChange = async (id, field, value) => {
+    const trabajo = formData.trabajos.find(t => t.oidTrabajoMemoria === id);
+    const updated = { ...trabajo, [field]: value };
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/memorias-trabajos/${id}/`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated)
+      });
+      const data = await res.json();
+      setFormData(prev => ({
+        ...prev,
+        trabajos: prev.trabajos.map(t => t.oidTrabajoMemoria === id ? data : t)
+      }));
+    } catch (error) {
+      console.error('Error actualizando trabajo:', error);
+    }
   };
 
-  const handleRemoveActividad = (index) => {
-    setFormData({
-      ...formData,
-      actividades: formData.actividades.filter((_, i) => i !== index),
-    });
+  const handleAddProyecto = async () => {
+    if (!memoriaId) {
+      alert('Primero debes crear una memoria anual en la pestaña General');
+      return;
+    }
+
+    const nuevoProyecto = {
+      MemoriaAnual: memoriaId,
+      nombre: '',
+      estado: 'En curso',
+      fechaInicio: new Date().toISOString().split('T')[0],
+      fechaFin: null,
+      responsable: '',
+      responsableTitulo: '',
+      presupuesto: '',
+      colaboradores: '',
+      colaboradoresTitulo: '',
+      objetivos: '',
+      objetivosTitulo: '',
+      resultados: '',
+      resultadosTitulo: ''
+    };
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/memorias-proyectos/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(nuevoProyecto)
+      });
+      const data = await res.json();
+      setFormData(prev => ({ ...prev, proyectos: [...prev.proyectos, data] }));
+      console.log('Proyecto agregado:', data);
+    } catch (error) {
+      console.error('Error agregando proyecto:', error);
+    }
   };
 
-  const handleActividadChange = (index, field, value) => {
-    const updated = [...formData.actividades];
-    updated[index][field] = value;
-    setFormData({ ...formData, actividades: updated });
+  const handleRemoveProyecto = async (id) => {
+    if (!window.confirm('¿Estás seguro de eliminar este proyecto?')) return;
+
+    try {
+      await fetch(`${API_BASE_URL}/memorias-proyectos/${id}/`, {
+        method: 'DELETE'
+      });
+      setFormData(prev => ({
+        ...prev,
+        proyectos: prev.proyectos.filter(p => p.oidProyectoMemoria !== id)
+      }));
+      console.log('Proyecto eliminado');
+    } catch (error) {
+      console.error('Error eliminando proyecto:', error);
+    }
   };
 
-  const handleAddPublicacion = () => {
-    setFormData({
-      ...formData,
-      publicaciones: [...formData.publicaciones, { titulo: '', autor: '', revista: '', anio: '' }],
-    });
+  const handleProyectoChange = async (id, field, value) => {
+    const proyecto = formData.proyectos.find(p => p.oidProyectoMemoria === id);
+    const updated = { ...proyecto, [field]: value };
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/memorias-proyectos/${id}/`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated)
+      });
+      const data = await res.json();
+      setFormData(prev => ({
+        ...prev,
+        proyectos: prev.proyectos.map(p => p.oidProyectoMemoria === id ? data : p)
+      }));
+    } catch (error) {
+      console.error('Error actualizando proyecto:', error);
+    }
   };
 
-  const handleRemovePublicacion = (index) => {
-    setFormData({
-      ...formData,
-      publicaciones: formData.publicaciones.filter((_, i) => i !== index),
-    });
+  const handleAddActividad = async () => {
+    if (!memoriaId) {
+      alert('Primero debes crear una memoria anual en la pestaña General');
+      return;
+    }
+
+    const nuevaActividad = {
+      MemoriaAnual: memoriaId,
+      titulo: '',
+      descripcion: '',
+      fecha: new Date().toISOString().split('T')[0],
+      tipo: 'Seminario'
+    };
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/memorias-actividades/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(nuevaActividad)
+      });
+      const data = await res.json();
+      setFormData(prev => ({ ...prev, actividades: [...prev.actividades, data] }));
+      console.log('Actividad agregada:', data);
+    } catch (error) {
+      console.error('Error agregando actividad:', error);
+    }
   };
 
-  const handlePublicacionChange = (index, field, value) => {
-    const updated = [...formData.publicaciones];
-    updated[index][field] = value;
-    setFormData({ ...formData, publicaciones: updated });
+  const handleRemoveActividad = async (id) => {
+    if (!window.confirm('¿Estás seguro de eliminar esta actividad?')) return;
+
+    try {
+      await fetch(`${API_BASE_URL}/memorias-actividades/${id}/`, {
+        method: 'DELETE'
+      });
+      setFormData(prev => ({
+        ...prev,
+        actividades: prev.actividades.filter(a => a.oidActividadMemoria !== id)
+      }));
+      console.log('Actividad eliminada');
+    } catch (error) {
+      console.error('Error eliminando actividad:', error);
+    }
   };
 
-  const handleAddPatente = () => {
-    setFormData({
-      ...formData,
-      patentes: [...formData.patentes, { titulo: '', numero: '', fecha: '', estado: '' }],
-    });
+  const handleActividadChange = async (id, field, value) => {
+    const actividad = formData.actividades.find(a => a.oidActividadMemoria === id);
+    const updated = { ...actividad, [field]: value };
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/memorias-actividades/${id}/`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated)
+      });
+      const data = await res.json();
+      setFormData(prev => ({
+        ...prev,
+        actividades: prev.actividades.map(a => a.oidActividadMemoria === id ? data : a)
+      }));
+    } catch (error) {
+      console.error('Error actualizando actividad:', error);
+    }
   };
 
-  const handleRemovePatente = (index) => {
-    setFormData({
-      ...formData,
-      patentes: formData.patentes.filter((_, i) => i !== index),
-    });
+  const handleAddPublicacion = async () => {
+    if (!memoriaId) {
+      alert('Primero debes crear una memoria anual en la pestaña General');
+      return;
+    }
+
+    const nuevaPublicacion = {
+      MemoriaAnual: memoriaId,
+      titulo: '',
+      autor: '',
+      revista: '',
+      anio: new Date().getFullYear()
+    };
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/memorias-publicaciones/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(nuevaPublicacion)
+      });
+      const data = await res.json();
+      setFormData(prev => ({ ...prev, publicaciones: [...prev.publicaciones, data] }));
+      console.log('Publicación agregada:', data);
+    } catch (error) {
+      console.error('Error agregando publicación:', error);
+    }
   };
 
-  const handlePatenteChange = (index, field, value) => {
-    const updated = [...formData.patentes];
-    updated[index][field] = value;
-    setFormData({ ...formData, patentes: updated });
+  const handleRemovePublicacion = async (id) => {
+    if (!window.confirm('¿Estás seguro de eliminar esta publicación?')) return;
+
+    try {
+      await fetch(`${API_BASE_URL}/memorias-publicaciones/${id}/`, {
+        method: 'DELETE'
+      });
+      setFormData(prev => ({
+        ...prev,
+        publicaciones: prev.publicaciones.filter(p => p.oidPublicacionMemoria !== id)
+      }));
+      console.log('Publicación eliminada');
+    } catch (error) {
+      console.error('Error eliminando publicación:', error);
+    }
+  };
+
+  const handlePublicacionChange = async (id, field, value) => {
+    const publicacion = formData.publicaciones.find(p => p.oidPublicacionMemoria === id);
+    const updated = { ...publicacion, [field]: value };
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/memorias-publicaciones/${id}/`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated)
+      });
+      const data = await res.json();
+      setFormData(prev => ({
+        ...prev,
+        publicaciones: prev.publicaciones.map(p => p.oidPublicacionMemoria === id ? data : p)
+      }));
+    } catch (error) {
+      console.error('Error actualizando publicación:', error);
+    }
+  };
+
+  const handleAddPatente = async () => {
+    if (!memoriaId) {
+      alert('Primero debes crear una memoria anual en la pestaña General');
+      return;
+    }
+
+    const nuevaPatente = {
+      MemoriaAnual: memoriaId,
+      titulo: '',
+      numero: '',
+      fecha: new Date().toISOString().split('T')[0],
+      estado: 'En trámite'
+    };
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/memorias-patentes/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(nuevaPatente)
+      });
+      const data = await res.json();
+      setFormData(prev => ({ ...prev, patentes: [...prev.patentes, data] }));
+      console.log('Patente agregada:', data);
+    } catch (error) {
+      console.error('Error agregando patente:', error);
+    }
+  };
+
+  const handleRemovePatente = async (id) => {
+    if (!window.confirm('¿Estás seguro de eliminar esta patente?')) return;
+
+    try {
+      await fetch(`${API_BASE_URL}/memorias-patentes/${id}/`, {
+        method: 'DELETE'
+      });
+      setFormData(prev => ({
+        ...prev,
+        patentes: prev.patentes.filter(p => p.oidPatenteMemoria !== id)
+      }));
+      console.log('Patente eliminada');
+    } catch (error) {
+      console.error('Error eliminando patente:', error);
+    }
+  };
+
+  const handlePatenteChange = async (id, field, value) => {
+    const patente = formData.patentes.find(p => p.oidPatenteMemoria === id);
+    const updated = { ...patente, [field]: value };
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/memorias-patentes/${id}/`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated)
+      });
+      const data = await res.json();
+      setFormData(prev => ({
+        ...prev,
+        patentes: prev.patentes.map(p => p.oidPatenteMemoria === id ? data : p)
+      }));
+    } catch (error) {
+      console.error('Error actualizando patente:', error);
+    }
   };
 
   const openFieldModal = (index, field, value, title, type = 'proyecto') => {
