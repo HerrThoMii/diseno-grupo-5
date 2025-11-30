@@ -3,9 +3,9 @@ from .models import (
     ProgramaActividades, GrupoInvestigacion, InformeRendicionCuentas,
     Erogacion, ProyectoInvestigacion, LineaDeInvestigacion, Actividad,
     Persona, ActividadDocente, InvestigadorDocente, BecarioPersonalFormacion,
-    Investigador, DocumentacionBiblioteca, TrabajoPublicado,
+    Investigador, DocumentacionBiblioteca, TrabajoPublicado, Autor, TipoTrabajoPublicado,
     ActividadTransferencia, ParteExterna, EquipamientoInfraestructura,
-    TrabajoPresentado, ActividadXPersona, Patente, Registro,
+    TrabajoPresentado, ActividadXPersona, Patente, TipoDeRegistro, Registro,
     MemoriaAnual, IntegranteMemoria, TrabajoMemoria, ActividadMemoria,
     PublicacionMemoria, PatenteMemoria, ProyectoMemoria
 )
@@ -48,11 +48,32 @@ class PatenteSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
 
 
+class TipoDeRegistroSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TipoDeRegistro
+        fields = '__all__'
+        read_only_fields = ['id']
+
+
 class RegistroSerializer(serializers.ModelSerializer):
     class Meta:
         model = Registro
         fields = '__all__'
         read_only_fields = ['id']
+
+
+class AutorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Autor
+        fields = '__all__'
+        read_only_fields = ['oidAutor']
+
+
+class TipoTrabajoPublicadoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TipoTrabajoPublicado
+        fields = '__all__'
+        read_only_fields = ['oidTipoTrabajoPublicado']
 
 
 class InformeRendicionCuentasSerializer(serializers.ModelSerializer):
@@ -201,7 +222,8 @@ class TrabajoPublicadoSerializer(serializers.ModelSerializer):
     class Meta:
         model = TrabajoPublicado
         fields = '__all__'
-        read_only_fields = ['id']
+        # estado is managed by backend and defaults to 'Realizado' — treat it as read-only for clients
+        read_only_fields = ['id', 'estado']
 
 
 class ActividadTransferenciaSerializer(serializers.ModelSerializer):
@@ -263,130 +285,49 @@ class ActividadXPersonaSerializer(serializers.ModelSerializer):
 # Serializers para Memoria Anual
 
 class IntegranteMemoriaSerializer(serializers.ModelSerializer):
-    persona_nombre = serializers.CharField(source='persona.nombre', read_only=True)
-    persona_apellido = serializers.CharField(source='persona.apellido', read_only=True)
-    
     class Meta:
         model = IntegranteMemoria
-        fields = [
-            'oidIntegranteMemoria',
-            'MemoriaAnual',
-            'persona',
-            'persona_nombre',
-            'persona_apellido',
-            'rol',
-            'horasSemanales'
-        ]
+        fields = '__all__'
 
 
 class TrabajoMemoriaSerializer(serializers.ModelSerializer):
     class Meta:
         model = TrabajoMemoria
-        fields = [
-            'oidTrabajoMemoria',
-            'MemoriaAnual',
-            'ciudad',
-            'fecha',
-            'nombreReunion',
-            'titulo'
-        ]
+        fields = '__all__'
 
 
 class ActividadMemoriaSerializer(serializers.ModelSerializer):
     class Meta:
         model = ActividadMemoria
-        fields = [
-            'oidActividadMemoria',
-            'MemoriaAnual',
-            'titulo',
-            'descripcion',
-            'fecha',
-            'tipo'
-        ]
+        fields = '__all__'
 
 
 class PublicacionMemoriaSerializer(serializers.ModelSerializer):
     class Meta:
         model = PublicacionMemoria
-        fields = [
-            'oidPublicacionMemoria',
-            'MemoriaAnual',
-            'titulo',
-            'autor',
-            'revista',
-            'anio'
-        ]
+        fields = '__all__'
 
 
 class PatenteMemoriaSerializer(serializers.ModelSerializer):
     class Meta:
         model = PatenteMemoria
-        fields = [
-            'oidPatenteMemoria',
-            'MemoriaAnual',
-            'titulo',
-            'numero',
-            'fecha',
-            'estado'
-        ]
+        fields = '__all__'
 
 
 class ProyectoMemoriaSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProyectoMemoria
-        fields = [
-            'oidProyectoMemoria',
-            'MemoriaAnual',
-            'nombre',
-            'estado',
-            'fechaInicio',
-            'fechaFin',
-            'responsable',
-            'responsableTitulo',
-            'presupuesto',
-            'colaboradores',
-            'colaboradoresTitulo',
-            'objetivos',
-            'objetivosTitulo',
-            'resultados',
-            'resultadosTitulo'
-        ]
+        fields = '__all__'
 
 
 class MemoriaAnualSerializer(serializers.ModelSerializer):
-    director_nombre = serializers.CharField(source='director.nombre', read_only=True)
-    director_apellido = serializers.CharField(source='director.apellido', read_only=True)
-    vicedirector_nombre = serializers.CharField(source='vicedirector.nombre', read_only=True)
-    vicedirector_apellido = serializers.CharField(source='vicedirector.apellido', read_only=True)
-    grupo_nombre = serializers.CharField(source='GrupoInvestigacion.nombre', read_only=True)
-    
     integrantes = IntegranteMemoriaSerializer(many=True, read_only=True)
     trabajos = TrabajoMemoriaSerializer(many=True, read_only=True)
-    actividades_memoria = ActividadMemoriaSerializer(many=True, read_only=True)
-    publicaciones_memoria = PublicacionMemoriaSerializer(many=True, read_only=True)
-    patentes_memoria = PatenteMemoriaSerializer(many=True, read_only=True)
-    proyectos_memoria = ProyectoMemoriaSerializer(many=True, read_only=True)
-    
+    actividades = ActividadMemoriaSerializer(many=True, read_only=True)
+    publicaciones = PublicacionMemoriaSerializer(many=True, read_only=True)
+    patentes = PatenteMemoriaSerializer(many=True, read_only=True)
+    proyectos = ProyectoMemoriaSerializer(many=True, read_only=True)
+
     class Meta:
         model = MemoriaAnual
-        fields = [
-            'oidMemoriaAnual',
-            'anio',
-            'fechaCreacion',
-            'fechaActualizacion',
-            'GrupoInvestigacion',
-            'grupo_nombre',
-            'director',
-            'director_nombre',
-            'director_apellido',
-            'vicedirector',
-            'vicedirector_nombre',
-            'vicedirector_apellido',
-            'integrantes',
-            'trabajos',
-            'actividades_memoria',
-            'publicaciones_memoria',
-            'patentes_memoria',
-            'proyectos_memoria'
-        ]
-        read_only_fields = ['fechaCreacion', 'fechaActualizacion']
+        fields = '__all__'
