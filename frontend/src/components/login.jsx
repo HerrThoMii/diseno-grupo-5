@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
-import { login } from '../utils/auth';
 import './login.css';
 
 const Login = ({ onLogin = () => {} }) => {
@@ -38,9 +37,9 @@ const Login = ({ onLogin = () => {} }) => {
         }
 
         if (!formData.password) {
-            newErrors.password = 'La contrasena es requerida';
+            newErrors.password = 'La contraseña es requerida';
         } else if (formData.password.length < 6) {
-            newErrors.password = 'La contrasena debe tener al menos 6 caracteres';
+            newErrors.password = 'La contraseña debe tener al menos 6 caracteres';
         }
 
         return newErrors;
@@ -57,18 +56,17 @@ const Login = ({ onLogin = () => {} }) => {
         setIsLoading(true);
 
         try {
-            const data = await login(formData.email, formData.password);
-            
-            // Validar que recibimos datos válidos del backend
-            if (!data || !data.user || !data.token) {
-                throw new Error('Respuesta invalida del servidor');
-            }
-            
-            const userName = data.user.nombre || data.user.correo?.split('@')[0] || 'Usuario';
-            onLogin(userName);
+            // aca llamada de api
+            console.log('Datos de login:', formData);
+
+            // simular llamada
+            await new Promise(resolve => setTimeout(resolve, 1000))
+
+            // login exitoso
+            onLogin(formData.email.split('@')[0]);
         } catch (error) {
             console.error('Error en login:', error);
-            setErrors({ general: error.message || 'Error al iniciar sesion. Intenta nuevamente.'});
+            setErrors({ general: 'Error al iniciar sesion. Intenta nuevamente.'});
         } finally {
             setIsLoading(false);
         }
@@ -77,7 +75,7 @@ const Login = ({ onLogin = () => {} }) => {
     return (
         <div className="login-container">
             <div className="login-card">
-                <h2>Iniciar Sesion</h2>
+                <h2>Iniciar Sesión</h2>
 
                 <form onSubmit={handleSubmit} className='login-form'>
                 {errors.general && (

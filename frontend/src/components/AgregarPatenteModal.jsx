@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import './AgregarPatenteModal.css';
-import { crearPatente, listarGrupos } from '../services/api';
 
 export default function AgregarPatenteModal({ isOpen, onClose, onAdd }) {
   const [formData, setFormData] = useState({
@@ -11,9 +10,6 @@ export default function AgregarPatenteModal({ isOpen, onClose, onAdd }) {
     inventor: '',
     descripcion: ''
   });
-  const [grupos, setGrupos] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [submitError, setSubmitError] = useState('');
 
   const [errors, setErrors] = useState({});
 
@@ -58,57 +54,20 @@ export default function AgregarPatenteModal({ isOpen, onClose, onAdd }) {
     if (!validateForm()) {
       return;
     }
-    // Build payload for backend including new fields and optional file
-    const desc = formData.descripcion && formData.descripcion.trim().length > 0
-      ? formData.descripcion
-      : `${formData.numero} ${formData.inventor} ${formData.fecha}`;
 
-    const payloadToSend = {
-      descripcion: desc,
-      tipo: formData.tipo,
-      GrupoInvestigacion: parseInt(formData.GrupoInvestigacion, 10),
-      numero: formData.numero,
-      fecha: formData.fecha || null,
-      inventor: formData.inventor
-    };
+    onAdd({
+      id: Date.now(),
+      ...formData
+    });
 
-    setLoading(true);
-    setSubmitError('');
-    crearPatente(payloadToSend)
-      .then(created => {
-        const createdId = created?.oidPatente ?? created?.id ?? Date.now();
-        const uiPatente = {
-          id: createdId,
-          numero: formData.numero,
-          tipo: formData.tipo,
-          fecha: formData.fecha,
-          descripcion: created?.descripcion ?? formData.descripcion,
-          raw: created
-        };
-        onAdd && onAdd(uiPatente);
-        setFormData({ numero: '', tipo: 'Patente Activa', fecha: '', inventor: '', descripcion: '' });
-      })
-      .catch(err => {
-        let msg = err.message || 'Error al crear patente';
-        try {
-          const parsed = JSON.parse(msg);
-          if (parsed.detail) msg = parsed.detail;
-          else if (typeof parsed === 'object') {
-            msg = Object.entries(parsed).map(([k,v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`).join(' | ');
-          }
-        } catch (e) {}
-        setSubmitError(msg);
-      })
-      .finally(() => setLoading(false));
+    setFormData({
+      numero: '',
+      tipo: 'Patente Activa',
+      fecha: '',
+      inventor: '',
+      descripcion: ''
+    });
   };
-
-  useEffect(() => {
-    let mounted = true;
-    listarGrupos()
-      .then(data => { if (!mounted) return; setGrupos(Array.isArray(data) ? data : []); })
-      .catch(() => { if (!mounted) return; setGrupos([]); });
-    return () => { mounted = false };
-  }, []);
 
   if (!isOpen) return null;
 
@@ -189,21 +148,6 @@ export default function AgregarPatenteModal({ isOpen, onClose, onAdd }) {
               rows="4"
             />
           </div>
-
-          <div className="apm-form-group">
-            <label htmlFor="GrupoInvestigacion">Grupo de Investigación</label>
-            <select id="GrupoInvestigacion" name="GrupoInvestigacion" value={formData.GrupoInvestigacion || ''} onChange={handleChange}>
-              <option value="">-- Seleccione --</option>
-              {grupos.map(g => {
-                const pk = g.oidGrupoInvestigacion ?? g.id;
-                return <option key={pk} value={pk}>{g.nombre ?? `#${pk}`}</option>;
-              })}
-            </select>
-          </div>
-
-          {/* File uploads removed — files are not saved in the backend */}
-
-          {submitError && <div className="apm-submit-error">{submitError}</div>}
 
           <div className="apm-buttons">
             <button type="button" className="apm-btn-cancel" onClick={onClose}>
