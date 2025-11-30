@@ -225,3 +225,118 @@ class ActividadXPersona(models.Model):
 
     class Meta:
         unique_together = ("Actividad", "persona")
+
+
+class MemoriaAnual(models.Model):
+    oidMemoriaAnual = models.AutoField(primary_key=True, unique=True)
+    anio = models.IntegerField()
+    fechaCreacion = models.DateTimeField(auto_now_add=True)
+    fechaActualizacion = models.DateTimeField(auto_now=True)
+    GrupoInvestigacion = models.ForeignKey(
+        GrupoInvestigacion, on_delete=models.CASCADE, related_name='memorias'
+    )
+    director = models.ForeignKey(
+        Persona, on_delete=models.SET_NULL, null=True, related_name='memorias_como_director'
+    )
+    vicedirector = models.ForeignKey(
+        Persona, on_delete=models.SET_NULL, null=True, related_name='memorias_como_vicedirector'
+    )
+
+    class Meta:
+        unique_together = ('anio', 'GrupoInvestigacion')
+        ordering = ['-anio']
+
+    def __str__(self):
+        return f"Memoria {self.anio} - {self.GrupoInvestigacion.nombre}"
+
+
+class IntegranteMemoria(models.Model):
+    oidIntegranteMemoria = models.AutoField(primary_key=True, unique=True)
+    MemoriaAnual = models.ForeignKey(
+        MemoriaAnual, on_delete=models.CASCADE, related_name='integrantes'
+    )
+    persona = models.ForeignKey(Persona, on_delete=models.CASCADE)
+    rol = models.CharField(max_length=100)
+    horasSemanales = models.IntegerField()
+
+    def __str__(self):
+        return f"{self.persona.nombre} {self.persona.apellido} - {self.rol}"
+
+
+class TrabajoMemoria(models.Model):
+    oidTrabajoMemoria = models.AutoField(primary_key=True, unique=True)
+    MemoriaAnual = models.ForeignKey(
+        MemoriaAnual, on_delete=models.CASCADE, related_name='trabajos'
+    )
+    ciudad = models.CharField(max_length=100)
+    fecha = models.DateField()
+    nombreReunion = models.TextField()
+    titulo = models.TextField()
+
+    def __str__(self):
+        return self.titulo
+
+
+class ActividadMemoria(models.Model):
+    oidActividadMemoria = models.AutoField(primary_key=True, unique=True)
+    MemoriaAnual = models.ForeignKey(
+        MemoriaAnual, on_delete=models.CASCADE, related_name='actividades_memoria'
+    )
+    titulo = models.CharField(max_length=200)
+    descripcion = models.TextField()
+    fecha = models.DateField()
+    tipo = models.CharField(max_length=50)
+
+    def __str__(self):
+        return self.titulo
+
+
+class PublicacionMemoria(models.Model):
+    oidPublicacionMemoria = models.AutoField(primary_key=True, unique=True)
+    MemoriaAnual = models.ForeignKey(
+        MemoriaAnual, on_delete=models.CASCADE, related_name='publicaciones_memoria'
+    )
+    titulo = models.TextField()
+    autor = models.TextField()
+    revista = models.CharField(max_length=200)
+    anio = models.IntegerField()
+
+    def __str__(self):
+        return self.titulo
+
+
+class PatenteMemoria(models.Model):
+    oidPatenteMemoria = models.AutoField(primary_key=True, unique=True)
+    MemoriaAnual = models.ForeignKey(
+        MemoriaAnual, on_delete=models.CASCADE, related_name='patentes_memoria'
+    )
+    titulo = models.TextField()
+    numero = models.CharField(max_length=100)
+    fecha = models.DateField()
+    estado = models.CharField(max_length=50)
+
+    def __str__(self):
+        return self.titulo
+
+
+class ProyectoMemoria(models.Model):
+    oidProyectoMemoria = models.AutoField(primary_key=True, unique=True)
+    MemoriaAnual = models.ForeignKey(
+        MemoriaAnual, on_delete=models.CASCADE, related_name='proyectos_memoria'
+    )
+    nombre = models.CharField(max_length=200)
+    estado = models.CharField(max_length=50)
+    fechaInicio = models.DateField()
+    fechaFin = models.DateField(null=True, blank=True)
+    responsable = models.TextField()
+    responsableTitulo = models.CharField(max_length=200, blank=True)
+    presupuesto = models.CharField(max_length=100, blank=True)
+    colaboradores = models.TextField(blank=True)
+    colaboradoresTitulo = models.CharField(max_length=200, blank=True)
+    objetivos = models.TextField(blank=True)
+    objetivosTitulo = models.CharField(max_length=200, blank=True)
+    resultados = models.TextField(blank=True)
+    resultadosTitulo = models.CharField(max_length=200, blank=True)
+
+    def __str__(self):
+        return self.nombre
