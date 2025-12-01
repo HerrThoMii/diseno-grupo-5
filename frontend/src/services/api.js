@@ -349,6 +349,84 @@ export async function listarTiposTrabajoPublicado() {
     return json;
 }
 
+// Trabajos Presentados
+export async function actualizarTrabajoPresentado(id, data) {
+    const response = await authenticatedFetch(`http://localhost:8000/api/trabajos-presentados/${id}/`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+    const json = await response.json().catch(() => null);
+    if (!response.ok) {
+        const err = json ? JSON.stringify(json) : `HTTP ${response.status}`;
+        throw new Error(err);
+    }
+    return json;
+}
+
+export async function eliminarTrabajoPresentado(id) {
+    const response = await authenticatedFetch(`http://localhost:8000/api/trabajos-presentados/${id}/`, {
+        method: 'DELETE'
+    });
+    if (!response.ok) {
+        const err = `HTTP ${response.status}`;
+        throw new Error(err);
+    }
+    return true;
+}
+
+// Registros
+export async function actualizarRegistro(id, data) {
+    const response = await authenticatedFetch(`http://localhost:8000/api/registros/${id}/`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+    const json = await response.json().catch(() => null);
+    if (!response.ok) {
+        const err = json ? JSON.stringify(json) : `HTTP ${response.status}`;
+        throw new Error(err);
+    }
+    return json;
+}
+
+export async function eliminarRegistro(id) {
+    const response = await authenticatedFetch(`http://localhost:8000/api/registros/${id}/`, {
+        method: 'DELETE'
+    });
+    if (!response.ok) {
+        const err = `HTTP ${response.status}`;
+        throw new Error(err);
+    }
+    return true;
+}
+
+// Patentes
+export async function actualizarPatente(id, data) {
+    const response = await authenticatedFetch(`http://localhost:8000/api/patentes/${id}/`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+    const json = await response.json().catch(() => null);
+    if (!response.ok) {
+        const err = json ? JSON.stringify(json) : `HTTP ${response.status}`;
+        throw new Error(err);
+    }
+    return json;
+}
+
+export async function eliminarPatente(id) {
+    const response = await authenticatedFetch(`http://localhost:8000/api/patentes/${id}/`, {
+        method: 'DELETE'
+    });
+    if (!response.ok) {
+        const err = `HTTP ${response.status}`;
+        throw new Error(err);
+    }
+    return true;
+}
+
 export default {
   login,
   logout,

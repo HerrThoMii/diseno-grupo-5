@@ -1,16 +1,37 @@
 import React, { useState, useEffect } from 'react';
 import './TrabajoRegistrosPatentes.css';
-import { Search, Plus } from 'lucide-react';
+import { Search, Plus, Pencil, Trash2 } from 'lucide-react';
 import AgregarRegistroModal from './AgregarRegistroModal';
 import AgregarPatenteModal from './AgregarPatenteModal';
 import AgregarTrabajoModal from './AgregarTrabajoModal';
-import { listarRegistros, listarPatentes, listarTipoRegistros, listarTrabajosPresentados } from '../services/api';
+import EditarTrabajoPresentadoModal from './EditarTrabajoPresentadoModal';
+import EditarRegistroModal from './EditarRegistroModal';
+import EditarPatenteModal from './EditarPatenteModal';
+import { 
+  listarRegistros, 
+  listarPatentes, 
+  listarTipoRegistros, 
+  listarTrabajosPresentados,
+  eliminarTrabajoPresentado,
+  eliminarRegistro,
+  eliminarPatente
+} from '../services/api';
 
 const TrabajoRegistrosPatentes = () => {
   // Estados para modales
   const [showRegistroModal, setShowRegistroModal] = useState(false);
   const [showPatenteModal, setShowPatenteModal] = useState(false);
   const [showTrabajoModal, setShowTrabajoModal] = useState(false);
+  
+  // Estados para modales de edición
+  const [showEditTrabajoModal, setShowEditTrabajoModal] = useState(false);
+  const [showEditRegistroModal, setShowEditRegistroModal] = useState(false);
+  const [showEditPatenteModal, setShowEditPatenteModal] = useState(false);
+  
+  // Estados para elementos seleccionados
+  const [selectedTrabajo, setSelectedTrabajo] = useState(null);
+  const [selectedRegistro, setSelectedRegistro] = useState(null);
+  const [selectedPatente, setSelectedPatente] = useState(null);
   
   // Estados para búsqueda y filtros
   const [trabajoSearch, setTrabajoSearch] = useState('');
@@ -28,24 +49,21 @@ const TrabajoRegistrosPatentes = () => {
   useEffect(() => {
     let mounted = true;
     // load trabajos, registros, patentes and tipo registros from backend
+    recargarDatos();
+    return () => { mounted = false };
+  }, []);
+
+  const [patentes, setPatentes] = useState([]);
+  const [tipoRegistros, setTipoRegistros] = useState([]);
+
+  // Función para recargar todos los datos
+  const recargarDatos = () => {
     Promise.all([listarTrabajosPresentados(), listarRegistros(), listarPatentes(), listarTipoRegistros()])
       .then(([trabajosData, registrosData, patentesData, tiposData]) => {
-        if (!mounted) return;
         const trabajosArrRaw = Array.isArray(trabajosData) ? trabajosData : [];
-            // normalize trabajos (trabajosArrRaw ya contiene los datos crudos)
         const patentesArrRaw = Array.isArray(patentesData) ? patentesData : [];
-        // normalize patentes to UI shape: { id, descripcion, tipo, fecha, raw }
-        const patentesArr = patentesArrRaw.map(p => ({
-          id: p?.oidPatente ?? p?.id,
-          numero: p?.numero ?? p?.descripcion ?? '',
-          descripcion: p?.descripcion ?? '',
-          tipo: p?.tipo ?? '',
-          fecha: p?.fecha ?? '',
-          raw: p
-        }));
         const tiposArr = Array.isArray(tiposData) ? tiposData : [];
 
-        // Normalize trabajos from backend to UI friendly objects
         const trabajosMapped = trabajosArrRaw.map(t => ({
           id: t?.oidTrabajoPresentado ?? t?.id,
           ciudad: t?.ciudad ?? '',
@@ -55,7 +73,15 @@ const TrabajoRegistrosPatentes = () => {
           raw: t
         }));
 
-        // Map backend registros to UI-friendly objects
+        const patentesArr = patentesArrRaw.map(p => ({
+          id: p?.oidPatente ?? p?.id,
+          numero: p?.numero ?? p?.descripcion ?? '',
+          descripcion: p?.descripcion ?? '',
+          tipo: p?.tipo ?? '',
+          fecha: p?.fecha ?? '',
+          raw: p
+        }));
+
         const records = Array.isArray(registrosData) ? registrosData.map(r => {
           const id = r?.oidRegistro ?? r?.id;
           const nombre = r?.descripcion ?? '';
@@ -75,17 +101,12 @@ const TrabajoRegistrosPatentes = () => {
         setRegistros(records);
       })
       .catch(() => {
-        if (!mounted) return;
         setRegistros([]);
         setPatentes([]);
         setTipoRegistros([]);
         setTrabajos([]);
       });
-    return () => { mounted = false };
-  }, []);
-
-  const [patentes, setPatentes] = useState([]);
-  const [tipoRegistros, setTipoRegistros] = useState([]);
+  };
 
   // Filtrar datos
   const trabajosFiltrados = trabajos.filter(t =>
@@ -123,6 +144,63 @@ const TrabajoRegistrosPatentes = () => {
     setShowTrabajoModal(false);
   };
 
+  const handleEditTrabajo = (trabajo) => {
+    setSelectedTrabajo(trabajo.raw || trabajo);
+    setShowEditTrabajoModal(true);
+  };
+
+  const handleDeleteTrabajo = async (trabajo) => {
+    const confirmDelete = window.confirm(`¿Está seguro que desea eliminar el trabajo "${trabajo.tituloTrabajo}"?`);
+    if (!confirmDelete) return;
+
+    try {
+      await eliminarTrabajoPresentado(trabajo.id);
+      console.log('Trabajo eliminado exitosamente');
+      recargarDatos(); // Recargar la lista
+    } catch (err) {
+      console.error('Error al eliminar trabajo:', err);
+      alert('Error al eliminar el trabajo');
+    }
+  };
+
+  const handleEditRegistro = (registro) => {
+    setSelectedRegistro(registro.raw || registro);
+    setShowEditRegistroModal(true);
+  };
+
+  const handleDeleteRegistro = async (registro) => {
+    const confirmDelete = window.confirm(`¿Está seguro que desea eliminar el registro "${registro.nombre}"?`);
+    if (!confirmDelete) return;
+
+    try {
+      await eliminarRegistro(registro.id);
+      console.log('Registro eliminado exitosamente');
+      recargarDatos(); // Recargar la lista
+    } catch (err) {
+      console.error('Error al eliminar registro:', err);
+      alert('Error al eliminar el registro');
+    }
+  };
+
+  const handleEditPatente = (patente) => {
+    setSelectedPatente(patente.raw || patente);
+    setShowEditPatenteModal(true);
+  };
+
+  const handleDeletePatente = async (patente) => {
+    const confirmDelete = window.confirm(`¿Está seguro que desea eliminar la patente "${patente.numero}"?`);
+    if (!confirmDelete) return;
+
+    try {
+      await eliminarPatente(patente.id);
+      console.log('Patente eliminada exitosamente');
+      recargarDatos(); // Recargar la lista
+    } catch (err) {
+      console.error('Error al eliminar patente:', err);
+      alert('Error al eliminar la patente');
+    }
+  };
+
   return (
     <div className="trp-container">
       {/* Sección de Trabajos */}
@@ -151,6 +229,7 @@ const TrabajoRegistrosPatentes = () => {
               <th>Fecha Inicio</th>
               <th>Nombre de la Reunión</th>
               <th>Título Trabajo</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -161,11 +240,29 @@ const TrabajoRegistrosPatentes = () => {
                   <td>{trabajo.fechaInicio}</td>
                   <td>{trabajo.nombreReunion}</td>
                   <td>{trabajo.tituloTrabajo}</td>
+                  <td>
+                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                      <button
+                        onClick={() => handleEditTrabajo(trabajo)}
+                        className="action-button edit-button"
+                        title="Editar"
+                      >
+                        <Pencil size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteTrabajo(trabajo)}
+                        className="action-button delete-button"
+                        title="Eliminar"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="4" className="trp-empty">No hay trabajos</td>
+                <td colSpan="5" className="trp-empty">No hay trabajos</td>
               </tr>
             )}
           </tbody>
@@ -212,6 +309,22 @@ const TrabajoRegistrosPatentes = () => {
                   <div className="trp-item-info">
                     <strong>{registro.nombre}</strong>
                     <small>{registro.tipo} • {registro.fecha}</small>
+                  </div>
+                  <div className="trp-item-actions">
+                    <button
+                      onClick={() => handleEditRegistro(registro)}
+                      className="action-button edit-button"
+                      title="Editar"
+                    >
+                      <Pencil size={14} />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteRegistro(registro)}
+                      className="action-button delete-button"
+                      title="Eliminar"
+                    >
+                      <Trash2 size={14} />
+                    </button>
                   </div>
                 </div>
               ))
@@ -261,6 +374,22 @@ const TrabajoRegistrosPatentes = () => {
                     <strong>{patente.numero}</strong>
                     <small>{patente.tipo} • {patente.fecha}</small>
                   </div>
+                  <div className="trp-item-actions">
+                    <button
+                      onClick={() => handleEditPatente(patente)}
+                      className="action-button edit-button"
+                      title="Editar"
+                    >
+                      <Pencil size={14} />
+                    </button>
+                    <button
+                      onClick={() => handleDeletePatente(patente)}
+                      className="action-button delete-button"
+                      title="Eliminar"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </div>
               ))
             ) : (
@@ -286,6 +415,36 @@ const TrabajoRegistrosPatentes = () => {
         isOpen={showTrabajoModal}
         onClose={() => setShowTrabajoModal(false)}
         onAdd={handleAddTrabajo}
+      />
+
+      <EditarTrabajoPresentadoModal
+        isOpen={showEditTrabajoModal}
+        onClose={() => setShowEditTrabajoModal(false)}
+        onUpdate={() => {
+          recargarDatos();
+          setShowEditTrabajoModal(false);
+        }}
+        trabajo={selectedTrabajo}
+      />
+
+      <EditarRegistroModal
+        isOpen={showEditRegistroModal}
+        onClose={() => setShowEditRegistroModal(false)}
+        onUpdate={() => {
+          recargarDatos();
+          setShowEditRegistroModal(false);
+        }}
+        registro={selectedRegistro}
+      />
+
+      <EditarPatenteModal
+        isOpen={showEditPatenteModal}
+        onClose={() => setShowEditPatenteModal(false)}
+        onUpdate={() => {
+          recargarDatos();
+          setShowEditPatenteModal(false);
+        }}
+        patente={selectedPatente}
       />
     </div>
   );

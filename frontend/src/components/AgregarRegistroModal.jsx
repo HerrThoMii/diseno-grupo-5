@@ -17,29 +17,37 @@ export default function AgregarRegistroModal({ isOpen, onClose, onRegistroCreado
   const [tipoRegistros, setTipoRegistros] = useState([]);
 
   useEffect(() => {
+    if (!isOpen) return; // Solo cargar cuando el modal está abierto
+    
     let mounted = true;
+    console.log('Cargando datos del modal...');
+    
     listarPatentes()
       .then(data => {
         if (!mounted) return;
+        console.log('Patentes recibidas:', data);
         setPatentes(Array.isArray(data) ? data : []);
       })
-      .catch(() => {
+      .catch((err) => {
         if (!mounted) return;
+        console.error('Error al cargar patentes:', err);
         setPatentes([]);
       });
 
     listarTipoRegistros()
       .then(data => {
         if (!mounted) return;
+        console.log('Tipos de registro recibidos:', data);
         setTipoRegistros(Array.isArray(data) ? data : []);
       })
-      .catch(() => {
+      .catch((err) => {
         if (!mounted) return;
+        console.error('Error al cargar tipos de registro:', err);
         setTipoRegistros([]);
       });
 
     return () => { mounted = false };
-  }, []);
+  }, [isOpen]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -90,6 +98,10 @@ export default function AgregarRegistroModal({ isOpen, onClose, onRegistroCreado
         TipoDeRegistro: parseInt(formData.TipoDeRegistro, 10),
         Patente: parseInt(formData.Patente, 10)
       };
+
+      console.log('Payload a enviar:', payload);
+      console.log('FormData:', formData);
+      console.log('Patentes disponibles:', patentes);
 
       const created = await crearRegistro(payload);
 
