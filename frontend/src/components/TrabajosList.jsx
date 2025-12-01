@@ -1,93 +1,33 @@
 import React, { useState } from 'react';
-import { Search, Plus, Edit, Trash2 } from 'lucide-react';
+import { Search, Plus } from 'lucide-react';
 import './TrabajosList.css';
-import AgregarTrabajoRealizadoModal from './AgregarTrabajoRealizadoModal';
-import AgregarTrabajoPublicadoModal from './AgregarTrabajoPublicadoModal';
+import AgregarTrabajoRealizado from './AgregarTrabajoRealizado';
 
 function TrabajosList() {
   const [activeTab, setActiveTab] = useState('realizados');
   const [searchTerm, setSearchTerm] = useState('');
-  const [showRealizadoModal, setShowRealizadoModal] = useState(false);
-  const [showPublicadoModal, setShowPublicadoModal] = useState(false);
 
-  const [trabajosRealizados, setTrabajosRealizados] = useState([
-    {
-      id: 1,
-      nombre: 'Trabajo 1',
-      titulo: 'Investigación en IA',
-      issn: 'ISSN-001',
-      editorial: 'Editorial A',
-      pais: 'Argentina'
-    },
-    {
-      id: 2,
-      nombre: 'Trabajo 2',
-      titulo: 'Machine Learning',
-      issn: 'ISSN-002',
-      editorial: 'Editorial B',
-      pais: 'Chile'
-    },
-  ]);
+  // sample data shaped like backend model `TrabajoPublicado`: { id, autor, titulo, tipoTrabajoPublicado }
+  const trabajosRealizados = [
+    { id: 1, autor: 'Revista A', titulo: 'Investigación en IA', tipoTrabajoPublicado: 'Artículo' },
+    { id: 2, autor: 'Revista B', titulo: 'Machine Learning', tipoTrabajoPublicado: 'Artículo' },
+  ];
 
-  const [trabajosPublicados, setTrabajosPublicados] = useState([
-    {
-      id: 1,
-      nombre: 'Paper 1',
-      titulo: 'Cloud Computing',
-      issn: 'ISSN-003',
-      editorial: 'IEEE',
-      pais: 'USA'
-    },
-    {
-      id: 2,
-      nombre: 'Paper 2',
-      titulo: 'Blockchain Technology',
-      issn: 'ISSN-004',
-      editorial: 'ACM',
-      pais: 'Canadá'
-    },
-  ]);
+  const trabajosPublicados = [
+    { id: 1, autor: 'IEEE', titulo: 'Cloud Computing', tipoTrabajoPublicado: 'Artículo' },
+    { id: 2, autor: 'ACM', titulo: 'Blockchain Technology', tipoTrabajoPublicado: 'Artículo' },
+  ];
 
-  const handleAddRealizado = (nuevoTrabajo) => {
-    setTrabajosRealizados(prev => [...prev, nuevoTrabajo]);
-    setShowRealizadoModal(false);
-  };
-
-  const handleAddPublicado = (nuevoTrabajo) => {
-    setTrabajosPublicados(prev => [...prev, nuevoTrabajo]);
-    setShowPublicadoModal(false);
-  };
-
-  const handleDeleteRealizado = (id) => {
-    if (window.confirm('¿Está seguro de eliminar este trabajo?')) {
-      setTrabajosRealizados(prev => prev.filter(trabajo => trabajo.id !== id));
-    }
-  };
-
-  const handleDeletePublicado = (id) => {
-    if (window.confirm('¿Está seguro de eliminar este trabajo?')) {
-      setTrabajosPublicados(prev => prev.filter(trabajo => trabajo.id !== id));
-    }
-  };
-
-  const handleEditRealizado = (id) => {
-    console.log('Editar trabajo realizado:', id);
-    // Aquí se implementaría la lógica para editar
-  };
-
-  const handleEditPublicado = (id) => {
-    console.log('Editar trabajo publicado:', id);
-    // Aquí se implementaría la lógica para editar
-  };
-
-  const trabajos = activeTab === 'realizados' ? trabajosRealizados : trabajosPublicados;
+  const [showAgregarRealizado, setShowAgregarRealizado] = useState(false);
+  const [realizadosState, setRealizadosState] = useState(trabajosRealizados);
+  const trabajos = activeTab === 'realizados' ? realizadosState : trabajosPublicados;
 
   const filteredTrabajos = trabajos.filter(trabajo =>
-    trabajo.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    trabajo.titulo.toLowerCase().includes(searchTerm.toLowerCase())
+    (trabajo.autor || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (trabajo.titulo || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  return (
+  return (<>
     <div className="trabajos-container">
       <div className="trabajos-header">
         <h2>Trabajos Realizados y Publicados</h2>
@@ -122,11 +62,7 @@ function TrabajosList() {
           <button className="search-button">
             <Search size={18} />
           </button>
-          <button 
-            className="add-button" 
-            title={activeTab === 'realizados' ? 'Agregar trabajo realizado' : 'Agregar trabajo publicado'}
-            onClick={() => activeTab === 'realizados' ? setShowRealizadoModal(true) : setShowPublicadoModal(true)}
-          >
+          <button className="add-button" title="Agregar nuevo trabajo" onClick={() => setShowAgregarRealizado(true)}>
             <Plus size={18} />
           </button>
         </div>
@@ -140,7 +76,6 @@ function TrabajosList() {
                 <th>ISSN</th>
                 <th>Editorial</th>
                 <th>País</th>
-                <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -152,29 +87,11 @@ function TrabajosList() {
                     <td>{trabajo.issn}</td>
                     <td>{trabajo.editorial}</td>
                     <td>{trabajo.pais}</td>
-                    <td>
-                      <div className="action-buttons">
-                        <button 
-                          className="btn-edit"
-                          onClick={() => activeTab === 'realizados' ? handleEditRealizado(trabajo.id) : handleEditPublicado(trabajo.id)}
-                          title="Editar"
-                        >
-                          <Edit size={16} />
-                        </button>
-                        <button 
-                          className="btn-delete"
-                          onClick={() => activeTab === 'realizados' ? handleDeleteRealizado(trabajo.id) : handleDeletePublicado(trabajo.id)}
-                          title="Eliminar"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="6" className="empty-message">
+                  <td colSpan="5" className="empty-message">
                     No hay trabajos para mostrar
                   </td>
                 </tr>
@@ -183,20 +100,13 @@ function TrabajosList() {
           </table>
         </div>
       </div>
-
-      <AgregarTrabajoRealizadoModal
-        isOpen={showRealizadoModal}
-        onClose={() => setShowRealizadoModal(false)}
-        onAdd={handleAddRealizado}
-      />
-
-      <AgregarTrabajoPublicadoModal
-        isOpen={showPublicadoModal}
-        onClose={() => setShowPublicadoModal(false)}
-        onAdd={handleAddPublicado}
-      />
     </div>
-  );
+    <AgregarTrabajoRealizado
+      isOpen={showAgregarRealizado}
+      onClose={() => setShowAgregarRealizado(false)}
+      onAdd={(item) => { setRealizadosState(prev => [...prev, item]); setShowAgregarRealizado(false); }}
+    />
+  </>);
 }
 
 export default TrabajosList;

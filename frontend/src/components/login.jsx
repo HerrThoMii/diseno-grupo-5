@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
+import { login } from '../utils/auth';
 import './login.css';
 import RecuperarPasswordModal from './RecuperarPasswordModal';
 import { login as apiLogin } from '../services/api';
@@ -40,9 +41,9 @@ const Login = ({ onLogin = () => {} }) => {
         }
 
         if (!formData.password) {
-            newErrors.password = 'La contraseña es requerida';
+            newErrors.password = 'La contrasena es requerida';
         } else if (formData.password.length < 6) {
-            newErrors.password = 'La contraseña debe tener al menos 6 caracteres';
+            newErrors.password = 'La contrasena debe tener al menos 6 caracteres';
         }
 
         return newErrors;
@@ -85,7 +86,7 @@ const Login = ({ onLogin = () => {} }) => {
     return (
         <div className="login-container">
             <div className="login-card">
-                <h2>Iniciar Sesión</h2>
+                <h2>Iniciar Sesion</h2>
 
                 <form onSubmit={handleSubmit} className='login-form'>
                 {errors.general && (

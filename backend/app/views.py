@@ -11,11 +11,7 @@ from .models import (
     Persona, ActividadDocente, InvestigadorDocente,
     BecarioPersonalFormacion, Investigador, DocumentacionBiblioteca,
     Autor, TipoTrabajoPublicado, TrabajoPublicado, ActividadTransferencia, ParteExterna,
-    EquipamientoInfraestructura, TrabajoPresentado, ActividadXPersona, Patente, TipoDeRegistro, Registro,
-    MemoriaAnual, IntegranteMemoria, TrabajoMemoria, ActividadMemoria,
-    PublicacionMemoria, PatenteMemoria, ProyectoMemoria,
-    TipoDePersonal, GradoAcademico, CategoriaUtn, Dedicacion,
-    ProgramaDeIncentivos, DenominacionCursoCatedra, RolDesempenado
+    EquipamientoInfraestructura, TrabajoPresentado, ActividadXPersona, Patente, TipoDeRegistro, Registro
 )
 
 from .serializers import (
@@ -28,9 +24,7 @@ from .serializers import (
     TrabajoPublicadoSerializer, ActividadTransferenciaSerializer,
     ParteExternaSerializer, EquipamientoInfraestructuraSerializer,
     TrabajoPresentadoSerializer, ActividadXPersonaSerializer, LoginSerializer, PatenteSerializer, TipoDeRegistroSerializer, RegistroSerializer,
-    AutorSerializer, TipoTrabajoPublicadoSerializer,
-    MemoriaAnualSerializer, IntegranteMemoriaSerializer, TrabajoMemoriaSerializer,
-    ActividadMemoriaSerializer, PublicacionMemoriaSerializer, PatenteMemoriaSerializer, ProyectoMemoriaSerializer
+    AutorSerializer, TipoTrabajoPublicadoSerializer
 )
 
 # Create your views here.
@@ -100,7 +94,7 @@ def refresh_token(request):
         return Response({'error': 'Invalid refresh token'}, status=status.HTTP_401_UNAUTHORIZED)
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def perfil(request, oidpersona):
     try:
         persona = Persona.objects.get(oidpersona = oidpersona)
@@ -115,7 +109,7 @@ def perfil(request, oidpersona):
         )
     
 @api_view(['PUT'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def actualizar_perfil(request, oidpersona):
     try:
         persona = Persona.objects.get(oidpersona=oidpersona)
@@ -128,7 +122,6 @@ def actualizar_perfil(request, oidpersona):
     serializer = PersonaSerializer(persona, data=request.data, partial=True)
 
     if serializer.is_valid():
-        serializer.save()
         return Response({
             'mensaje': 'Perfil actualizado exitosamente',
             'persona': serializer.data
@@ -282,55 +275,3 @@ class RegistroViewSet(viewsets.ModelViewSet):
 class TipoDeRegistroViewSet(viewsets.ModelViewSet):
     queryset = TipoDeRegistro.objects.all()
     serializer_class = TipoDeRegistroSerializer
-
-
-# ViewSets para Memoria Anual
-class MemoriaAnualViewSet(viewsets.ModelViewSet):
-    queryset = MemoriaAnual.objects.all()
-    serializer_class = MemoriaAnualSerializer
-    permission_classes = [AllowAny]
-
-class IntegranteMemoriaViewSet(viewsets.ModelViewSet):
-    queryset = IntegranteMemoria.objects.all()
-    serializer_class = IntegranteMemoriaSerializer
-    permission_classes = [AllowAny]
-
-class TrabajoMemoriaViewSet(viewsets.ModelViewSet):
-    queryset = TrabajoMemoria.objects.all()
-    serializer_class = TrabajoMemoriaSerializer
-    permission_classes = [AllowAny]
-
-class ActividadMemoriaViewSet(viewsets.ModelViewSet):
-    queryset = ActividadMemoria.objects.all()
-    serializer_class = ActividadMemoriaSerializer
-    permission_classes = [AllowAny]
-
-class PublicacionMemoriaViewSet(viewsets.ModelViewSet):
-    queryset = PublicacionMemoria.objects.all()
-    serializer_class = PublicacionMemoriaSerializer
-    permission_classes = [AllowAny]
-
-class PatenteMemoriaViewSet(viewsets.ModelViewSet):
-    queryset = PatenteMemoria.objects.all()
-    serializer_class = PatenteMemoriaSerializer
-    permission_classes = [AllowAny]
-
-class ProyectoMemoriaViewSet(viewsets.ModelViewSet):
-    queryset = ProyectoMemoria.objects.all()
-    serializer_class = ProyectoMemoriaSerializer
-    permission_classes = [AllowAny]
-
-# Endpoints para obtener opciones de perfil
-@api_view(['GET'])
-@permission_classes([AllowAny])
-def get_opciones_perfil(request):
-    """Retorna todas las opciones disponibles para los campos del perfil"""
-    return Response({
-        'tipos_personal': [{'id': t.id, 'nombre': t.nombre} for t in TipoDePersonal.objects.all()],
-        'grados_academicos': [{'id': g.id, 'nombre': g.nombre} for g in GradoAcademico.objects.all()],
-        'categorias_utn': [{'id': c.id, 'nombre': c.nombre} for c in CategoriaUtn.objects.all()],
-        'dedicaciones': [{'id': d.id, 'nombre': d.nombre} for d in Dedicacion.objects.all()],
-        'programas_incentivos': [{'id': p.id, 'nombre': p.nombre} for p in ProgramaDeIncentivos.objects.all()],
-        'cursos_catedras': [{'id': c.id, 'nombre': c.nombre} for c in DenominacionCursoCatedra.objects.all()],
-        'roles_desempenados': [{'id': r.id, 'nombre': r.nombre} for r in RolDesempenado.objects.all()]
-    }, status=status.HTTP_200_OK)

@@ -5,11 +5,7 @@ from .models import (
     Persona, ActividadDocente, InvestigadorDocente, BecarioPersonalFormacion,
     Investigador, DocumentacionBiblioteca, TrabajoPublicado, Autor, TipoTrabajoPublicado,
     ActividadTransferencia, ParteExterna, EquipamientoInfraestructura,
-    TrabajoPresentado, ActividadXPersona, Patente, TipoDeRegistro, Registro,
-    MemoriaAnual, IntegranteMemoria, TrabajoMemoria, ActividadMemoria,
-    PublicacionMemoria, PatenteMemoria, ProyectoMemoria, TipoDePersonal,
-    GradoAcademico, CategoriaUtn, Dedicacion, ProgramaDeIncentivos,
-    DenominacionCursoCatedra, RolDesempenado
+    TrabajoPresentado, ActividadXPersona, Patente, TipoDeRegistro, Registro
 )
 
 
@@ -146,14 +142,6 @@ class ActividadSerializer(serializers.ModelSerializer):
 
 
 class PersonaSerializer(serializers.ModelSerializer):
-    tipoDePersonal_nombres = serializers.SerializerMethodField()
-    gradoAcademico_nombres = serializers.SerializerMethodField()
-    categoriaUtn_nombres = serializers.SerializerMethodField()
-    dedicacion_nombre = serializers.CharField(source='dedicacion.nombre', read_only=True)
-    programaDeIncentivos_nombre = serializers.CharField(source='programaDeIncentivos.nombre', read_only=True)
-    denominacionCursoCatedra_nombres = serializers.SerializerMethodField()
-    rolDesempenado_nombres = serializers.SerializerMethodField()
-    
     class Meta:
         model = Persona
         fields = [
@@ -164,68 +152,8 @@ class PersonaSerializer(serializers.ModelSerializer):
             'apellido',
             'horasSemanales',
             'tipoDePersonal',
-            'tipoDePersonal_nombres',
-            'GrupoInvestigacion',
-            'gradoAcademico',
-            'gradoAcademico_nombres',
-            'categoriaUtn',
-            'categoriaUtn_nombres',
-            'dedicacion',
-            'dedicacion_nombre',
-            'programaDeIncentivos',
-            'programaDeIncentivos_nombre',
-            'denominacionCursoCatedra',
-            'denominacionCursoCatedra_nombres',
-            'rolDesempenado',
-            'rolDesempenado_nombres',
-            'fechaPeriodoDictadoInicio',
-            'fechaPeriodoDictadoFin'
+            'GrupoInvestigacion'
         ]
-        extra_kwargs = {
-            'contrasena': {'write_only': True}
-        }
-    
-    def get_tipoDePersonal_nombres(self, obj):
-        return [t.nombre for t in obj.tipoDePersonal.all()]
-    
-    def get_gradoAcademico_nombres(self, obj):
-        return [g.nombre for g in obj.gradoAcademico.all()]
-    
-    def get_categoriaUtn_nombres(self, obj):
-        return [c.nombre for c in obj.categoriaUtn.all()]
-    
-    def get_denominacionCursoCatedra_nombres(self, obj):
-        return [d.nombre for d in obj.denominacionCursoCatedra.all()]
-    
-    def get_rolDesempenado_nombres(self, obj):
-        return [r.nombre for r in obj.rolDesempenado.all()]
-    
-    def update(self, instance, validated_data):
-        # Extract ManyToMany fields
-        tipos_personal = validated_data.pop('tipoDePersonal', None)
-        grados_academicos = validated_data.pop('gradoAcademico', None)
-        categorias_utn = validated_data.pop('categoriaUtn', None)
-        cursos_catedra = validated_data.pop('denominacionCursoCatedra', None)
-        roles_desempenados = validated_data.pop('rolDesempenado', None)
-        
-        # Update regular fields (including ForeignKeys)
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        instance.save()
-        
-        # Update ManyToMany fields
-        if tipos_personal is not None:
-            instance.tipoDePersonal.set(tipos_personal)
-        if grados_academicos is not None:
-            instance.gradoAcademico.set(grados_academicos)
-        if categorias_utn is not None:
-            instance.categoriaUtn.set(categorias_utn)
-        if cursos_catedra is not None:
-            instance.denominacionCursoCatedra.set(cursos_catedra)
-        if roles_desempenados is not None:
-            instance.rolDesempenado.set(roles_desempenados)
-        
-        return instance
 
 
 class ActividadDocenteSerializer(serializers.ModelSerializer):
@@ -350,54 +278,3 @@ class ActividadXPersonaSerializer(serializers.ModelSerializer):
             'Actividad',
             'persona'
         ]
-
-
-# Serializers para Memoria Anual
-
-class IntegranteMemoriaSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = IntegranteMemoria
-        fields = '__all__'
-
-
-class TrabajoMemoriaSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = TrabajoMemoria
-        fields = '__all__'
-
-
-class ActividadMemoriaSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ActividadMemoria
-        fields = '__all__'
-
-
-class PublicacionMemoriaSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PublicacionMemoria
-        fields = '__all__'
-
-
-class PatenteMemoriaSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PatenteMemoria
-        fields = '__all__'
-
-
-class ProyectoMemoriaSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ProyectoMemoria
-        fields = '__all__'
-
-
-class MemoriaAnualSerializer(serializers.ModelSerializer):
-    integrantes = IntegranteMemoriaSerializer(many=True, read_only=True)
-    trabajos = TrabajoMemoriaSerializer(many=True, read_only=True)
-    actividades = ActividadMemoriaSerializer(many=True, read_only=True)
-    publicaciones = PublicacionMemoriaSerializer(many=True, read_only=True)
-    patentes = PatenteMemoriaSerializer(many=True, read_only=True)
-    proyectos = ProyectoMemoriaSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = MemoriaAnual
-        fields = '__all__'
