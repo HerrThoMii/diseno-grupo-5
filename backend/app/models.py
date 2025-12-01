@@ -261,3 +261,118 @@ class ActividadXPersona(models.Model):
 
     class Meta:
         unique_together = ("Actividad", "persona")
+
+
+# Modelos para Memoria Anual
+
+class MemoriaAnual(models.Model):
+    oidMemoriaAnual = models.AutoField(primary_key=True, unique=True)
+    anio = models.IntegerField()
+    numero = models.CharField(max_length=50)
+    estado = models.CharField(max_length=50, default='Borrador')
+    introduccion = models.TextField(blank=True)
+    titulo_introduccion = models.CharField(max_length=200, blank=True)
+    GrupoInvestigacion = models.ForeignKey(
+        GrupoInvestigacion, on_delete=models.CASCADE
+    )
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_modificacion = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-anio', '-numero']
+
+    def __str__(self):
+        return f"Memoria Anual {self.anio} - {self.numero}"
+
+
+class IntegranteMemoria(models.Model):
+    oidIntegrante = models.AutoField(primary_key=True, unique=True)
+    nombre = models.CharField(max_length=100)
+    apellido = models.CharField(max_length=100)
+    rol = models.CharField(max_length=100)
+    horas = models.IntegerField()
+    memoria = models.ForeignKey(
+        MemoriaAnual, on_delete=models.CASCADE, related_name='integrantes'
+    )
+
+    def __str__(self):
+        return f"{self.nombre} {self.apellido}"
+
+
+class TrabajoMemoria(models.Model):
+    oidTrabajo = models.AutoField(primary_key=True, unique=True)
+    ciudad = models.CharField(max_length=100)
+    fecha = models.DateField()
+    reunion = models.CharField(max_length=200)
+    titulo = models.CharField(max_length=300)
+    memoria = models.ForeignKey(
+        MemoriaAnual, on_delete=models.CASCADE, related_name='trabajos'
+    )
+
+    def __str__(self):
+        return self.titulo
+
+
+class ActividadMemoria(models.Model):
+    oidActividad = models.AutoField(primary_key=True, unique=True)
+    titulo = models.CharField(max_length=200)
+    descripcion = models.TextField()
+    fecha = models.DateField()
+    tipo = models.CharField(max_length=100)
+    memoria = models.ForeignKey(
+        MemoriaAnual, on_delete=models.CASCADE, related_name='actividades'
+    )
+
+    def __str__(self):
+        return self.titulo
+
+
+class PublicacionMemoria(models.Model):
+    oidPublicacion = models.AutoField(primary_key=True, unique=True)
+    titulo = models.CharField(max_length=300)
+    autor = models.CharField(max_length=200)
+    revista = models.CharField(max_length=200)
+    anio = models.IntegerField()
+    memoria = models.ForeignKey(
+        MemoriaAnual, on_delete=models.CASCADE, related_name='publicaciones'
+    )
+
+    def __str__(self):
+        return self.titulo
+
+
+class PatenteMemoria(models.Model):
+    oidPatente = models.AutoField(primary_key=True, unique=True)
+    titulo = models.CharField(max_length=300)
+    numero = models.CharField(max_length=100)
+    fecha = models.DateField()
+    estado = models.CharField(max_length=100)
+    memoria = models.ForeignKey(
+        MemoriaAnual, on_delete=models.CASCADE, related_name='patentes'
+    )
+
+    def __str__(self):
+        return self.titulo
+
+
+class ProyectoMemoria(models.Model):
+    oidProyecto = models.AutoField(primary_key=True, unique=True)
+    nombre = models.CharField(max_length=200)
+    estado = models.CharField(max_length=100)
+    inicio = models.DateField()
+    fin = models.DateField()
+    responsable = models.TextField()
+    responsable_titulo = models.CharField(max_length=200, blank=True)
+    presupuesto = models.CharField(max_length=100)
+    colaboradores = models.TextField()
+    colaboradores_titulo = models.CharField(max_length=200, blank=True)
+    objetivos = models.TextField()
+    objetivos_titulo = models.CharField(max_length=200, blank=True)
+    resultados = models.TextField()
+    resultados_titulo = models.CharField(max_length=200, blank=True)
+    memoria = models.ForeignKey(
+        MemoriaAnual, on_delete=models.CASCADE, related_name='proyectos'
+    )
+
+    def __str__(self):
+        return self.nombre

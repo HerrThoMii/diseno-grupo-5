@@ -1,0 +1,26 @@
+.page-container {
+  flex: 1;
+  background-color: #e8e8e8;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.page-content {
+  background-color: white;
+  border-radius: 8px;
+  padding: 40px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.page-content h1 {
+  font-size: 28px;
+  color: #333;
+  margin: 0 0 15px 0;
+}
+
+.page-content p {
+  color: #999;
+  font-size: 16px;
+  margin: 0;
+}
