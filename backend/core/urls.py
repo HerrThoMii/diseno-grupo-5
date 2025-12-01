@@ -11,8 +11,10 @@ from app.views import (
     TrabajoPublicadoViewSet, ActividadTransferenciaViewSet,
     ParteExternaViewSet, EquipamientoInfraestructuraViewSet,
     TrabajoPresentadoViewSet, ActividadXPersonaViewSet,
-    login, perfil, actualizar_perfil, eliminar_persona, listar_personas, refresh_token, get_opciones_perfil, RegistroViewSet, PatenteViewSet, AutorViewSet, TipoTrabajoPublicadoViewSet, TipoDeRegistroViewSet
+    login, perfil, actualizar_perfil, eliminar_persona, listar_personas, refresh_token, get_opciones_perfil, RegistroViewSet, PatenteViewSet, AutorViewSet, TipoTrabajoPublicadoViewSet, TipoDeRegistroViewSet,
+    IntegranteMemoriaViewSet, ActividadMemoriaViewSet, PublicacionMemoriaViewSet, PatenteMemoriaViewSet, ProyectoMemoriaViewSet
 )
+from app.memoria_views import MemoriaAnualViewSet
 
 
 router = DefaultRouter()
@@ -41,6 +43,12 @@ router.register(r'autores', AutorViewSet)
 router.register(r'tipo-trabajos-publicados', TipoTrabajoPublicadoViewSet)
 router.register(r'tipo-registros', TipoDeRegistroViewSet)
 router.register(r'registros', RegistroViewSet)
+router.register(r'memorias-anuales', MemoriaAnualViewSet)
+router.register(r'integrantes-memoria', IntegranteMemoriaViewSet)
+router.register(r'actividades-memoria', ActividadMemoriaViewSet)
+router.register(r'publicaciones-memoria', PublicacionMemoriaViewSet)
+router.register(r'patentes-memoria', PatenteMemoriaViewSet)
+router.register(r'proyectos-memoria', ProyectoMemoriaViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),

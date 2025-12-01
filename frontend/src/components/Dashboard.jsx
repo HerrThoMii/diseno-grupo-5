@@ -14,6 +14,7 @@ function Dashboard({ userName = 'nombre del usuario', userData = null, onLogout 
     const routes = {
       home: '/',
       memoria: '/memoria',
+      'ver-memorias': '/ver-memorias',
       trabajos: '/trabajos',
       registros: '/registros',
       grupo: '/grupo',
@@ -25,6 +26,7 @@ function Dashboard({ userName = 'nombre del usuario', userData = null, onLogout 
     const path = location.pathname;
     if (path === '/') return 'home';
     if (path === '/memoria') return 'memoria';
+    if (path === '/ver-memorias') return 'ver-memorias';
     if (path === '/trabajos') return 'trabajos';
     if (path === '/registros') return 'registros';
     if (path === '/grupo') return 'grupo';

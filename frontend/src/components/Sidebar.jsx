@@ -1,10 +1,11 @@
 import React from 'react';
-import { FileText, BookOpen, Award, Users } from 'lucide-react';
+import { FileText, BookOpen, Award, Users, Eye } from 'lucide-react';
 import './Sidebar.css';
 
 function Sidebar({ onNavigate, activeSection, isOpen = true }) {
   const menuItems = [
     { id: 'memoria', label: 'Crear memoria anual', icon: FileText },
+    { id: 'ver-memorias', label: 'Ver memorias anuales', icon: Eye },
     { id: 'trabajos', label: 'Trabajos realizados y publicados', icon: BookOpen },
     { id: 'registros', label: 'Trabajos, registros y patentes', icon: Award },
     { id: 'grupo', label: 'Agregar grupo', icon: Users },

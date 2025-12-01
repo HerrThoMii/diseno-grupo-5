@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './MemoriaAnual.css';
 import { ChevronDown, Plus, Trash2, Edit, Search } from 'lucide-react';
-import { obtenerGrupos, obtenerPersonas, crearPersona, obtenerOpcionesPerfil, listarTrabajosPresentados, crearTrabajoPresentado, listarActividades, crearActividad, listarLineasInvestigacion, listarTrabajosPublicados, crearTrabajoPublicado } from '../services/api';
+import { obtenerGrupos, obtenerPersonas, crearPersona, obtenerOpcionesPerfil, listarTrabajosPresentados, crearTrabajoPresentado, listarActividades, crearActividad, listarLineasInvestigacion, listarTrabajosPublicados, crearTrabajoPublicado, actualizarTrabajoPublicado, eliminarTrabajoPublicado, listarAutores, listarTiposTrabajoPublicado, listarPatentes, crearPatente, actualizarPatente, eliminarPatente, listarProyectos, crearProyecto, actualizarProyecto, eliminarProyecto } from '../services/api';
 
 const API_BASE_URL = 'http://127.0.0.1:8000/api';
 
@@ -10,6 +10,8 @@ const MemoriaAnual = () => {
   const trabajosSearchRef = useRef(null);
   const actividadesSearchRef = useRef(null);
   const publicacionesSearchRef = useRef(null);
+  const patentesSearchRef = useRef(null);
+  const proyectosSearchRef = useRef(null);
   const [activeTab, setActiveTab] = useState('general');
   const [memoriaId, setMemoriaId] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -39,15 +41,28 @@ const MemoriaAnual = () => {
     currentPage: 1,
     itemsPerPage: 5,
   });
+  const [patentesPagination, setPatentesPagination] = useState({
+    currentPage: 1,
+    itemsPerPage: 5,
+  });
+  const [proyectosPagination, setProyectosPagination] = useState({
+    currentPage: 1,
+    itemsPerPage: 5,
+  });
   const [showIntegranteModal, setShowIntegranteModal] = useState(false);
   const [showTrabajoModal, setShowTrabajoModal] = useState(false);
   const [showActividadModal, setShowActividadModal] = useState(false);
   const [showPublicacionModal, setShowPublicacionModal] = useState(false);
+  const [showPatenteModal, setShowPatenteModal] = useState(false);
+  const [showProyectoModal, setShowProyectoModal] = useState(false);
   const [showPersonaDropdown, setShowPersonaDropdown] = useState(false);
   const [showIntegrantesSearchDropdown, setShowIntegrantesSearchDropdown] = useState(false);
   const [showTrabajosSearchDropdown, setShowTrabajosSearchDropdown] = useState(false);
   const [showActividadesSearchDropdown, setShowActividadesSearchDropdown] = useState(false);
   const [showPublicacionesSearchDropdown, setShowPublicacionesSearchDropdown] = useState(false);
+  const [publicacionesDropdownSearch, setPublicacionesDropdownSearch] = useState('');
+  const [showPatentesSearchDropdown, setShowPatentesSearchDropdown] = useState(false);
+  const [showProyectosSearchDropdown, setShowProyectosSearchDropdown] = useState(false);
   const [personaSearchTerm, setPersonaSearchTerm] = useState('');
   const [selectedPersonaId, setSelectedPersonaId] = useState('');
   const [horasSemanales, setHorasSemanales] = useState(40);
@@ -83,6 +98,10 @@ const MemoriaAnual = () => {
   const [actividadesDisponibles, setActividadesDisponibles] = useState([]);
   const [lineasInvestigacion, setLineasInvestigacion] = useState([]);
   const [publicacionesDisponibles, setPublicacionesDisponibles] = useState([]);
+  const [autores, setAutores] = useState([]);
+  const [tiposTrabajoPublicado, setTiposTrabajoPublicado] = useState([]);
+  const [patentesDisponibles, setPatentesDisponibles] = useState([]);
+  const [proyectosDisponibles, setProyectosDisponibles] = useState([]);
   const [newPublicacionData, setNewPublicacionData] = useState({
     titulo: '',
     ISSN: '',
@@ -94,6 +113,26 @@ const MemoriaAnual = () => {
     Autor: null,
     GrupoInvestigacion: null
   });
+  const [newPatenteData, setNewPatenteData] = useState({
+    descripcion: '',
+    tipo: '',
+    numero: '',
+    fecha: '',
+    inventor: '',
+    GrupoInvestigacion: null
+  });
+  const [newProyectoData, setNewProyectoData] = useState({
+    nombre: '',
+    codigoProyecto: '',
+    descripcion: '',
+    tipoProyecto: '',
+    fechaInicio: '',
+    fechaFinalizacion: '',
+    fuenteFinanciamiento: '',
+    logrosObtenidos: '',
+    GrupoInvestigacion: null
+  });
+  const [editingProyectoIndex, setEditingProyectoIndex] = useState(null);
   const [formData, setFormData] = useState({
     ano: new Date().getFullYear().toString(),
     grupo: '',
@@ -114,11 +153,13 @@ const MemoriaAnual = () => {
     { id: 'publicaciones', label: 'Publicaciones' },
     { id: 'patentes', label: 'Patentes' },
     { id: 'proyectos', label: 'Proyectos' },
+    { id: 'guardar', label: 'Guardar' },
   ];
 
   // Cargar datos al montar el componente
   useEffect(() => {
-    loadMemoriaData();
+    // No cargar memoria existente, estamos creando una nueva
+    // loadMemoriaData();
     loadGrupos();
     loadPersonas();
     loadOpcionesPerfil();
@@ -126,6 +167,10 @@ const MemoriaAnual = () => {
     loadActividadesDisponibles();
     loadLineasInvestigacion();
     loadPublicacionesDisponibles();
+    loadAutores();
+    loadTiposTrabajoPublicado();
+    loadPatentesDisponibles();
+    loadProyectosDisponibles();
   }, []);
 
   // Cerrar dropdown al hacer click fuera
@@ -142,6 +187,12 @@ const MemoriaAnual = () => {
       }
       if (publicacionesSearchRef.current && !publicacionesSearchRef.current.contains(event.target)) {
         setShowPublicacionesSearchDropdown(false);
+      }
+      if (patentesSearchRef.current && !patentesSearchRef.current.contains(event.target)) {
+        setShowPatentesSearchDropdown(false);
+      }
+      if (proyectosSearchRef.current && !proyectosSearchRef.current.contains(event.target)) {
+        setShowProyectosSearchDropdown(false);
       }
     };
 
@@ -227,11 +278,61 @@ const MemoriaAnual = () => {
       const publicacionesData = await listarTrabajosPublicados();
       console.log('Trabajos publicados recibidos:', publicacionesData);
       const publicacionesArr = Array.isArray(publicacionesData) ? publicacionesData : [];
-      // Filtrar solo los que tienen estado 'Publicado'
-      const publicados = publicacionesArr.filter(p => p.estado === 'Publicado');
+      // Filtrar trabajos con estado 'Realizado' o 'Publicado'
+      const publicados = publicacionesArr.filter(p => 
+        p.estado === 'Publicado' || p.estado === 'Realizado'
+      );
       setPublicacionesDisponibles(publicados);
     } catch (error) {
       console.error('Error cargando publicaciones:', error);
+    }
+  };
+
+  // Función para cargar autores
+  const loadAutores = async () => {
+    try {
+      const autoresData = await listarAutores();
+      console.log('Autores recibidos:', autoresData);
+      const autoresArr = Array.isArray(autoresData) ? autoresData : [];
+      setAutores(autoresArr);
+    } catch (error) {
+      console.error('Error cargando autores:', error);
+    }
+  };
+
+  // Función para cargar tipos de trabajo publicado
+  const loadTiposTrabajoPublicado = async () => {
+    try {
+      const tiposData = await listarTiposTrabajoPublicado();
+      console.log('Tipos de trabajo publicado recibidos:', tiposData);
+      const tiposArr = Array.isArray(tiposData) ? tiposData : [];
+      setTiposTrabajoPublicado(tiposArr);
+    } catch (error) {
+      console.error('Error cargando tipos de trabajo publicado:', error);
+    }
+  };
+
+  // Función para cargar patentes disponibles
+  const loadPatentesDisponibles = async () => {
+    try {
+      const patentesData = await listarPatentes();
+      console.log('Patentes recibidas:', patentesData);
+      const patentesArr = Array.isArray(patentesData) ? patentesData : [];
+      setPatentesDisponibles(patentesArr);
+    } catch (error) {
+      console.error('Error cargando patentes:', error);
+    }
+  };
+
+  // Función para cargar proyectos disponibles
+  const loadProyectosDisponibles = async () => {
+    try {
+      const proyectosData = await listarProyectos();
+      console.log('Proyectos recibidos:', proyectosData);
+      const proyectosArr = Array.isArray(proyectosData) ? proyectosData : [];
+      setProyectosDisponibles(proyectosArr);
+    } catch (error) {
+      console.error('Error cargando proyectos:', error);
     }
   };
 
@@ -275,7 +376,7 @@ const MemoriaAnual = () => {
     console.log('Seleccionando persona:', persona);
     
     // Verificar si ya existe en la lista
-    const yaExiste = formData.integrantes.some(i => i.persona === persona.oidpersona);
+    const yaExiste = formData.integrantes.some(i => i.oidPersona === persona.oidpersona);
     if (yaExiste) {
       alert('Esta persona ya está agregada como integrante');
       setSearchTerms({...searchTerms, integrantes: ''});
@@ -286,12 +387,12 @@ const MemoriaAnual = () => {
     // Si no hay memoria creada, solo agregar a la lista local
     if (!memoriaId) {
       const nuevoIntegrante = {
-        persona: persona.oidpersona,
+        oidPersona: persona.oidpersona,
         persona_nombre: persona.nombre,
         persona_apellido: persona.apellido,
-        rol: persona.tipoDePersonalNombre,
-        horasSemanales: 40,
-        temp: true // Marcador temporal
+        rol: persona.tipoDePersonalNombre || '',
+        dedicacion: '',
+        temp: true
       };
       
       setFormData(prev => ({
@@ -724,77 +825,317 @@ const MemoriaAnual = () => {
     }
   };
 
-  const handleAddProyecto = async () => {
-    if (!memoriaId) {
-      alert('Primero debes crear una memoria anual en la pestaña General');
-      return;
-    }
-
-    const nuevoProyecto = {
-      MemoriaAnual: memoriaId,
+  const handleAddProyecto = () => {
+    setEditingProyectoIndex(null);
+    setNewProyectoData({
       nombre: '',
-      estado: 'En curso',
-      fechaInicio: new Date().toISOString().split('T')[0],
-      fechaFin: null,
-      responsable: '',
-      responsableTitulo: '',
-      presupuesto: '',
-      colaboradores: '',
-      colaboradoresTitulo: '',
-      objetivos: '',
-      objetivosTitulo: '',
-      resultados: '',
-      resultadosTitulo: ''
-    };
+      codigoProyecto: '',
+      descripcion: '',
+      tipoProyecto: '',
+      fechaInicio: '',
+      fechaFinalizacion: '',
+      fuenteFinanciamiento: '',
+      logrosObtenidos: '',
+      GrupoInvestigacion: null
+    });
+    setShowProyectoModal(true);
+  };
 
+  const handleEditProyecto = (index) => {
+    const proyecto = formData.proyectos[index];
+    setEditingProyectoIndex(index);
+    setNewProyectoData({
+      nombre: proyecto.nombre || '',
+      codigoProyecto: proyecto.codigoProyecto || '',
+      descripcion: proyecto.descripcion || '',
+      tipoProyecto: proyecto.tipoProyecto || '',
+      fechaInicio: proyecto.fechaInicio || '',
+      fechaFinalizacion: proyecto.fechaFinalizacion || '',
+      fuenteFinanciamiento: proyecto.fuenteFinanciamiento || '',
+      logrosObtenidos: proyecto.logrosObtenidos || '',
+      GrupoInvestigacion: proyecto.GrupoInvestigacion
+    });
+    setShowProyectoModal(true);
+  };
+
+  const handleCreateProyecto = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/memorias-proyectos/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(nuevoProyecto)
+      // Validar campos requeridos
+      if (!newProyectoData.nombre.trim()) {
+        alert('El nombre del proyecto es requerido');
+        return;
+      }
+      if (!newProyectoData.codigoProyecto.trim()) {
+        alert('El código del proyecto es requerido');
+        return;
+      }
+      if (!newProyectoData.GrupoInvestigacion) {
+        alert('Debe seleccionar un grupo de investigación');
+        return;
+      }
+
+      // Si estamos editando
+      if (editingProyectoIndex !== null) {
+        const proyectoActual = formData.proyectos[editingProyectoIndex];
+        
+        // Si es un proyecto temporal (no guardado en backend aún)
+        if (proyectoActual.temp) {
+          // Actualizar el proyecto en el backend
+          const proyectoActualizado = await actualizarProyecto(
+            proyectoActual.oidProyectoInvestigacion,
+            {
+              nombre: newProyectoData.nombre,
+              codigoProyecto: newProyectoData.codigoProyecto,
+              descripcion: newProyectoData.descripcion,
+              tipoProyecto: newProyectoData.tipoProyecto,
+              fechaInicio: newProyectoData.fechaInicio || null,
+              fechaFinalizacion: newProyectoData.fechaFinalizacion || null,
+              fuenteFinanciamiento: newProyectoData.fuenteFinanciamiento,
+              logrosObtenidos: newProyectoData.logrosObtenidos,
+              objectType: 'ProyectoInvestigacion',
+              GrupoInvestigacion: newProyectoData.GrupoInvestigacion
+            }
+          );
+
+          // Actualizar en la lista local
+          setFormData(prev => ({
+            ...prev,
+            proyectos: prev.proyectos.map((p, i) => 
+              i === editingProyectoIndex ? {
+                ...proyectoActualizado,
+                temp: true
+              } : p
+            )
+          }));
+        } else {
+          // Si NO es temporal, solo actualizar localmente (edición inline)
+          setFormData(prev => ({
+            ...prev,
+            proyectos: prev.proyectos.map((p, i) => 
+              i === editingProyectoIndex ? {
+                ...p,
+                nombre: newProyectoData.nombre,
+                codigoProyecto: newProyectoData.codigoProyecto,
+                descripcion: newProyectoData.descripcion,
+                tipoProyecto: newProyectoData.tipoProyecto,
+                fechaInicio: newProyectoData.fechaInicio,
+                fechaFinalizacion: newProyectoData.fechaFinalizacion,
+                fuenteFinanciamiento: newProyectoData.fuenteFinanciamiento,
+                logrosObtenidos: newProyectoData.logrosObtenidos
+              } : p
+            )
+          }));
+        }
+
+        setShowProyectoModal(false);
+        setEditingProyectoIndex(null);
+        alert('Proyecto actualizado exitosamente');
+        return;
+      }
+
+      // Crear el proyecto en el backend
+      const proyectoCreado = await crearProyecto({
+        nombre: newProyectoData.nombre,
+        codigoProyecto: newProyectoData.codigoProyecto,
+        descripcion: newProyectoData.descripcion,
+        tipoProyecto: newProyectoData.tipoProyecto,
+        fechaInicio: newProyectoData.fechaInicio || null,
+        fechaFinalizacion: newProyectoData.fechaFinalizacion || null,
+        fuenteFinanciamiento: newProyectoData.fuenteFinanciamiento,
+        logrosObtenidos: newProyectoData.logrosObtenidos,
+        objectType: 'ProyectoInvestigacion',
+        GrupoInvestigacion: newProyectoData.GrupoInvestigacion
       });
-      const data = await res.json();
-      setFormData(prev => ({ ...prev, proyectos: [...prev.proyectos, data] }));
-      console.log('Proyecto agregado:', data);
+
+      console.log('Proyecto creado:', proyectoCreado);
+
+      // Recargar la lista de proyectos disponibles
+      await loadProyectosDisponibles();
+
+      // Agregar automáticamente a la grilla con temp: true
+      const nuevoProyecto = {
+        oidProyectoInvestigacion: proyectoCreado.oidProyectoInvestigacion || proyectoCreado.id,
+        nombre: proyectoCreado.nombre,
+        codigoProyecto: proyectoCreado.codigoProyecto,
+        descripcion: proyectoCreado.descripcion,
+        fechaInicio: proyectoCreado.fechaInicio,
+        fechaFinalizacion: proyectoCreado.fechaFinalizacion,
+        tipoProyecto: proyectoCreado.tipoProyecto,
+        fuenteFinanciamiento: proyectoCreado.fuenteFinanciamiento,
+        logrosObtenidos: proyectoCreado.logrosObtenidos,
+        temp: true
+      };
+
+      setFormData(prev => ({
+        ...prev,
+        proyectos: [...prev.proyectos, nuevoProyecto]
+      }));
+
+      // Limpiar formulario y cerrar modal
+      setNewProyectoData({
+        nombre: '',
+        codigoProyecto: '',
+        descripcion: '',
+        tipoProyecto: '',
+        fechaInicio: '',
+        fechaFinalizacion: '',
+        fuenteFinanciamiento: '',
+        logrosObtenidos: '',
+        GrupoInvestigacion: null
+      });
+      setShowProyectoModal(false);
+
+      alert('Proyecto creado y agregado exitosamente');
     } catch (error) {
-      console.error('Error agregando proyecto:', error);
+      console.error('Error creando proyecto:', error);
+      alert('Error al crear el proyecto: ' + error.message);
     }
   };
 
-  const handleRemoveProyecto = async (id) => {
+  const handleRemoveProyecto = async (index) => {
+    const proyecto = formData.proyectos[index];
+    
+    // Si es temporal, solo eliminar de la lista local
+    if (proyecto.temp) {
+      setFormData(prev => ({
+        ...prev,
+        proyectos: prev.proyectos.filter((_, i) => i !== index)
+      }));
+      return;
+    }
+
+    // Si no es temporal, eliminar del backend
     if (!window.confirm('¿Estás seguro de eliminar este proyecto?')) return;
 
     try {
-      await fetch(`${API_BASE_URL}/memorias-proyectos/${id}/`, {
-        method: 'DELETE'
-      });
+      const id = proyecto.oidProyectoInvestigacion || proyecto.id;
+      await eliminarProyecto(id);
       setFormData(prev => ({
         ...prev,
-        proyectos: prev.proyectos.filter(p => p.oidProyectoMemoria !== id)
+        proyectos: prev.proyectos.filter((_, i) => i !== index)
       }));
       console.log('Proyecto eliminado');
     } catch (error) {
       console.error('Error eliminando proyecto:', error);
+      alert('Error al eliminar el proyecto: ' + error.message);
     }
   };
 
-  const handleProyectoChange = async (id, field, value) => {
-    const proyecto = formData.proyectos.find(p => p.oidProyectoMemoria === id);
-    const updated = { ...proyecto, [field]: value };
+  const handleGuardarMemoria = async () => {
+    try {
+      // Validaciones
+      if (!formData.ano) {
+        alert('Debe especificar el año de la memoria');
+        return;
+      }
+      if (!formData.grupo) {
+        alert('Debe seleccionar un grupo de investigación');
+        return;
+      }
+
+      // Confirmación final
+      if (!window.confirm(`¿Está seguro que desea guardar la Memoria Anual del año ${formData.ano}?\n\nEsta acción creará un registro permanente con todos los datos ingresados.`)) {
+        return;
+      }
+
+      // Preparar datos para enviar
+      const memoriaData = {
+        ano: parseInt(formData.ano),
+        fechaInicio: formData.fechaInicio || null,
+        fechaFin: formData.fechaFin || null,
+        director: formData.director || '',
+        objetivosGenerales: formData.objetivosGenerales || '',
+        objetivosEspecificos: formData.objetivosEspecificos || '',
+        actividadesRealizadas: formData.actividadesRealizadas || '',
+        resultadosObtenidos: formData.resultadosObtenidos || '',
+        GrupoInvestigacion: parseInt(formData.grupo),
+        
+        // Relaciones many-to-many (IDs de los registros)
+        integrantes: formData.integrantes?.map(i => ({
+          personaId: i.oidPersona || i.id,
+          rol: i.rol || '',
+          dedicacion: i.dedicacion || ''
+        })) || [],
+        
+        actividades: formData.actividades?.map(a => ({
+          actividadId: a.oidActividad || a.id,
+          observaciones: a.observaciones || ''
+        })) || [],
+        
+        publicaciones: formData.publicaciones?.map(p => p.oidTrabajoPublicado || p.id) || [],
+        
+        patentes: formData.patentes?.map(p => p.oidPatente || p.id) || [],
+        
+        proyectos: formData.proyectos?.map(p => p.oidProyectoInvestigacion || p.id) || []
+      };
+
+      console.log('Guardando memoria:', memoriaData);
+
+      // Llamar al endpoint para crear la memoria
+      const response = await fetch(`${API_BASE_URL}/memorias-anuales/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(memoriaData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(JSON.stringify(errorData));
+      }
+
+      const memoriaCreada = await response.json();
+      console.log('Memoria creada exitosamente:', memoriaCreada);
+
+      alert(`✅ Memoria Anual del año ${formData.ano} guardada exitosamente!\n\nID: ${memoriaCreada.oidMemoriaAnual}`);
+      
+      // Opcional: Limpiar el formulario o redirigir
+      // navigate('/memorias');
+      
+    } catch (error) {
+      console.error('Error guardando memoria:', error);
+      alert('Error al guardar la memoria: ' + error.message);
+    }
+  };
+
+  const handleProyectoChange = (index, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      proyectos: prev.proyectos.map((p, i) => 
+        i === index ? { ...p, [field]: value } : p
+      )
+    }));
+  };
+
+  const handleSaveProyecto = async (index) => {
+    const proyecto = formData.proyectos[index];
+    
+    // Si es temporal, no guardar en backend
+    if (proyecto.temp) {
+      alert('Este proyecto aún no está guardado. Se guardará al guardar la memoria.');
+      return;
+    }
 
     try {
-      const res = await fetch(`${API_BASE_URL}/memorias-proyectos/${id}/`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updated)
-      });
-      const data = await res.json();
-      setFormData(prev => ({
-        ...prev,
-        proyectos: prev.proyectos.map(p => p.oidProyectoMemoria === id ? data : p)
-      }));
+      const id = proyecto.oidProyectoInvestigacion || proyecto.id;
+      const dataToUpdate = {
+        nombre: proyecto.nombre,
+        codigoProyecto: proyecto.codigoProyecto,
+        descripcion: proyecto.descripcion,
+        tipoProyecto: proyecto.tipoProyecto,
+        fechaInicio: proyecto.fechaInicio || null,
+        fechaFinalizacion: proyecto.fechaFinalizacion || null,
+        logrosObtenidos: proyecto.logrosObtenidos,
+        fuenteFinanciamiento: proyecto.fuenteFinanciamiento,
+        GrupoInvestigacion: proyecto.GrupoInvestigacion
+      };
+      
+      await actualizarProyecto(id, dataToUpdate);
+      alert('Proyecto actualizado exitosamente');
     } catch (error) {
-      console.error('Error actualizando proyecto:', error);
+      console.error('Error al actualizar el proyecto:', error);
+      alert('Error al actualizar el proyecto');
     }
   };
 
@@ -948,9 +1289,8 @@ const MemoriaAnual = () => {
     if (!window.confirm('¿Estás seguro de eliminar esta publicación?')) return;
 
     try {
-      await fetch(`${API_BASE_URL}/memorias-publicaciones/${publicacion.oidPublicacionMemoria}/`, {
-        method: 'DELETE'
-      });
+      const id = publicacion.oidTrabajoPublicado || publicacion.id;
+      await eliminarTrabajoPublicado(id);
       setFormData(prev => ({
         ...prev,
         publicaciones: prev.publicaciones.filter((_, i) => i !== index)
@@ -958,6 +1298,7 @@ const MemoriaAnual = () => {
       console.log('Publicación eliminada');
     } catch (error) {
       console.error('Error eliminando publicación:', error);
+      alert('Error al eliminar la publicación: ' + error.message);
     }
   };
 
@@ -1079,23 +1420,21 @@ const MemoriaAnual = () => {
 
   // Seleccionar publicación desde el buscador
   const handleSelectPublicacionFromSearch = (publicacion) => {
-    console.log('Seleccionando publicación:', publicacion);
-    
     const yaExiste = formData.publicaciones.some(p => 
-      p.oidTrabajoPublicado === publicacion.oidTrabajoPublicado || p.id === publicacion.id
+      p.oidTrabajoPublicado === publicacion.oidTrabajoPublicado
     );
     if (yaExiste) {
       alert('Esta publicación ya está agregada');
-      setSearchTerms({...searchTerms, publicaciones: ''});
+      setPublicacionesDropdownSearch('');
       setShowPublicacionesSearchDropdown(false);
       return;
     }
     
     const nuevaPublicacion = {
-      oidTrabajoPublicado: publicacion.oidTrabajoPublicado || publicacion.id,
+      oidTrabajoPublicado: publicacion.oidTrabajoPublicado,
       titulo: publicacion.titulo || '',
-      anoPublicacion: publicacion.anoPublicacion || '',
       nombreRevista: publicacion.nombreRevista || '',
+      estado: publicacion.estado || '',
       temp: true
     };
     
@@ -1104,14 +1443,100 @@ const MemoriaAnual = () => {
       publicaciones: [...prev.publicaciones, nuevaPublicacion]
     }));
     
-    setSearchTerms({...searchTerms, publicaciones: ''});
-    setShowPublicacionesSearchDropdown(false);
+    // Mantener el dropdown abierto para seguir agregando
   };
 
   const getPublicacionesDisponibles = () => {
     return publicacionesDisponibles.filter(publicacion => {
       const yaAgregado = formData.publicaciones.some(p => 
-        p.oidTrabajoPublicado === publicacion.oidTrabajoPublicado || p.id === publicacion.id
+        p.oidTrabajoPublicado === publicacion.oidTrabajoPublicado
+      );
+      return !yaAgregado;
+    });
+  };
+
+  // Seleccionar patente desde el buscador
+  const handleSelectPatenteFromSearch = (patente) => {
+    console.log('Seleccionando patente:', patente);
+    
+    const yaExiste = formData.patentes.some(p => 
+      p.oidPatente === patente.oidPatente || p.id === patente.id
+    );
+    if (yaExiste) {
+      alert('Esta patente ya está agregada');
+      setSearchTerms({...searchTerms, patentes: ''});
+      setShowPatentesSearchDropdown(false);
+      return;
+    }
+    
+    const nuevaPatente = {
+      oidPatente: patente.oidPatente || patente.id,
+      descripcion: patente.descripcion || '',
+      tipo: patente.tipo || '',
+      numero: patente.numero || '',
+      fecha: patente.fecha || '',
+      inventor: patente.inventor || '',
+      temp: true
+    };
+    
+    setFormData(prev => ({
+      ...prev,
+      patentes: [...prev.patentes, nuevaPatente]
+    }));
+    
+    setSearchTerms({...searchTerms, patentes: ''});
+    setShowPatentesSearchDropdown(false);
+  };
+
+  const getPatentesDisponibles = () => {
+    return patentesDisponibles.filter(patente => {
+      const yaAgregado = formData.patentes.some(p => 
+        p.oidPatente === patente.oidPatente || p.id === patente.id
+      );
+      return !yaAgregado;
+    });
+  };
+
+  // Seleccionar proyecto desde el buscador
+  const handleSelectProyectoFromSearch = (proyecto) => {
+    console.log('Seleccionando proyecto:', proyecto);
+    
+    const yaExiste = formData.proyectos.some(p => 
+      p.oidProyectoInvestigacion === proyecto.oidProyectoInvestigacion || p.id === proyecto.id
+    );
+    if (yaExiste) {
+      alert('Este proyecto ya está agregado');
+      setSearchTerms({...searchTerms, proyectos: ''});
+      setShowProyectosSearchDropdown(false);
+      return;
+    }
+    
+    const nuevoProyecto = {
+      oidProyectoInvestigacion: proyecto.oidProyectoInvestigacion || proyecto.id,
+      nombre: proyecto.nombre || '',
+      codigoProyecto: proyecto.codigoProyecto || '',
+      descripcion: proyecto.descripcion || '',
+      fechaInicio: proyecto.fechaInicio || '',
+      fechaFinalizacion: proyecto.fechaFinalizacion || '',
+      tipoProyecto: proyecto.tipoProyecto || '',
+      fuenteFinanciamiento: proyecto.fuenteFinanciamiento || '',
+      logrosObtenidos: proyecto.logrosObtenidos || '',
+      temp: true
+    };
+    
+    setFormData(prev => ({
+      ...prev,
+      proyectos: [...prev.proyectos, nuevoProyecto]
+    }));
+    
+    setSearchTerms({...searchTerms, proyectos: ''});
+    setShowProyectosSearchDropdown(false);
+  };
+
+  const getProyectosDisponibles = () => {
+    return proyectosDisponibles.filter(proyecto => {
+      const yaAgregado = formData.proyectos.some(p => 
+        p.oidProyectoInvestigacion === proyecto.oidProyectoInvestigacion || p.id === proyecto.id
       );
       return !yaAgregado;
     });
@@ -1150,9 +1575,9 @@ const MemoriaAnual = () => {
     if (!searchTerms.patentes.trim()) return formData.patentes;
     const term = searchTerms.patentes.toLowerCase();
     return formData.patentes.filter(patente =>
-      patente.titulo.toLowerCase().includes(term) ||
-      patente.numero.toLowerCase().includes(term) ||
-      patente.estado.toLowerCase().includes(term)
+      (patente.descripcion && patente.descripcion.toLowerCase().includes(term)) ||
+      (patente.numero && patente.numero.toLowerCase().includes(term)) ||
+      (patente.tipo && patente.tipo.toLowerCase().includes(term))
     );
   };
 
@@ -1167,46 +1592,133 @@ const MemoriaAnual = () => {
   };
 
   const handleAddPatente = () => {
-    setFormData({
-      ...formData,
-      patentes: [...formData.patentes, { titulo: '', numero: '', fecha: '', estado: '' }],
-    });
+    setShowPatenteModal(true);
   };
 
-  const handleRemovePatente = async (id) => {
+  const handleCreatePatente = async () => {
+    try {
+      // Validar campos requeridos
+      if (!newPatenteData.descripcion.trim()) {
+        alert('La descripción es requerida');
+        return;
+      }
+      if (!newPatenteData.GrupoInvestigacion) {
+        alert('Debe seleccionar un grupo de investigación');
+        return;
+      }
+
+      // Crear la patente en el backend
+      const patenteCreada = await crearPatente({
+        descripcion: newPatenteData.descripcion,
+        tipo: newPatenteData.tipo,
+        numero: newPatenteData.numero,
+        fecha: newPatenteData.fecha || null,
+        inventor: newPatenteData.inventor,
+        GrupoInvestigacion: newPatenteData.GrupoInvestigacion
+      });
+
+      console.log('Patente creada:', patenteCreada);
+
+      // Recargar la lista de patentes disponibles
+      await loadPatentesDisponibles();
+
+      // Agregar automáticamente a la grilla con temp: true
+      const nuevaPatente = {
+        oidPatente: patenteCreada.oidPatente || patenteCreada.id,
+        descripcion: patenteCreada.descripcion,
+        tipo: patenteCreada.tipo,
+        numero: patenteCreada.numero,
+        fecha: patenteCreada.fecha,
+        inventor: patenteCreada.inventor,
+        temp: true
+      };
+
+      setFormData(prev => ({
+        ...prev,
+        patentes: [...prev.patentes, nuevaPatente]
+      }));
+
+      // Limpiar formulario y cerrar modal
+      setNewPatenteData({
+        descripcion: '',
+        tipo: '',
+        numero: '',
+        fecha: '',
+        inventor: '',
+        GrupoInvestigacion: null
+      });
+      setShowPatenteModal(false);
+
+      alert('Patente creada y agregada exitosamente');
+    } catch (error) {
+      console.error('Error creando patente:', error);
+      alert('Error al crear la patente: ' + error.message);
+    }
+  };
+
+  const handleRemovePatente = async (index) => {
+    const patente = formData.patentes[index];
+    
+    // Si es temporal, solo eliminar de la lista local
+    if (patente.temp) {
+      setFormData(prev => ({
+        ...prev,
+        patentes: prev.patentes.filter((_, i) => i !== index)
+      }));
+      return;
+    }
+
+    // Si no es temporal, eliminar del backend
     if (!window.confirm('¿Estás seguro de eliminar esta patente?')) return;
 
     try {
-      await fetch(`${API_BASE_URL}/memorias-patentes/${id}/`, {
-        method: 'DELETE'
-      });
+      const id = patente.oidPatente || patente.id;
+      await eliminarPatente(id);
       setFormData(prev => ({
         ...prev,
-        patentes: prev.patentes.filter(p => p.oidPatenteMemoria !== id)
+        patentes: prev.patentes.filter((_, i) => i !== index)
       }));
       console.log('Patente eliminada');
     } catch (error) {
       console.error('Error eliminando patente:', error);
+      alert('Error al eliminar la patente: ' + error.message);
     }
   };
 
-  const handlePatenteChange = async (id, field, value) => {
-    const patente = formData.patentes.find(p => p.oidPatenteMemoria === id);
-    const updated = { ...patente, [field]: value };
+  const handlePatenteChange = (index, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      patentes: prev.patentes.map((p, i) => 
+        i === index ? { ...p, [field]: value } : p
+      )
+    }));
+  };
+
+  const handleSavePatente = async (index) => {
+    const patente = formData.patentes[index];
+    
+    // Si es temporal, no guardar en backend
+    if (patente.temp) {
+      alert('Esta patente aún no está guardada. Se guardará al guardar la memoria.');
+      return;
+    }
 
     try {
-      const res = await fetch(`${API_BASE_URL}/memorias-patentes/${id}/`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updated)
-      });
-      const data = await res.json();
-      setFormData(prev => ({
-        ...prev,
-        patentes: prev.patentes.map(p => p.oidPatenteMemoria === id ? data : p)
-      }));
+      const id = patente.oidPatente || patente.id;
+      const dataToUpdate = {
+        descripcion: patente.descripcion,
+        tipo: patente.tipo,
+        numero: patente.numero,
+        fecha: patente.fecha || null,
+        inventor: patente.inventor,
+        GrupoInvestigacion: patente.GrupoInvestigacion
+      };
+      
+      await actualizarPatente(id, dataToUpdate);
+      alert('Patente actualizada correctamente');
     } catch (error) {
       console.error('Error actualizando patente:', error);
+      alert('Error al actualizar la patente: ' + error.message);
     }
   };
 
@@ -1236,22 +1748,11 @@ const MemoriaAnual = () => {
     <div className="memoria-anual-container">
       <div className="memoria-header">
         <h1>Crear Memoria Anual</h1>
-        <button 
-          className="btn-add" 
-          onClick={saveMemoriaData}
-          style={{ 
-            padding: '10px 20px',
-            fontSize: '16px',
-            fontWeight: 'bold'
-          }}
-        >
-          {memoriaId ? 'Actualizar Memoria Anual' : 'Guardar Memoria Anual'}
-        </button>
       </div>
 
       <div className="tabs-container">
         <div className="tabs-header">
-          {tabs.map((tab) => (
+          {tabs.filter(tab => activeTab !== 'guardar' || tab.id === 'guardar').map((tab) => (
             <button
               key={tab.id}
               className={`tab-button ${activeTab === tab.id ? 'active' : ''}`}
@@ -1960,16 +2461,16 @@ const MemoriaAnual = () => {
                   <input
                     type="text"
                     placeholder="Buscar publicación por título o revista..."
-                    value={searchTerms.publicaciones}
+                    value={publicacionesDropdownSearch}
                     onChange={(e) => {
-                      setSearchTerms({...searchTerms, publicaciones: e.target.value});
-                      setShowPublicacionesSearchDropdown(e.target.value.trim().length > 0);
+                      setPublicacionesDropdownSearch(e.target.value);
+                      setShowPublicacionesSearchDropdown(true);
                     }}
-                    onFocus={() => searchTerms.publicaciones.trim() && setShowPublicacionesSearchDropdown(true)}
+                    onFocus={() => setShowPublicacionesSearchDropdown(true)}
                     style={{ border: 'none', outline: 'none', flex: 1, fontSize: '14px' }}
                   />
                 </div>
-                {showPublicacionesSearchDropdown && searchTerms.publicaciones.trim() && (
+                {showPublicacionesSearchDropdown && (
                   <div style={{
                     position: 'absolute',
                     top: '100%',
@@ -1985,16 +2486,23 @@ const MemoriaAnual = () => {
                     boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
                   }}>
                     {(() => {
-                      const term = searchTerms.publicaciones.toLowerCase();
-                      const filtrados = getPublicacionesDisponibles().filter(p =>
-                        (p.titulo && p.titulo.toLowerCase().includes(term)) ||
-                        (p.nombreRevista && p.nombreRevista.toLowerCase().includes(term))
-                      );
+                      const term = publicacionesDropdownSearch.toLowerCase().trim();
+                      const disponibles = getPublicacionesDisponibles();
+                      const filtrados = term 
+                        ? disponibles.filter(p =>
+                            (p.titulo && p.titulo.toLowerCase().includes(term)) ||
+                            (p.nombreRevista && p.nombreRevista.toLowerCase().includes(term))
+                          )
+                        : disponibles;
+                      
                       return filtrados.length > 0 ? (
                         filtrados.map((publicacion) => (
                           <div
                             key={publicacion.oidTrabajoPublicado || publicacion.id}
-                            onClick={() => handleSelectPublicacionFromSearch(publicacion)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSelectPublicacionFromSearch(publicacion);
+                            }}
                             style={{
                               padding: '10px',
                               cursor: 'pointer',
@@ -2011,7 +2519,7 @@ const MemoriaAnual = () => {
                         ))
                       ) : (
                         <div style={{ padding: '10px', color: '#999', textAlign: 'center' }}>
-                          No se encontraron publicaciones
+                          {term ? `No se encontraron publicaciones para "${publicacionesDropdownSearch}"` : 'Escribe para buscar publicaciones'}
                         </div>
                       );
                     })()}
@@ -2027,6 +2535,7 @@ const MemoriaAnual = () => {
                 <tr>
                   <th>Título</th>
                   <th>Revista</th>
+                  <th>Estado</th>
                   <th>Acción</th>
                 </tr>
               </thead>
@@ -2046,6 +2555,7 @@ const MemoriaAnual = () => {
                         <tr key={publicacionId || originalIndex}>
                           <td>{publicacion.titulo || '-'}</td>
                           <td>{publicacion.nombreRevista || '-'}</td>
+                          <td>{publicacion.estado || '-'}</td>
                           <td>
                             <button
                               type="button"
@@ -2061,7 +2571,7 @@ const MemoriaAnual = () => {
                     })
                   ) : (
                     <tr>
-                      <td colSpan="3" style={{ textAlign: 'center', padding: '20px' }}>
+                      <td colSpan="4" style={{ textAlign: 'center', padding: '20px' }}>
                         {searchTerms.publicaciones.trim() ? (
                           `No se encontraron resultados para "${searchTerms.publicaciones}"`
                         ) : (
@@ -2124,263 +2634,572 @@ const MemoriaAnual = () => {
 
           {activeTab === 'patentes' && (
             <div className="tab-content">
-              <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'center' }}>
-                <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '4px', padding: '8px' }}>
-                  <Search size={18} style={{ marginRight: '8px', color: '#666' }} />
-                  <input
-                    type="text"
-                    placeholder="Buscar patente por título, número o estado..."
-                    value={searchTerms.patentes}
-                    onChange={(e) => setSearchTerms({...searchTerms, patentes: e.target.value})}
-                    style={{ border: 'none', outline: 'none', flex: 1, fontSize: '14px' }}
-                  />
+              <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'stretch' }}>
+                <div ref={patentesSearchRef} style={{ flex: 1, position: 'relative' }}>
+                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '4px', padding: '8px' }}>
+                    <Search size={18} style={{ marginRight: '8px', color: '#666' }} />
+                    <input
+                      type="text"
+                      placeholder="Buscar patente por descripción, número o tipo..."
+                      value={searchTerms.patentes}
+                      onChange={(e) => {
+                        setSearchTerms({...searchTerms, patentes: e.target.value});
+                        setShowPatentesSearchDropdown(true);
+                      }}
+                      onFocus={() => setShowPatentesSearchDropdown(true)}
+                      style={{ border: 'none', outline: 'none', flex: 1, fontSize: '14px' }}
+                    />
+                  </div>
+                  {showPatentesSearchDropdown && (
+                    <div style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      right: 0,
+                      maxHeight: '280px',
+                      overflowY: 'auto',
+                      backgroundColor: '#fff',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      marginTop: '4px',
+                      zIndex: 1000,
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                    }}>
+                      {(() => {
+                        const term = searchTerms.patentes.toLowerCase().trim();
+                        const disponibles = getPatentesDisponibles();
+                        console.log('Patentes disponibles:', disponibles);
+                        const filtradas = term
+                          ? disponibles.filter(p => 
+                              (p.descripcion && p.descripcion.toLowerCase().includes(term)) ||
+                              (p.numero && p.numero.toLowerCase().includes(term)) ||
+                              (p.tipo && p.tipo.toLowerCase().includes(term))
+                            )
+                          : disponibles;
+                        
+                        console.log('Patentes filtradas:', filtradas);
+                        
+                        return filtradas.length > 0 ? (
+                          filtradas.map((patente) => (
+                            <div
+                              key={patente.oidPatente || patente.id}
+                              onClick={() => handleSelectPatenteFromSearch(patente)}
+                              style={{
+                                padding: '10px',
+                                cursor: 'pointer',
+                                borderBottom: '1px solid #f0f0f0'
+                              }}
+                              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#fff'}
+                            >
+                              <div style={{ fontWeight: '500' }}>{patente.descripcion}</div>
+                              <div style={{ fontSize: '12px', color: '#666' }}>
+                                Número: {patente.numero} | Tipo: {patente.tipo} | Fecha: {patente.fecha}
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div style={{ padding: '10px', color: '#999', textAlign: 'center' }}>
+                            {term ? `No se encontraron patentes para "${searchTerms.patentes}"` : 'Escribe para buscar patentes'}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
                 </div>
+                <button className="btn-add" onClick={handleAddPatente} style={{ whiteSpace: 'nowrap' }}>
+                  <Plus size={18} /> Agregar Patente
+                </button>
               </div>
-              <button className="btn-add" onClick={handleAddPatente}>
-                <Plus size={18} /> Agregar Patente
-              </button>
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>Título</th>
+                    <th>Descripción</th>
+                    <th>Tipo</th>
                     <th>Número</th>
                     <th>Fecha</th>
-                    <th>Estado</th>
+                    <th>Inventor</th>
                     <th>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filterPatentes().length > 0 ? (
-                    filterPatentes().map((patente, index) => {
-                      const originalIndex = formData.patentes.indexOf(patente);
-                      return (
-                        <tr key={originalIndex}>
-                          <td>
-                            <input
-                              type="text"
-                              value={patente.titulo}
-                              onChange={(e) => handlePatenteChange(originalIndex, 'titulo', e.target.value)}
-                              placeholder="Título"
-                            />
-                          </td>
-                          <td>
-                            <input
-                              type="text"
-                              value={patente.numero}
-                              onChange={(e) => handlePatenteChange(originalIndex, 'numero', e.target.value)}
-                              placeholder="Número"
-                            />
-                          </td>
-                          <td>
-                            <input
-                              type="date"
-                              value={patente.fecha}
-                              onChange={(e) => handlePatenteChange(originalIndex, 'fecha', e.target.value)}
-                            />
-                          </td>
-                          <td>
-                            <input
-                              type="text"
-                              value={patente.estado}
-                              onChange={(e) => handlePatenteChange(originalIndex, 'estado', e.target.value)}
-                              placeholder="Estado"
-                            />
-                          </td>
-                          <td>
-                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                              <button
-                                type="button"
-                                className="btn-edit"
-                                onClick={() => setEditingIndex(editingIndex === originalIndex ? null : originalIndex)}
-                                title="Editar"
+                  {(() => {
+                    const { currentPage, itemsPerPage } = patentesPagination;
+                    const startIndex = (currentPage - 1) * itemsPerPage;
+                    const endIndex = startIndex + itemsPerPage;
+                    const filteredPatentes = filterPatentes();
+                    const paginatedPatentes = filteredPatentes.slice(startIndex, endIndex);
+                    
+                    return paginatedPatentes.length > 0 ? (
+                      paginatedPatentes.map((patente, paginatedIndex) => {
+                        const originalIndex = formData.patentes.indexOf(patente);
+                        return (
+                          <tr key={originalIndex}>
+                            <td>
+                              <input
+                                type="text"
+                                value={patente.descripcion}
+                                onChange={(e) => handlePatenteChange(originalIndex, 'descripcion', e.target.value)}
+                                placeholder="Descripción"
+                              />
+                            </td>
+                            <td>
+                              <select
+                                value={patente.tipo}
+                                onChange={(e) => handlePatenteChange(originalIndex, 'tipo', e.target.value)}
+                                style={{ width: '100%', padding: '8px' }}
                               >
-                                <Edit size={16} />
-                              </button>
-                              <button
-                                type="button"
-                                className="btn-delete"
-                                onClick={() => handleRemovePatente(originalIndex)}
-                                title="Eliminar"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  ) : (
-                    <tr>
-                      <td colSpan="5" style={{ textAlign: 'center', padding: '20px' }}>
-                        {searchTerms.patentes.trim() ? (
-                          <div>
-                            <p style={{ marginBottom: '10px' }}>No se encontraron resultados para "{searchTerms.patentes}"</p>
-                            <button className="btn-add" onClick={handleAddPatente}>
-                              <Plus size={18} /> Agregar Nueva Patente
-                            </button>
-                          </div>
-                        ) : (
-                          <p>No hay patentes registradas</p>
-                        )}
-                      </td>
-                    </tr>
-                  )}
+                                <option value="">Seleccionar tipo</option>
+                                <option value="Patente Activa">Patente Activa</option>
+                                <option value="Patente en Trámite">Patente en Trámite</option>
+                                <option value="Patente Expirada">Patente Expirada</option>
+                              </select>
+                            </td>
+                            <td>
+                              <input
+                                type="text"
+                                value={patente.numero}
+                                onChange={(e) => handlePatenteChange(originalIndex, 'numero', e.target.value)}
+                                placeholder="Número"
+                              />
+                            </td>
+                            <td>
+                              <input
+                                type="date"
+                                value={patente.fecha}
+                                onChange={(e) => handlePatenteChange(originalIndex, 'fecha', e.target.value)}
+                              />
+                            </td>
+                            <td>
+                              <input
+                                type="text"
+                                value={patente.inventor}
+                                onChange={(e) => handlePatenteChange(originalIndex, 'inventor', e.target.value)}
+                                placeholder="Inventor"
+                              />
+                            </td>
+                            <td>
+                              <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                                {!patente.temp && (
+                                  <button
+                                    type="button"
+                                    className="btn-edit"
+                                    onClick={() => handleSavePatente(originalIndex)}
+                                    title="Guardar cambios"
+                                    style={{ backgroundColor: '#4CAF50' }}
+                                  >
+                                    💾
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  className="btn-delete"
+                                  onClick={() => handleRemovePatente(originalIndex)}
+                                  title="Eliminar"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    ) : (
+                      <tr>
+                        <td colSpan="5" style={{ textAlign: 'center', padding: '20px' }}>
+                          {searchTerms.patentes.trim() ? (
+                            `No se encontraron resultados para "${searchTerms.patentes}"`
+                          ) : (
+                            'No hay patentes registradas'
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })()}
                 </tbody>
               </table>
+              {(() => {
+                const filteredPatentes = filterPatentes();
+                return filteredPatentes.length > patentesPagination.itemsPerPage && (
+                  <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center', gap: '10px' }}>
+                    <button
+                      className="btn-pagination"
+                      onClick={() => setPatentesPagination(prev => ({
+                        ...prev,
+                        currentPage: Math.max(1, prev.currentPage - 1)
+                      }))}
+                      disabled={patentesPagination.currentPage === 1}
+                      style={{
+                        padding: '8px 16px',
+                        backgroundColor: patentesPagination.currentPage === 1 ? '#ccc' : '#c49acc',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: patentesPagination.currentPage === 1 ? 'not-allowed' : 'pointer'
+                      }}
+                    >
+                      Anterior
+                    </button>
+                    <span style={{ padding: '8px 16px', display: 'flex', alignItems: 'center' }}>
+                      Página {patentesPagination.currentPage} de {Math.ceil(filteredPatentes.length / patentesPagination.itemsPerPage)}
+                    </span>
+                    <button
+                      className="btn-pagination"
+                      onClick={() => setPatentesPagination(prev => ({
+                        ...prev,
+                        currentPage: Math.min(Math.ceil(filteredPatentes.length / prev.itemsPerPage), prev.currentPage + 1)
+                      }))}
+                      disabled={patentesPagination.currentPage >= Math.ceil(filteredPatentes.length / patentesPagination.itemsPerPage)}
+                      style={{
+                        padding: '8px 16px',
+                        backgroundColor: patentesPagination.currentPage >= Math.ceil(filteredPatentes.length / patentesPagination.itemsPerPage) ? '#ccc' : '#c49acc',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: patentesPagination.currentPage >= Math.ceil(filteredPatentes.length / patentesPagination.itemsPerPage) ? 'not-allowed' : 'pointer'
+                      }}
+                    >
+                      Siguiente
+                    </button>
+                  </div>
+                );
+              })()}
             </div>
           )}
 
           {activeTab === 'proyectos' && (
             <div className="tab-content">
-              <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'center' }}>
-                <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '4px', padding: '8px' }}>
-                  <Search size={18} style={{ marginRight: '8px', color: '#666' }} />
-                  <input
-                    type="text"
-                    placeholder="Buscar proyecto por nombre, estado o responsable..."
-                    value={searchTerms.proyectos}
-                    onChange={(e) => setSearchTerms({...searchTerms, proyectos: e.target.value})}
-                    style={{ border: 'none', outline: 'none', flex: 1, fontSize: '14px' }}
-                  />
+              <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'stretch' }}>
+                <div ref={proyectosSearchRef} style={{ flex: 1, position: 'relative' }}>
+                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '4px', padding: '8px' }}>
+                    <Search size={18} style={{ marginRight: '8px', color: '#666' }} />
+                    <input
+                      type="text"
+                      placeholder="Buscar proyecto por nombre o código..."
+                      value={searchTerms.proyectos}
+                      onChange={(e) => {
+                        setSearchTerms({...searchTerms, proyectos: e.target.value});
+                        setShowProyectosSearchDropdown(true);
+                      }}
+                      onFocus={() => setShowProyectosSearchDropdown(true)}
+                      style={{ border: 'none', outline: 'none', flex: 1, fontSize: '14px' }}
+                    />
+                  </div>
+                  {showProyectosSearchDropdown && (
+                    <div style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      right: 0,
+                      maxHeight: '280px',
+                      overflowY: 'auto',
+                      backgroundColor: '#fff',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      marginTop: '4px',
+                      zIndex: 1000,
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                    }}>
+                      {(() => {
+                        const term = searchTerms.proyectos.toLowerCase().trim();
+                        const disponibles = getProyectosDisponibles();
+                        console.log('Proyectos disponibles:', disponibles);
+                        const filtrados = term
+                          ? disponibles.filter(p => 
+                              (p.nombre && p.nombre.toLowerCase().includes(term)) ||
+                              (p.codigoProyecto && p.codigoProyecto.toLowerCase().includes(term)) ||
+                              (p.tipoProyecto && p.tipoProyecto.toLowerCase().includes(term))
+                            )
+                          : disponibles;
+                        
+                        console.log('Proyectos filtrados:', filtrados);
+                        
+                        return filtrados.length > 0 ? (
+                          filtrados.map((proyecto) => (
+                            <div
+                              key={proyecto.oidProyectoInvestigacion || proyecto.id}
+                              onClick={() => handleSelectProyectoFromSearch(proyecto)}
+                              style={{
+                                padding: '10px',
+                                cursor: 'pointer',
+                                borderBottom: '1px solid #f0f0f0'
+                              }}
+                              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#fff'}
+                            >
+                              <div style={{ fontWeight: '500' }}>{proyecto.nombre}</div>
+                              <div style={{ fontSize: '12px', color: '#666' }}>
+                                Código: {proyecto.codigoProyecto} | Tipo: {proyecto.tipoProyecto}
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div style={{ padding: '10px', color: '#999', textAlign: 'center' }}>
+                            {term ? `No se encontraron proyectos para "${searchTerms.proyectos}"` : 'Escribe para buscar proyectos'}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
                 </div>
+                <button className="btn-add" onClick={handleAddProyecto} style={{ whiteSpace: 'nowrap' }}>
+                  <Plus size={18} /> Agregar Proyecto
+                </button>
               </div>
-              <button className="btn-add" onClick={handleAddProyecto}>
-                <Plus size={18} /> Agregar Proyecto
-              </button>
               <table className="data-table">
                 <thead>
                   <tr>
                     <th>Nombre</th>
-                    <th>Estado</th>
-                    <th>Inicio</th>
-                    <th>Fin</th>
-                    <th>Responsable</th>
-                    <th>Presupuesto</th>
-                    <th>Colaboradores</th>
-                    <th>Objetivos</th>
-                    <th>Resultados</th>
-                    <th>Acción</th>
+                    <th>Código</th>
+                    <th>Tipo Proyecto</th>
+                    <th>Fecha Inicio</th>
+                    <th>Fecha Finalización</th>
+                    <th>Descripción</th>
+                    <th>Logros</th>
+                    <th>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filterProyectos().length > 0 ? (
-                    filterProyectos().map((proyecto, index) => {
-                      const originalIndex = formData.proyectos.indexOf(proyecto);
-                      return (
-                        <tr key={originalIndex}>
-                          <td>
-                            <input
-                              type="text"
-                              value={proyecto.nombre}
-                              onChange={(e) => handleProyectoChange(originalIndex, 'nombre', e.target.value)}
-                            />
-                          </td>
-                          <td>
-                            <input
-                              type="text"
-                              value={proyecto.estado}
-                              onChange={(e) => handleProyectoChange(originalIndex, 'estado', e.target.value)}
-                            />
-                          </td>
-                          <td>
-                            <input
-                              type="date"
-                              value={proyecto.inicio}
-                              onChange={(e) => handleProyectoChange(originalIndex, 'inicio', e.target.value)}
-                            />
-                          </td>
-                          <td>
-                            <input
-                              type="date"
-                              value={proyecto.fin}
-                              onChange={(e) => handleProyectoChange(originalIndex, 'fin', e.target.value)}
-                            />
-                          </td>
-                          <td>
-                            <button
-                              type="button"
-                              className="btn-field-edit"
-                              onClick={() => openFieldModal(originalIndex, 'responsable', proyecto.responsable, proyecto.responsableTitulo)}
-                            >
-                              {proyecto.responsableTitulo || 'Responsable'}
-                            </button>
-                          </td>
-                          <td>
-                            <input
-                              type="text"
-                              value={proyecto.presupuesto}
-                              onChange={(e) => handleProyectoChange(originalIndex, 'presupuesto', e.target.value)}
-                            />
-                          </td>
-                          <td>
-                            <button
-                              type="button"
-                              className="btn-field-edit"
-                              onClick={() => openFieldModal(originalIndex, 'colaboradores', proyecto.colaboradores, proyecto.colaboradoresTitulo)}
-                            >
-                              {proyecto.colaboradoresTitulo || 'Colaboradores'}
-                            </button>
-                          </td>
-                          <td>
-                            <button
-                              type="button"
-                              className="btn-field-edit"
-                              onClick={() => openFieldModal(originalIndex, 'objetivos', proyecto.objetivos, proyecto.objetivosTitulo)}
-                            >
-                              {proyecto.objetivosTitulo || 'Objetivos'}
-                            </button>
-                          </td>
-                          <td>
-                            <button
-                              type="button"
-                              className="btn-field-edit"
-                              onClick={() => openFieldModal(originalIndex, 'resultados', proyecto.resultados, proyecto.resultadosTitulo)}
-                            >
-                              {proyecto.resultadosTitulo || 'Resultados'}
-                            </button>
-                          </td>
-                          <td>
-                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                              <button 
-                                className="btn-edit" 
-                                onClick={() => setEditingIndex({ ...editingIndex, proyectos: originalIndex })}
-                                title="Editar"
-                              >
-                                <Edit size={16} />
-                              </button>
-                              <button 
-                                className="btn-delete" 
-                                onClick={() => handleRemoveProyecto(originalIndex)}
-                                title="Eliminar"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  ) : (
-                    <tr>
-                      <td colSpan="10" style={{ textAlign: 'center', padding: '20px' }}>
-                        {searchTerms.proyectos.trim() ? (
-                          <div>
-                            <p style={{ marginBottom: '10px' }}>No se encontraron resultados para "{searchTerms.proyectos}"</p>
-                            <button className="btn-add" onClick={handleAddProyecto}>
-                              <Plus size={18} /> Agregar Nuevo Proyecto
-                            </button>
-                          </div>
-                        ) : (
-                          <p>No hay proyectos registrados</p>
-                        )}
-                      </td>
-                    </tr>
-                  )}
+                  {(() => {
+                    const { currentPage, itemsPerPage } = proyectosPagination;
+                    const startIndex = (currentPage - 1) * itemsPerPage;
+                    const endIndex = startIndex + itemsPerPage;
+                    const filteredProyectos = filterProyectos();
+                    const paginatedProyectos = filteredProyectos.slice(startIndex, endIndex);
+                    
+                    return paginatedProyectos.length > 0 ? (
+                      paginatedProyectos.map((proyecto, paginatedIndex) => {
+                        const originalIndex = formData.proyectos.indexOf(proyecto);
+                        return (
+                          <tr key={originalIndex}>
+                            <td>{proyecto.nombre || '-'}</td>
+                            <td>{proyecto.codigoProyecto || '-'}</td>
+                            <td>{proyecto.tipoProyecto || '-'}</td>
+                            <td>{proyecto.fechaInicio || '-'}</td>
+                            <td>{proyecto.fechaFinalizacion || '-'}</td>
+                            <td>{proyecto.descripcion || '-'}</td>
+                            <td>{proyecto.logrosObtenidos || '-'}</td>
+                            <td>
+                              <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                                <button 
+                                  className="btn-edit" 
+                                  onClick={() => handleEditProyecto(originalIndex)}
+                                  title="Editar"
+                                >
+                                  <Edit size={16} />
+                                </button>
+                                <button 
+                                  className="btn-delete" 
+                                  onClick={() => handleRemoveProyecto(originalIndex)}
+                                  title="Eliminar"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    ) : (
+                      <tr>
+                        <td colSpan="8" style={{ textAlign: 'center', padding: '20px' }}>
+                          {searchTerms.proyectos.trim() ? (
+                            `No se encontraron resultados para "${searchTerms.proyectos}"`
+                          ) : (
+                            'No hay proyectos registrados'
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })()}
                 </tbody>
               </table>
+              {(() => {
+                const filteredProyectos = filterProyectos();
+                return filteredProyectos.length > proyectosPagination.itemsPerPage && (
+                  <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center', gap: '10px' }}>
+                    <button
+                      className="btn-pagination"
+                      onClick={() => setProyectosPagination(prev => ({
+                        ...prev,
+                        currentPage: Math.max(1, prev.currentPage - 1)
+                      }))}
+                      disabled={proyectosPagination.currentPage === 1}
+                      style={{
+                        padding: '8px 16px',
+                        backgroundColor: proyectosPagination.currentPage === 1 ? '#ccc' : '#c49acc',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: proyectosPagination.currentPage === 1 ? 'not-allowed' : 'pointer'
+                      }}
+                    >
+                      Anterior
+                    </button>
+                    <span style={{ padding: '8px 16px', display: 'flex', alignItems: 'center' }}>
+                      Página {proyectosPagination.currentPage} de {Math.ceil(filteredProyectos.length / proyectosPagination.itemsPerPage)}
+                    </span>
+                    <button
+                      className="btn-pagination"
+                      onClick={() => setProyectosPagination(prev => ({
+                        ...prev,
+                        currentPage: Math.min(Math.ceil(filteredProyectos.length / prev.itemsPerPage), prev.currentPage + 1)
+                      }))}
+                      disabled={proyectosPagination.currentPage >= Math.ceil(filteredProyectos.length / proyectosPagination.itemsPerPage)}
+                      style={{
+                        padding: '8px 16px',
+                        backgroundColor: proyectosPagination.currentPage >= Math.ceil(filteredProyectos.length / proyectosPagination.itemsPerPage) ? '#ccc' : '#c49acc',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: proyectosPagination.currentPage >= Math.ceil(filteredProyectos.length / proyectosPagination.itemsPerPage) ? 'not-allowed' : 'pointer'
+                      }}
+                    >
+                      Siguiente
+                    </button>
+                  </div>
+                );
+              })()}
             </div>
           )}
         </div>
+
+        {/* Tab Guardar */}
+        {activeTab === 'guardar' && (
+          <div className="tab-content" style={{ 
+            maxHeight: 'calc(100vh - 200px)', 
+            overflowY: 'auto',
+            padding: '20px'
+          }}>
+            <div style={{ 
+              maxWidth: '800px', 
+              margin: '0 auto', 
+              padding: '40px', 
+              textAlign: 'center',
+              backgroundColor: '#fff',
+              borderRadius: '8px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+            }}>
+              <h2 style={{ marginBottom: '20px', color: '#333' }}>Guardar Memoria Anual</h2>
+              
+              <div style={{ 
+                backgroundColor: '#fff3cd', 
+                border: '1px solid #ffc107',
+                borderRadius: '8px',
+                padding: '20px',
+                marginBottom: '30px',
+                textAlign: 'left'
+              }}>
+                <h3 style={{ color: '#856404', marginBottom: '15px', fontSize: '18px' }}>
+                  Antes de guardar, verifique:
+                </h3>
+                <ul style={{ color: '#856404', lineHeight: '1.8', marginLeft: '20px' }}>
+                  <li>Que haya completado todos los campos del tab "General e Integrantes"</li>
+                  <li>Que haya agregado todos los integrantes necesarios</li>
+                  <li>Que haya registrado todos los trabajos realizados</li>
+                  <li>Que haya incluido todas las actividades desarrolladas</li>
+                  <li>Que haya agregado todas las publicaciones del año</li>
+                  <li>Que haya registrado todas las patentes correspondientes</li>
+                  <li>Que haya incluido todos los proyectos de investigación</li>
+                </ul>
+              </div>
+
+              <div style={{ 
+                backgroundColor: '#f8f9fa',
+                borderRadius: '8px',
+                padding: '20px',
+                marginBottom: '30px',
+                textAlign: 'left'
+              }}>
+                <h3 style={{ color: '#333', marginBottom: '15px', fontSize: '18px' }}>
+                  Resumen de la Memoria
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                  <div style={{ padding: '10px', backgroundColor: '#fff', borderRadius: '4px' }}>
+                    <strong>Año:</strong> {formData.ano}
+                  </div>
+                  <div style={{ padding: '10px', backgroundColor: '#fff', borderRadius: '4px' }}>
+                    <strong>Grupo:</strong> {formData.grupo ? 
+                      grupos.find(g => g.oidGrupoInvestigacion === parseInt(formData.grupo))?.nombre : 'No seleccionado'}
+                  </div>
+                  <div style={{ padding: '10px', backgroundColor: '#fff', borderRadius: '4px' }}>
+                    <strong>Integrantes:</strong> {formData.integrantes?.length || 0}
+                  </div>
+                  <div style={{ padding: '10px', backgroundColor: '#fff', borderRadius: '4px' }}>
+                    <strong>Trabajos:</strong> {formData.trabajos?.length || 0}
+                  </div>
+                  <div style={{ padding: '10px', backgroundColor: '#fff', borderRadius: '4px' }}>
+                    <strong>Actividades:</strong> {formData.actividades?.length || 0}
+                  </div>
+                  <div style={{ padding: '10px', backgroundColor: '#fff', borderRadius: '4px' }}>
+                    <strong>Publicaciones:</strong> {formData.publicaciones?.length || 0}
+                  </div>
+                  <div style={{ padding: '10px', backgroundColor: '#fff', borderRadius: '4px' }}>
+                    <strong>Patentes:</strong> {formData.patentes?.length || 0}
+                  </div>
+                  <div style={{ padding: '10px', backgroundColor: '#fff', borderRadius: '4px' }}>
+                    <strong>Proyectos:</strong> {formData.proyectos?.length || 0}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ 
+                backgroundColor: '#f3e5f5',
+                border: '1px solid #c49acc',
+                borderRadius: '8px',
+                padding: '20px',
+                marginBottom: '30px'
+              }}>
+                <h3 style={{ color: '#7b1fa2', marginBottom: '10px', fontSize: '16px' }}>
+                  ¿Está seguro que desea guardar la memoria anual?
+                </h3>
+                <p style={{ color: '#7b1fa2', margin: '0' }}>
+                  Esta acción creará un registro permanente de la memoria anual del año {formData.ano}.
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', gap: '20px', justifyContent: 'center', alignItems: 'center' }}>
+                <button 
+                  onClick={() => setActiveTab('general')}
+                  style={{
+                    backgroundColor: '#6c757d',
+                    color: '#fff',
+                    border: 'none',
+                    padding: '15px 30px',
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.3s'
+                  }}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = '#5a6268'}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = '#6c757d'}
+                >
+                  ← Revisar Datos
+                </button>
+                
+                <button 
+                  onClick={handleGuardarMemoria}
+                  style={{
+                    backgroundColor: '#c49acc',
+                    color: '#fff',
+                    border: 'none',
+                    padding: '15px 40px',
+                    fontSize: '18px',
+                    fontWeight: 'bold',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.3s'
+                  }}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = '#b388c4'}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = '#c49acc'}
+                >
+                  Guardar Memoria Anual
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Modal para agregar integrante */}
         {showIntegranteModal && (
@@ -2718,7 +3537,7 @@ const MemoriaAnual = () => {
                       style={{ width: '100%', padding: '8px', fontSize: '14px' }}
                     >
                       <option value="">Seleccionar tipo</option>
-                      {opcionesPerfil?.tiposTrabajoPublicado?.map(tipo => (
+                      {tiposTrabajoPublicado.map(tipo => (
                         <option key={tipo.oidTipoDeTrabajoPublicado} value={tipo.oidTipoDeTrabajoPublicado}>
                           {tipo.nombre}
                         </option>
@@ -2733,7 +3552,7 @@ const MemoriaAnual = () => {
                       style={{ width: '100%', padding: '8px', fontSize: '14px' }}
                     >
                       <option value="">Seleccionar autor</option>
-                      {opcionesPerfil?.autores?.map(autor => (
+                      {autores.map(autor => (
                         <option key={autor.oidAutor} value={autor.oidAutor}>
                           {autor.nombre} {autor.apellido}
                         </option>
@@ -2760,6 +3579,217 @@ const MemoriaAnual = () => {
               <div className="field-modal-footer">
                 <button className="btn-cancel" onClick={() => setShowPublicacionModal(false)}>Cancelar</button>
                 <button className="btn-save" onClick={handleCreatePublicacion}>Crear y Agregar</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showPatenteModal && (
+          <div className="field-modal-overlay" onClick={() => setShowPatenteModal(false)}>
+            <div className="field-modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+              <div className="field-modal-header">
+                <h3>Crear Patente</h3>
+                <button className="field-modal-close" onClick={() => setShowPatenteModal(false)}>×</button>
+              </div>
+              <div className="field-modal-body">
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                    <label>Descripción *</label>
+                    <textarea
+                      value={newPatenteData.descripcion}
+                      onChange={(e) => setNewPatenteData({...newPatenteData, descripcion: e.target.value})}
+                      placeholder="Descripción de la patente"
+                      rows="3"
+                      style={{ width: '100%', padding: '8px', fontSize: '14px', resize: 'vertical' }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Tipo</label>
+                    <select
+                      value={newPatenteData.tipo}
+                      onChange={(e) => setNewPatenteData({...newPatenteData, tipo: e.target.value})}
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    >
+                      <option value="">Seleccionar tipo</option>
+                      <option value="Patente Activa">Patente Activa</option>
+                      <option value="Patente en Trámite">Patente en Trámite</option>
+                      <option value="Patente Expirada">Patente Expirada</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Número</label>
+                    <input
+                      type="text"
+                      value={newPatenteData.numero}
+                      onChange={(e) => setNewPatenteData({...newPatenteData, numero: e.target.value})}
+                      placeholder="Número de patente"
+                      maxLength="100"
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Fecha</label>
+                    <input
+                      type="date"
+                      value={newPatenteData.fecha}
+                      onChange={(e) => setNewPatenteData({...newPatenteData, fecha: e.target.value})}
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Inventor</label>
+                    <input
+                      type="text"
+                      value={newPatenteData.inventor}
+                      onChange={(e) => setNewPatenteData({...newPatenteData, inventor: e.target.value})}
+                      placeholder="Nombre del inventor"
+                      maxLength="200"
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Grupo de Investigación *</label>
+                    <select
+                      value={newPatenteData.GrupoInvestigacion || ''}
+                      onChange={(e) => setNewPatenteData({...newPatenteData, GrupoInvestigacion: e.target.value ? parseInt(e.target.value) : null})}
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    >
+                      <option value="">Seleccionar grupo</option>
+                      {grupos.map(grupo => (
+                        <option key={grupo.oidGrupoInvestigacion} value={grupo.oidGrupoInvestigacion}>
+                          {grupo.nombre}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div className="field-modal-footer">
+                <button className="btn-cancel" onClick={() => setShowPatenteModal(false)}>Cancelar</button>
+                <button className="btn-save" onClick={handleCreatePatente}>Crear y Agregar</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showProyectoModal && (
+          <div className="field-modal-overlay" onClick={() => setShowProyectoModal(false)}>
+            <div className="field-modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '700px' }}>
+              <div className="field-modal-header">
+                <h3>{editingProyectoIndex !== null ? 'Editar Proyecto de Investigación' : 'Crear Proyecto de Investigación'}</h3>
+                <button className="field-modal-close" onClick={() => setShowProyectoModal(false)}>×</button>
+              </div>
+              <div className="field-modal-body">
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div className="form-group">
+                    <label>Nombre del Proyecto *</label>
+                    <input
+                      type="text"
+                      value={newProyectoData.nombre}
+                      onChange={(e) => setNewProyectoData({...newProyectoData, nombre: e.target.value})}
+                      placeholder="Nombre del proyecto"
+                      maxLength="45"
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Código del Proyecto *</label>
+                    <input
+                      type="text"
+                      value={newProyectoData.codigoProyecto}
+                      onChange={(e) => setNewProyectoData({...newProyectoData, codigoProyecto: e.target.value})}
+                      placeholder="Código único"
+                      maxLength="50"
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    />
+                  </div>
+                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                    <label>Descripción</label>
+                    <textarea
+                      value={newProyectoData.descripcion}
+                      onChange={(e) => setNewProyectoData({...newProyectoData, descripcion: e.target.value})}
+                      placeholder="Descripción del proyecto"
+                      rows="3"
+                      maxLength="50"
+                      style={{ width: '100%', padding: '8px', fontSize: '14px', resize: 'vertical' }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Tipo de Proyecto</label>
+                    <select
+                      value={newProyectoData.tipoProyecto}
+                      onChange={(e) => setNewProyectoData({...newProyectoData, tipoProyecto: e.target.value})}
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    >
+                      <option value="">Seleccionar tipo</option>
+                      <option value="Investigación Básica">Investigación Básica</option>
+                      <option value="Investigación Aplicada">Investigación Aplicada</option>
+                      <option value="Desarrollo Tecnológico">Desarrollo Tecnológico</option>
+                      <option value="Transferencia Tecnológica">Transferencia Tecnológica</option>
+                      <option value="Extensión">Extensión</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Fuente de Financiamiento</label>
+                    <input
+                      type="text"
+                      value={newProyectoData.fuenteFinanciamiento}
+                      onChange={(e) => setNewProyectoData({...newProyectoData, fuenteFinanciamiento: e.target.value})}
+                      placeholder="Fuente de financiamiento"
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Fecha de Inicio</label>
+                    <input
+                      type="date"
+                      value={newProyectoData.fechaInicio}
+                      onChange={(e) => setNewProyectoData({...newProyectoData, fechaInicio: e.target.value})}
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Fecha de Finalización</label>
+                    <input
+                      type="date"
+                      value={newProyectoData.fechaFinalizacion}
+                      onChange={(e) => setNewProyectoData({...newProyectoData, fechaFinalizacion: e.target.value})}
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    />
+                  </div>
+                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                    <label>Logros Obtenidos</label>
+                    <textarea
+                      value={newProyectoData.logrosObtenidos}
+                      onChange={(e) => setNewProyectoData({...newProyectoData, logrosObtenidos: e.target.value})}
+                      placeholder="Logros y resultados obtenidos"
+                      rows="2"
+                      maxLength="50"
+                      style={{ width: '100%', padding: '8px', fontSize: '14px', resize: 'vertical' }}
+                    />
+                  </div>
+                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                    <label>Grupo de Investigación *</label>
+                    <select
+                      value={newProyectoData.GrupoInvestigacion || ''}
+                      onChange={(e) => setNewProyectoData({...newProyectoData, GrupoInvestigacion: e.target.value ? parseInt(e.target.value) : null})}
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    >
+                      <option value="">Seleccionar grupo</option>
+                      {grupos.map(grupo => (
+                        <option key={grupo.oidGrupoInvestigacion} value={grupo.oidGrupoInvestigacion}>
+                          {grupo.nombre}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div className="field-modal-footer">
+                <button className="btn-cancel" onClick={() => setShowProyectoModal(false)}>Cancelar</button>
+                <button className="btn-save" onClick={handleCreateProyecto}>
+                  {editingProyectoIndex !== null ? 'Guardar Cambios' : 'Crear y Agregar'}
+                </button>
               </div>
             </div>
           </div>

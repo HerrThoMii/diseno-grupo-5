@@ -11,6 +11,7 @@ import MemoriaPage from './pages/MemoriaPage'
 import RegistrosPage from './pages/RegistrosPage'
 import GrupoPage from './pages/GrupoPage'
 import AcercaDePage from './pages/AcercaDePage'
+import VerMemorias from './components/VerMemorias'
 import { getUser } from './services/api';
 
 function App() {
@@ -82,6 +83,7 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/trabajos" element={<TrabajosPage />} />
           <Route path="/memoria" element={<MemoriaPage />} />
+          <Route path="/ver-memorias" element={<VerMemorias />} />
           <Route path="/registros" element={<RegistrosPage />} />
           <Route path="/grupo" element={<GrupoPage />} />
           <Route path="/acerca-de" element={<AcercaDePage />} />

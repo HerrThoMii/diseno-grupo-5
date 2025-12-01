@@ -5,7 +5,9 @@ from .models import (
     Persona, ActividadDocente, InvestigadorDocente, BecarioPersonalFormacion,
     Investigador, DocumentacionBiblioteca, TrabajoPublicado, Autor, TipoTrabajoPublicado,
     ActividadTransferencia, ParteExterna, EquipamientoInfraestructura,
-    TrabajoPresentado, ActividadXPersona, Patente, TipoDeRegistro, Registro
+    TrabajoPresentado, ActividadXPersona, Patente, TipoDeRegistro, Registro,
+    MemoriaAnual, IntegranteMemoria, ActividadMemoria, PublicacionMemoria, 
+    PatenteMemoria, ProyectoMemoria
 )
 
 
@@ -286,3 +288,77 @@ class ActividadXPersonaSerializer(serializers.ModelSerializer):
             'Actividad',
             'persona'
         ]
+
+
+class IntegranteMemoriaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = IntegranteMemoria
+        fields = '__all__'
+
+
+class ActividadMemoriaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ActividadMemoria
+        fields = '__all__'
+
+
+class PublicacionMemoriaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PublicacionMemoria
+        fields = '__all__'
+
+
+class PatenteMemoriaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PatenteMemoria
+        fields = '__all__'
+
+
+class ProyectoMemoriaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProyectoMemoria
+        fields = '__all__'
+
+
+class MemoriaAnualSerializer(serializers.ModelSerializer):
+    director_nombre = serializers.SerializerMethodField()
+    vicedirector_nombre = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = MemoriaAnual
+        fields = [
+            'oidMemoriaAnual',
+            'ano',
+            'fechaCreacion',
+            'fechaModificacion',
+            'director',
+            'director_nombre',
+            'vicedirector',
+            'vicedirector_nombre',
+            'objetivosGenerales',
+            'objetivosEspecificos',
+            'actividadesRealizadas',
+            'resultadosObtenidos',
+            'GrupoInvestigacion'
+        ]
+        read_only_fields = ['oidMemoriaAnual', 'fechaCreacion', 'fechaModificacion']
+    
+    def get_director_nombre(self, obj):
+        if obj.director:
+            try:
+                from .models import Persona
+                persona = Persona.objects.get(oidpersona=int(obj.director))
+                return f"{persona.nombre} {persona.apellido}"
+            except (Persona.DoesNotExist, ValueError):
+                return obj.director
+        return None
+    
+    def get_vicedirector_nombre(self, obj):
+        if obj.vicedirector:
+            try:
+                from .models import Persona
+                persona = Persona.objects.get(oidpersona=int(obj.vicedirector))
+                return f"{persona.nombre} {persona.apellido}"
+            except (Persona.DoesNotExist, ValueError):
+                return obj.vicedirector
+        return None

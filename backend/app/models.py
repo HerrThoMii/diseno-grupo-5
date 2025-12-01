@@ -36,6 +36,9 @@ class Patente(models.Model):
     fecha = models.DateField(null=True, blank=True)
     inventor = models.CharField(max_length=200, blank=True)
 
+    def __str__(self):
+        return f"{self.descripcion} ({self.numero})"
+
 class TipoDeRegistro(models.Model):
     oidTipoDeRegistro = models.AutoField(primary_key=True, unique=True)
     nombre = models.CharField(max_length=100)
@@ -269,3 +272,96 @@ class ActividadXPersona(models.Model):
 
 class MemoriaAnual(models.Model):
     oidMemoriaAnual = models.AutoField(primary_key=True, unique=True)
+    ano = models.IntegerField()
+    fechaCreacion = models.DateTimeField(auto_now_add=True)
+    fechaModificacion = models.DateTimeField(auto_now=True)
+    
+    # Información General (Tab 1)
+    fechaInicio = models.DateField(null=True, blank=True)
+    fechaFin = models.DateField(null=True, blank=True)
+    
+    # Integrantes del Grupo (Tab 2)
+    director = models.CharField(max_length=200, blank=True)
+    vicedirector = models.CharField(max_length=200, blank=True)
+    
+    # Actividades Desarrolladas (Tab 3)
+    objetivosGenerales = models.TextField(blank=True)
+    objetivosEspecificos = models.TextField(blank=True)
+    actividadesRealizadas = models.TextField(blank=True)
+    resultadosObtenidos = models.TextField(blank=True)
+    
+    # Relaciones con otras tablas (many-to-many)
+    integrantes = models.ManyToManyField(Persona, through='IntegranteMemoria', related_name='memorias', blank=True)
+    actividades = models.ManyToManyField(Actividad, through='ActividadMemoria', related_name='memorias', blank=True)
+    publicaciones = models.ManyToManyField(TrabajoPublicado, through='PublicacionMemoria', related_name='memorias', blank=True)
+    patentes = models.ManyToManyField(Patente, through='PatenteMemoria', related_name='memorias', blank=True)
+    proyectos = models.ManyToManyField(ProyectoInvestigacion, through='ProyectoMemoria', related_name='memorias', blank=True)
+    
+    # Relación con el Grupo
+    GrupoInvestigacion = models.ForeignKey(GrupoInvestigacion, on_delete=models.CASCADE, related_name='memorias', null=True, blank=True)
+    
+    def __str__(self):
+        return f"Memoria Anual {self.ano} - {self.GrupoInvestigacion.nombre if self.GrupoInvestigacion else 'Sin grupo'}"
+
+
+class IntegranteMemoria(models.Model):
+    oidIntegranteMemoria = models.AutoField(primary_key=True, unique=True)
+    MemoriaAnual = models.ForeignKey(MemoriaAnual, on_delete=models.CASCADE)
+    Persona = models.ForeignKey(Persona, on_delete=models.CASCADE)
+    rol = models.CharField(max_length=100, blank=True)
+    dedicacion = models.CharField(max_length=100, blank=True)
+    
+    class Meta:
+        unique_together = ('MemoriaAnual', 'Persona')
+    
+    def __str__(self):
+        return f"{self.Persona.nombre} - {self.MemoriaAnual}"
+
+
+class ActividadMemoria(models.Model):
+    oidActividadMemoria = models.AutoField(primary_key=True, unique=True)
+    MemoriaAnual = models.ForeignKey(MemoriaAnual, on_delete=models.CASCADE)
+    Actividad = models.ForeignKey(Actividad, on_delete=models.CASCADE)
+    observaciones = models.TextField(blank=True)
+    
+    class Meta:
+        unique_together = ('MemoriaAnual', 'Actividad')
+    
+    def __str__(self):
+        return f"{self.Actividad.nombre} - {self.MemoriaAnual}"
+
+
+class PublicacionMemoria(models.Model):
+    oidPublicacionMemoria = models.AutoField(primary_key=True, unique=True)
+    MemoriaAnual = models.ForeignKey(MemoriaAnual, on_delete=models.CASCADE)
+    TrabajoPublicado = models.ForeignKey(TrabajoPublicado, on_delete=models.CASCADE)
+    
+    class Meta:
+        unique_together = ('MemoriaAnual', 'TrabajoPublicado')
+    
+    def __str__(self):
+        return f"{self.TrabajoPublicado.titulo} - {self.MemoriaAnual}"
+
+
+class PatenteMemoria(models.Model):
+    oidPatenteMemoria = models.AutoField(primary_key=True, unique=True)
+    MemoriaAnual = models.ForeignKey(MemoriaAnual, on_delete=models.CASCADE)
+    Patente = models.ForeignKey(Patente, on_delete=models.CASCADE)
+    
+    class Meta:
+        unique_together = ('MemoriaAnual', 'Patente')
+    
+    def __str__(self):
+        return f"{self.Patente.descripcion} - {self.MemoriaAnual}"
+
+
+class ProyectoMemoria(models.Model):
+    oidProyectoMemoria = models.AutoField(primary_key=True, unique=True)
+    MemoriaAnual = models.ForeignKey(MemoriaAnual, on_delete=models.CASCADE)
+    ProyectoInvestigacion = models.ForeignKey(ProyectoInvestigacion, on_delete=models.CASCADE)
+    
+    class Meta:
+        unique_together = ('MemoriaAnual', 'ProyectoInvestigacion')
+    
+    def __str__(self):
+        return f"{self.ProyectoInvestigacion.nombre} - {self.MemoriaAnual}"

@@ -291,6 +291,55 @@ export async function listarPatentes() {
     return json;
 }
 
+export async function listarProyectos() {
+    const response = await authenticatedFetch('http://localhost:8000/api/proyectos/');
+    const json = await response.json().catch(() => null);
+    if (!response.ok) {
+        const err = json ? JSON.stringify(json) : `HTTP ${response.status}`;
+        throw new Error(err);
+    }
+    return json;
+}
+
+export async function crearProyecto(data) {
+    const response = await authenticatedFetch('http://localhost:8000/api/proyectos/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+    const json = await response.json().catch(() => null);
+    if (!response.ok) {
+        const err = json ? JSON.stringify(json) : `HTTP ${response.status}`;
+        throw new Error(err);
+    }
+    return json;
+}
+
+export async function actualizarProyecto(id, data) {
+    const response = await authenticatedFetch(`http://localhost:8000/api/proyectos/${id}/`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+    const json = await response.json().catch(() => null);
+    if (!response.ok) {
+        const err = json ? JSON.stringify(json) : `HTTP ${response.status}`;
+        throw new Error(err);
+    }
+    return json;
+}
+
+export async function eliminarProyecto(id) {
+    const response = await authenticatedFetch(`http://localhost:8000/api/proyectos/${id}/`, {
+        method: 'DELETE'
+    });
+    if (!response.ok) {
+        const err = `HTTP ${response.status}`;
+        throw new Error(err);
+    }
+    return true;
+}
+
 export async function listarTipoRegistros() {
     const response = await authenticatedFetch('http://localhost:8000/api/tipo-registros/');
     const json = await response.json().catch(() => null);
