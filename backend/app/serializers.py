@@ -217,11 +217,16 @@ class DocumentacionBibliotecaSerializer(serializers.ModelSerializer):
 
 
 class TrabajoPublicadoSerializer(serializers.ModelSerializer):
+    # Campos anidados para lectura
+    Autor_detalle = AutorSerializer(source='Autor', read_only=True)
+    tipoTrabajoPublicado_detalle = TipoTrabajoPublicadoSerializer(source='tipoTrabajoPublicado', read_only=True)
+    GrupoInvestigacion_detalle = GrupoInvestigacionSerializer(source='GrupoInvestigacion', read_only=True)
+    
     class Meta:
         model = TrabajoPublicado
         fields = '__all__'
-        # estado is managed by backend and defaults to 'Realizado' — treat it as read-only for clients
-        read_only_fields = ['id', 'estado']
+        # Solo el oid es read-only, estado puede ser actualizado
+        read_only_fields = ['oidTrabajoPublicado']
 
 
 class ActividadTransferenciaSerializer(serializers.ModelSerializer):

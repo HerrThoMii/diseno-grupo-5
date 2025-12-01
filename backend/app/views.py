@@ -224,6 +224,7 @@ class DocumentacionBibliotecaViewSet(viewsets.ModelViewSet):
 class TrabajoPublicadoViewSet(viewsets.ModelViewSet):
     queryset = TrabajoPublicado.objects.all()
     serializer_class = TrabajoPublicadoSerializer
+    permission_classes = [AllowAny]
 
 
 class ActividadTransferenciaViewSet(viewsets.ModelViewSet):

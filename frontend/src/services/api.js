@@ -1,7 +1,7 @@
 import { authenticatedFetch } from '../utils/auth';
 
 // Configuración base de la API
-const API_BASE_URL = 'http://127.0.0.1:8000/api';
+const API_BASE_URL = 'http://localhost:8000/api';
 
 // Función para hacer login
 export const login = async (email, password) => {
@@ -35,14 +35,14 @@ export const login = async (email, password) => {
 
     // Guardar tokens en localStorage
     if (data.tokens) {
-      localStorage.setItem('access_token', data.tokens.access);
-      localStorage.setItem('refresh_token', data.tokens.refresh);
+      localStorage.setItem('authToken', data.tokens.access);
+      localStorage.setItem('refreshToken', data.tokens.refresh);
       console.log('Tokens guardados en localStorage');
     }
 
     // Guardar datos del usuario
     if (data.persona) {
-      localStorage.setItem('user', JSON.stringify(data.persona));
+      localStorage.setItem('userData', JSON.stringify(data.persona));
       console.log('Datos de usuario guardados');
     }
 
@@ -58,15 +58,15 @@ export const login = async (email, password) => {
 
 // Función para logout
 export const logout = () => {
-  localStorage.removeItem('access_token');
-  localStorage.removeItem('refresh_token');
-  localStorage.removeItem('user');
+  localStorage.removeItem('authToken');
+  localStorage.removeItem('refreshToken');
+  localStorage.removeItem('userData');
   console.log('Sesión cerrada y tokens eliminados');
 };
 
 // Función para obtener el token de acceso
 export const getAccessToken = () => {
-  return localStorage.getItem('access_token');
+  return localStorage.getItem('authToken');
 };
 
 // Función para verificar si hay sesión activa
@@ -76,7 +76,7 @@ export const isAuthenticated = () => {
 
 // Función para obtener datos del usuario
 export const getUser = () => {
-  const userStr = localStorage.getItem('user');
+  const userStr = localStorage.getItem('userData');
   return userStr ? JSON.parse(userStr) : null;
 };
 
@@ -136,7 +136,7 @@ export const actualizarPerfil = async (oidpersona, perfilData) => {
     
     // Actualizar datos en localStorage
     if (data.persona) {
-      localStorage.setItem('user', JSON.stringify(data.persona));
+      localStorage.setItem('userData', JSON.stringify(data.persona));
     }
     
     return data;
@@ -195,6 +195,31 @@ export async function listarTrabajosPublicados() {
         throw new Error(err);
     }
     return json;
+}
+
+export async function actualizarTrabajoPublicado(id, data) {
+    const response = await authenticatedFetch(`http://localhost:8000/api/trabajos-publicados/${id}/`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+    const json = await response.json().catch(() => null);
+    if (!response.ok) {
+        const err = json ? JSON.stringify(json) : `HTTP ${response.status}`;
+        throw new Error(err);
+    }
+    return json;
+}
+
+export async function eliminarTrabajoPublicado(id) {
+    const response = await authenticatedFetch(`http://localhost:8000/api/trabajos-publicados/${id}/`, {
+        method: 'DELETE'
+    });
+    if (!response.ok) {
+        const err = `HTTP ${response.status}`;
+        throw new Error(err);
+    }
+    return true;
 }
 
 export async function crearPatente(data) {
