@@ -128,7 +128,7 @@ class Persona(models.Model):
     horasSemanales = models.IntegerField()
     tipoDePersonal = models.ForeignKey(TipoDePersonal, on_delete=models.SET_NULL, null=True, blank=True)
     GrupoInvestigacion = models.ForeignKey(
-        GrupoInvestigacion, on_delete=models.CASCADE
+        GrupoInvestigacion, on_delete=models.CASCADE, null=True, blank=True
     )
 
     @property
@@ -265,3 +265,7 @@ class ActividadXPersona(models.Model):
 
     class Meta:
         unique_together = ("Actividad", "persona")
+
+
+class MemoriaAnual(models.Model):
+    oidMemoriaAnual = models.AutoField(primary_key=True, unique=True)

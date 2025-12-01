@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.hashers import make_password
-from .models import Persona, GrupoInvestigacion, TipoDePersonal, ProgramaActividades, TipoDeRegistro, TipoTrabajoPublicado
+from .models import Persona, GrupoInvestigacion, TipoDePersonal, ProgramaActividades, TipoDeRegistro, TipoTrabajoPublicado, LineaDeInvestigacion
 
 # Register your models here.
 
@@ -20,3 +20,4 @@ admin.site.register(TipoDePersonal)
 admin.site.register(ProgramaActividades)
 admin.site.register(TipoDeRegistro)
 admin.site.register(TipoTrabajoPublicado)
+admin.site.register(LineaDeInvestigacion)

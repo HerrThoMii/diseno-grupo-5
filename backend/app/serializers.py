@@ -142,6 +142,8 @@ class ActividadSerializer(serializers.ModelSerializer):
 
 
 class PersonaSerializer(serializers.ModelSerializer):
+    tipoDePersonalNombre = serializers.CharField(source='tipoDePersonal.nombre', read_only=True, allow_null=True)
+    
     class Meta:
         model = Persona
         fields = [
@@ -152,6 +154,7 @@ class PersonaSerializer(serializers.ModelSerializer):
             'apellido',
             'horasSemanales',
             'tipoDePersonal',
+            'tipoDePersonalNombre',
             'GrupoInvestigacion'
         ]
 

@@ -197,6 +197,16 @@ export async function listarTrabajosPublicados() {
     return json;
 }
 
+export async function listarPublicaciones() {
+    const response = await authenticatedFetch('http://localhost:8000/api/trabajos-publicados/?estado=Publicado');
+    const json = await response.json().catch(() => null);
+    if (!response.ok) {
+        const err = json ? JSON.stringify(json) : `HTTP ${response.status}`;
+        throw new Error(err);
+    }
+    return json;
+}
+
 export async function actualizarTrabajoPublicado(id, data) {
     const response = await authenticatedFetch(`http://localhost:8000/api/trabajos-publicados/${id}/`, {
         method: 'PUT',
@@ -307,6 +317,40 @@ export async function crearTrabajoPresentado(data) {
 
 export async function listarTrabajosPresentados() {
     const response = await authenticatedFetch('http://localhost:8000/api/trabajos-presentados/');
+    const json = await response.json().catch(() => null);
+    if (!response.ok) {
+        const err = json ? JSON.stringify(json) : `HTTP ${response.status}`;
+        throw new Error(err);
+    }
+    return json;
+}
+
+export async function listarActividades() {
+    const response = await authenticatedFetch('http://localhost:8000/api/actividades/');
+    const json = await response.json().catch(() => null);
+    if (!response.ok) {
+        const err = json ? JSON.stringify(json) : `HTTP ${response.status}`;
+        throw new Error(err);
+    }
+    return json;
+}
+
+export async function listarLineasInvestigacion() {
+    const response = await authenticatedFetch('http://localhost:8000/api/lineas-investigacion/');
+    const json = await response.json().catch(() => null);
+    if (!response.ok) {
+        const err = json ? JSON.stringify(json) : `HTTP ${response.status}`;
+        throw new Error(err);
+    }
+    return json;
+}
+
+export async function crearActividad(data) {
+    const response = await authenticatedFetch('http://localhost:8000/api/actividades/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
     const json = await response.json().catch(() => null);
     if (!response.ok) {
         const err = json ? JSON.stringify(json) : `HTTP ${response.status}`;
@@ -452,6 +496,40 @@ export async function crearGrupo(grupoData) {
 
 export async function obtenerGrupos() {
     const response = await authenticatedFetch('http://localhost:8000/api/grupos/');
+    const json = await response.json().catch(() => null);
+    if (!response.ok) {
+        const err = json ? JSON.stringify(json) : `HTTP ${response.status}`;
+        throw new Error(err);
+    }
+    return json;
+}
+
+export async function obtenerPersonas() {
+    const response = await authenticatedFetch('http://localhost:8000/api/auth/personas/');
+    const json = await response.json().catch(() => null);
+    if (!response.ok) {
+        const err = json ? JSON.stringify(json) : `HTTP ${response.status}`;
+        throw new Error(err);
+    }
+    return json.personas || json;
+}
+
+export async function crearPersona(personaData) {
+    const response = await authenticatedFetch('http://localhost:8000/api/personas/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(personaData)
+    });
+    const json = await response.json().catch(() => null);
+    if (!response.ok) {
+        const err = json ? JSON.stringify(json) : `HTTP ${response.status}`;
+        throw new Error(err);
+    }
+    return json;
+}
+
+export async function obtenerOpcionesPerfil() {
+    const response = await authenticatedFetch('http://localhost:8000/api/auth/opciones-perfil/');
     const json = await response.json().catch(() => null);
     if (!response.ok) {
         const err = json ? JSON.stringify(json) : `HTTP ${response.status}`;
