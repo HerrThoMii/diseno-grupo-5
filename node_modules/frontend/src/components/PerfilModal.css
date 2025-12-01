@@ -425,7 +425,8 @@
   background-color: #f9fafb;
 }
 
-.multi-select-option input[type="checkbox"] {
+.multi-select-option input[type="checkbox"],
+.multi-select-option input[type="radio"] {
   width: 18px;
   height: 18px;
   cursor: pointer;

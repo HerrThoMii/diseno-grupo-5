@@ -48,7 +48,7 @@ class Registro(models.Model):
     oidRegistro = models.AutoField(primary_key=True, unique=True)
     descripcion = models.TextField()
     TipoDeRegistro = models.ForeignKey(
-        TipoDeRegistro, on_delete=models.CASCADE
+        TipoDeRegistro, on_delete=models.CASCADE, null=True, blank=True
     )
     Patente = models.ForeignKey(
         Patente, on_delete=models.CASCADE
@@ -119,6 +119,36 @@ class TipoDePersonal(models.Model):
     def __str__(self):
         return self.nombre
 
+class GradoAcademico(models.Model):
+    nombre = models.CharField(max_length=100)
+    def __str__(self):
+        return self.nombre
+
+class CategoriaUtn(models.Model):
+    nombre = models.CharField(max_length=100)
+    def __str__(self):
+        return self.nombre
+
+class Dedicacion(models.Model):
+    nombre = models.CharField(max_length=100)
+    def __str__(self):
+        return self.nombre
+
+class ProgramaDeIncentivos(models.Model):
+    nombre = models.CharField(max_length=100)
+    def __str__(self):
+        return self.nombre
+
+class DenominacionCursoCatedra(models.Model):
+    nombre = models.CharField(max_length=200)
+    def __str__(self):
+        return self.nombre
+
+class RolDesempenado(models.Model):
+    nombre = models.CharField(max_length=100)
+    def __str__(self):
+        return self.nombre
+
 class Persona(models.Model):
     oidpersona = models.AutoField(primary_key=True, unique=True)
     nombre = models.CharField(max_length=45)
@@ -126,10 +156,20 @@ class Persona(models.Model):
     correo = models.EmailField(unique=True)
     contrasena = models.CharField(max_length=128)
     horasSemanales = models.IntegerField()
-    tipoDePersonal = models.ForeignKey(TipoDePersonal, on_delete=models.SET_NULL, null=True, blank=True)
+    tipoDePersonal = models.ManyToManyField(TipoDePersonal, blank=True)
     GrupoInvestigacion = models.ForeignKey(
         GrupoInvestigacion, on_delete=models.CASCADE
     )
+    # Información Académica
+    gradoAcademico = models.ManyToManyField(GradoAcademico, blank=True)
+    categoriaUtn = models.ManyToManyField(CategoriaUtn, blank=True)
+    dedicacion = models.ForeignKey(Dedicacion, on_delete=models.SET_NULL, null=True, blank=True)
+    programaDeIncentivos = models.ForeignKey(ProgramaDeIncentivos, on_delete=models.SET_NULL, null=True, blank=True)
+    # Actividad Docente
+    denominacionCursoCatedra = models.ManyToManyField(DenominacionCursoCatedra, blank=True)
+    rolDesempenado = models.ManyToManyField(RolDesempenado, blank=True)
+    fechaPeriodoDictadoInicio = models.DateField(blank=True, null=True)
+    fechaPeriodoDictadoFin = models.DateField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.nombre} {self.apellido}"
