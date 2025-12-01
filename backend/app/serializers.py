@@ -151,6 +151,7 @@ class PersonaSerializer(serializers.ModelSerializer):
             'contrasena',
             'apellido',
             'horasSemanales',
+            'imagenPerfil',
             'tipoDePersonal',
             'GrupoInvestigacion'
         ]

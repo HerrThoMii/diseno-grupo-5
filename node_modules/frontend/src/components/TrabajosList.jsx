@@ -1,97 +1,123 @@
-import React, { useState } from 'react';
-import { Search, Plus, Edit, Trash2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Plus, Pencil, Trash2 } from 'lucide-react';
 import './TrabajosList.css';
-import AgregarTrabajoRealizadoModal from './AgregarTrabajoRealizadoModal';
-import AgregarTrabajoPublicadoModal from './AgregarTrabajoPublicadoModal';
+import AgregarTrabajoRealizado from './AgregarTrabajoRealizado';
+import EditarTrabajoModal from './EditarTrabajoModal';
+import { listarTrabajosPublicados, eliminarTrabajoPublicado, actualizarTrabajoPublicado } from '../services/api';
 
 function TrabajosList() {
   const [activeTab, setActiveTab] = useState('realizados');
   const [searchTerm, setSearchTerm] = useState('');
-  const [showRealizadoModal, setShowRealizadoModal] = useState(false);
-  const [showPublicadoModal, setShowPublicadoModal] = useState(false);
+  const [showAgregarRealizado, setShowAgregarRealizado] = useState(false);
+  const [showEditarModal, setShowEditarModal] = useState(false);
+  const [trabajoAEditar, setTrabajoAEditar] = useState(null);
+  const [trabajosRealizados, setTrabajosRealizados] = useState([]);
+  const [trabajosPublicados, setTrabajosPublicados] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const [trabajosRealizados, setTrabajosRealizados] = useState([
-    {
-      id: 1,
-      nombre: 'Trabajo 1',
-      titulo: 'Investigación en IA',
-      issn: 'ISSN-001',
-      editorial: 'Editorial A',
-      pais: 'Argentina'
-    },
-    {
-      id: 2,
-      nombre: 'Trabajo 2',
-      titulo: 'Machine Learning',
-      issn: 'ISSN-002',
-      editorial: 'Editorial B',
-      pais: 'Chile'
-    },
-  ]);
+  // Cargar trabajos desde el backend
+  useEffect(() => {
+    loadTrabajos();
+  }, []);
 
-  const [trabajosPublicados, setTrabajosPublicados] = useState([
-    {
-      id: 1,
-      nombre: 'Paper 1',
-      titulo: 'Cloud Computing',
-      issn: 'ISSN-003',
-      editorial: 'IEEE',
-      pais: 'USA'
-    },
-    {
-      id: 2,
-      nombre: 'Paper 2',
-      titulo: 'Blockchain Technology',
-      issn: 'ISSN-004',
-      editorial: 'ACM',
-      pais: 'Canadá'
-    },
-  ]);
-
-  const handleAddRealizado = (nuevoTrabajo) => {
-    setTrabajosRealizados(prev => [...prev, nuevoTrabajo]);
-    setShowRealizadoModal(false);
-  };
-
-  const handleAddPublicado = (nuevoTrabajo) => {
-    setTrabajosPublicados(prev => [...prev, nuevoTrabajo]);
-    setShowPublicadoModal(false);
-  };
-
-  const handleDeleteRealizado = (id) => {
-    if (window.confirm('¿Está seguro de eliminar este trabajo?')) {
-      setTrabajosRealizados(prev => prev.filter(trabajo => trabajo.id !== id));
+  const loadTrabajos = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const data = await listarTrabajosPublicados();
+      if (Array.isArray(data)) {
+        // Separar trabajos realizados de publicados según su estado
+        const realizados = data.filter(t => t.estado === 'Realizado');
+        const publicados = data.filter(t => t.estado === 'Publicado');
+        setTrabajosRealizados(realizados);
+        setTrabajosPublicados(publicados);
+      }
+    } catch (err) {
+      setError('Error al cargar los trabajos');
+      console.error('Error cargando trabajos:', err);
+    } finally {
+      setLoading(false);
     }
-  };
-
-  const handleDeletePublicado = (id) => {
-    if (window.confirm('¿Está seguro de eliminar este trabajo?')) {
-      setTrabajosPublicados(prev => prev.filter(trabajo => trabajo.id !== id));
-    }
-  };
-
-  const handleEditRealizado = (id) => {
-    console.log('Editar trabajo realizado:', id);
-    // Aquí se implementaría la lógica para editar
-  };
-
-  const handleEditPublicado = (id) => {
-    console.log('Editar trabajo publicado:', id);
-    // Aquí se implementaría la lógica para editar
   };
 
   const trabajos = activeTab === 'realizados' ? trabajosRealizados : trabajosPublicados;
 
   const filteredTrabajos = trabajos.filter(trabajo =>
-    trabajo.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    trabajo.titulo.toLowerCase().includes(searchTerm.toLowerCase())
+    (trabajo.nombreRevista || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (trabajo.titulo || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (trabajo.editorial || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  return (
+  const handleAddTrabajo = (nuevoTrabajo) => {
+    // Recargar la lista después de agregar
+    loadTrabajos();
+    setShowAgregarRealizado(false);
+  };
+
+  const handleEdit = (trabajo) => {
+    console.log('Editar trabajo:', trabajo);
+    setTrabajoAEditar(trabajo);
+    setShowEditarModal(true);
+  };
+
+  const handleUpdate = (trabajoActualizado) => {
+    console.log('Trabajo actualizado:', trabajoActualizado);
+    loadTrabajos();
+    setShowEditarModal(false);
+    setTrabajoAEditar(null);
+  };
+
+  const handleDelete = async (trabajo) => {
+    const confirmDelete = window.confirm(`¿Está seguro que desea eliminar el trabajo "${trabajo.titulo}"?`);
+    if (!confirmDelete) return;
+
+    try {
+      const trabajoId = trabajo.oidTrabajoPublicado || trabajo.id;
+      await eliminarTrabajoPublicado(trabajoId);
+      console.log('Trabajo eliminado exitosamente');
+      loadTrabajos(); // Recargar la lista
+    } catch (err) {
+      console.error('Error al eliminar trabajo:', err);
+      alert('Error al eliminar el trabajo');
+    }
+  };
+
+  const handlePublish = async (trabajo) => {
+    const confirmPublish = window.confirm(`¿Está seguro que desea publicar el trabajo "${trabajo.titulo}"?`);
+    if (!confirmPublish) return;
+
+    try {
+      const trabajoId = trabajo.oidTrabajoPublicado || trabajo.id;
+      const payload = {
+        titulo: trabajo.titulo,
+        ISSN: trabajo.ISSN || '',
+        editorial: trabajo.editorial || '',
+        nombreRevista: trabajo.nombreRevista || '',
+        pais: trabajo.pais || '',
+        estado: 'Publicado', // Cambiar estado a Publicado
+        tipoTrabajoPublicado: trabajo.tipoTrabajoPublicado,
+        Autor: trabajo.Autor,
+        GrupoInvestigacion: trabajo.GrupoInvestigacion
+      };
+      
+      await actualizarTrabajoPublicado(trabajoId, payload);
+      console.log('Trabajo publicado exitosamente');
+      loadTrabajos(); // Recargar la lista
+    } catch (err) {
+      console.error('Error al publicar trabajo:', err);
+      alert('Error al publicar el trabajo');
+    }
+  };
+
+  return (<>
     <div className="trabajos-container">
       <div className="trabajos-header">
         <h2>Trabajos Realizados y Publicados</h2>
       </div>
+
+      {error && <div className="error-message">{error}</div>}
+      {loading && <div className="loading-message">Cargando trabajos...</div>}
 
       <div className="trabajos-tabs">
         <button
@@ -122,60 +148,73 @@ function TrabajosList() {
           <button className="search-button">
             <Search size={18} />
           </button>
-          <button 
-            className="add-button" 
-            title={activeTab === 'realizados' ? 'Agregar trabajo realizado' : 'Agregar trabajo publicado'}
-            onClick={() => activeTab === 'realizados' ? setShowRealizadoModal(true) : setShowPublicadoModal(true)}
-          >
-            <Plus size={18} />
-          </button>
+          {activeTab === 'realizados' && (
+            <button className="add-button" title="Agregar nuevo trabajo" onClick={() => setShowAgregarRealizado(true)}>
+              <Plus size={18} />
+            </button>
+          )}
         </div>
 
         <div className="table-wrapper">
           <table className="trabajos-table">
             <thead>
               <tr>
+                <th>Título</th>
+                <th>Autor</th>
                 <th>Nombre Revista</th>
-                <th>Título del Trabajo</th>
                 <th>ISSN</th>
                 <th>Editorial</th>
                 <th>País</th>
+                <th>Tipo de Trabajo</th>
+                <th>Grupo</th>
                 <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
               {filteredTrabajos.length > 0 ? (
                 filteredTrabajos.map((trabajo) => (
-                  <tr key={trabajo.id}>
-                    <td>{trabajo.nombre}</td>
-                    <td>{trabajo.titulo}</td>
-                    <td>{trabajo.issn}</td>
-                    <td>{trabajo.editorial}</td>
-                    <td>{trabajo.pais}</td>
+                  <tr key={trabajo.oidTrabajoPublicado || trabajo.id}>
+                    <td>{trabajo.titulo || '-'}</td>
+                    <td>{trabajo.Autor_detalle ? `${trabajo.Autor_detalle.nombre || ''} ${trabajo.Autor_detalle.apellido || ''}`.trim() : '-'}</td>
+                    <td>{trabajo.nombreRevista || '-'}</td>
+                    <td>{trabajo.ISSN || '-'}</td>
+                    <td>{trabajo.editorial || '-'}</td>
+                    <td>{trabajo.pais || '-'}</td>
+                    <td>{trabajo.tipoTrabajoPublicado_detalle?.nombre || '-'}</td>
+                    <td>{trabajo.GrupoInvestigacion_detalle?.nombre || '-'}</td>
                     <td>
-                      <div className="action-buttons">
-                        <button 
-                          className="btn-edit"
-                          onClick={() => activeTab === 'realizados' ? handleEditRealizado(trabajo.id) : handleEditPublicado(trabajo.id)}
+                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                        <button
+                          onClick={() => handleEdit(trabajo)}
+                          className="action-button edit-button"
                           title="Editar"
                         >
-                          <Edit size={16} />
+                          <Pencil size={16} />
                         </button>
-                        <button 
-                          className="btn-delete"
-                          onClick={() => activeTab === 'realizados' ? handleDeleteRealizado(trabajo.id) : handleDeletePublicado(trabajo.id)}
+                        <button
+                          onClick={() => handleDelete(trabajo)}
+                          className="action-button delete-button"
                           title="Eliminar"
                         >
                           <Trash2 size={16} />
                         </button>
+                        {activeTab === 'realizados' && (
+                          <button
+                            onClick={() => handlePublish(trabajo)}
+                            className="action-button publish-button"
+                            title="Publicar"
+                          >
+                            Publicar
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="6" className="empty-message">
-                    No hay trabajos para mostrar
+                  <td colSpan="9" className="empty-message">
+                    {loading ? 'Cargando...' : 'No hay trabajos para mostrar'}
                   </td>
                 </tr>
               )}
@@ -183,20 +222,22 @@ function TrabajosList() {
           </table>
         </div>
       </div>
-
-      <AgregarTrabajoRealizadoModal
-        isOpen={showRealizadoModal}
-        onClose={() => setShowRealizadoModal(false)}
-        onAdd={handleAddRealizado}
-      />
-
-      <AgregarTrabajoPublicadoModal
-        isOpen={showPublicadoModal}
-        onClose={() => setShowPublicadoModal(false)}
-        onAdd={handleAddPublicado}
-      />
     </div>
-  );
+    <AgregarTrabajoRealizado
+      isOpen={showAgregarRealizado}
+      onClose={() => setShowAgregarRealizado(false)}
+      onAdd={handleAddTrabajo}
+    />
+    <EditarTrabajoModal
+      isOpen={showEditarModal}
+      onClose={() => {
+        setShowEditarModal(false);
+        setTrabajoAEditar(null);
+      }}
+      onUpdate={handleUpdate}
+      trabajo={trabajoAEditar}
+    />
+  </>);
 }
 
 export default TrabajosList;
