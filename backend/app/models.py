@@ -131,6 +131,10 @@ class Persona(models.Model):
         GrupoInvestigacion, on_delete=models.CASCADE
     )
 
+    @property
+    def is_authenticated(self):
+        return True
+
     def __str__(self):
         return f"{self.nombre} {self.apellido}"
 

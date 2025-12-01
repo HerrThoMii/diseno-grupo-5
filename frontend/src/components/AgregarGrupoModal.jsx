@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import './AgregarGrupoModal.css';
 
-const AgregarGrupoModal = ({ isOpen, onClose, onSubmit }) => {
+const AgregarGrupoModal = ({ isOpen, onClose, onSubmit, grupoToEdit = null }) => {
   const [formData, setFormData] = useState({
     correo: '',
     nombreGrupo: '',
@@ -11,6 +11,29 @@ const AgregarGrupoModal = ({ isOpen, onClose, onSubmit }) => {
     financiamiento: '',
     objetivos: '',
   });
+
+  // Cargar datos del grupo si está en modo edición
+  useEffect(() => {
+    if (grupoToEdit) {
+      setFormData({
+        correo: grupoToEdit.correo || '',
+        nombreGrupo: grupoToEdit.nombre || '',
+        siglasGrupo: grupoToEdit.sigla || '',
+        facultad: grupoToEdit.facultadReginalAsignada || '',
+        financiamiento: grupoToEdit.fuenteFinanciamiento || '',
+        objetivos: grupoToEdit.organigrama || '',
+      });
+    } else {
+      setFormData({
+        correo: '',
+        nombreGrupo: '',
+        siglasGrupo: '',
+        facultad: '',
+        financiamiento: '',
+        objetivos: '',
+      });
+    }
+  }, [grupoToEdit, isOpen]);
 
   const [errors, setErrors] = useState({});
 
@@ -121,7 +144,7 @@ const AgregarGrupoModal = ({ isOpen, onClose, onSubmit }) => {
     <div className="modal-overlay" onClick={handleCancel}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>Añadir Grupo de Investigación</h2>
+          <h2>{grupoToEdit ? 'Editar Grupo de Investigación' : 'Añadir Grupo de Investigación'}</h2>
           <button 
             className="modal-close-btn" 
             onClick={handleCancel}
@@ -272,7 +295,7 @@ const AgregarGrupoModal = ({ isOpen, onClose, onSubmit }) => {
               type="submit" 
               className="btn-submit"
             >
-              Guardar
+              {grupoToEdit ? 'Actualizar' : 'Guardar'}
             </button>
           </div>
         </form>

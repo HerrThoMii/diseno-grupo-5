@@ -427,6 +427,72 @@ export async function eliminarPatente(id) {
     return true;
 }
 
+// Grupos de Investigación
+export async function crearGrupo(grupoData) {
+    const response = await authenticatedFetch('http://localhost:8000/api/grupos/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            nombre: grupoData.nombreGrupo,
+            sigla: grupoData.siglasGrupo,
+            facultadReginalAsignada: grupoData.facultad,
+            correo: grupoData.correo,
+            organigrama: grupoData.objetivos,
+            fuenteFinanciamiento: grupoData.financiamiento,
+            ProgramaActividades: 1 // Valor por defecto, ajustar según necesidad
+        })
+    });
+    const json = await response.json().catch(() => null);
+    if (!response.ok) {
+        const err = json ? JSON.stringify(json) : `HTTP ${response.status}`;
+        throw new Error(err);
+    }
+    return json;
+}
+
+export async function obtenerGrupos() {
+    const response = await authenticatedFetch('http://localhost:8000/api/grupos/');
+    const json = await response.json().catch(() => null);
+    if (!response.ok) {
+        const err = json ? JSON.stringify(json) : `HTTP ${response.status}`;
+        throw new Error(err);
+    }
+    return json;
+}
+
+export async function actualizarGrupo(id, grupoData) {
+    const response = await authenticatedFetch(`http://localhost:8000/api/grupos/${id}/`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            nombre: grupoData.nombreGrupo,
+            sigla: grupoData.siglasGrupo,
+            facultadReginalAsignada: grupoData.facultad,
+            correo: grupoData.correo,
+            organigrama: grupoData.objetivos,
+            fuenteFinanciamiento: grupoData.financiamiento,
+            ProgramaActividades: 1 // Valor por defecto, ajustar según necesidad
+        })
+    });
+    const json = await response.json().catch(() => null);
+    if (!response.ok) {
+        const err = json ? JSON.stringify(json) : `HTTP ${response.status}`;
+        throw new Error(err);
+    }
+    return json;
+}
+
+export async function eliminarGrupo(id) {
+    const response = await authenticatedFetch(`http://localhost:8000/api/grupos/${id}/`, {
+        method: 'DELETE'
+    });
+    if (!response.ok) {
+        const err = `HTTP ${response.status}`;
+        throw new Error(err);
+    }
+    return true;
+}
+
 export default {
   login,
   logout,

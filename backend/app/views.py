@@ -154,6 +154,58 @@ def listar_personas(request):
         'personas': serializer.data
     }, status=status.HTTP_200_OK)
 
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_opciones_perfil(request):
+    """
+    Retorna las opciones disponibles para los campos del perfil
+    """
+    from .models import TipoDePersonal, GrupoInvestigacion
+    
+    tipos_personal = TipoDePersonal.objects.all()
+    grupos = GrupoInvestigacion.objects.all()
+    
+    return Response({
+        'tiposPersonal': [{'id': tp.id, 'nombre': tp.nombre} for tp in tipos_personal],
+        'grupos': [{'id': g.oidGrupoInvestigacion, 'nombre': g.nombre} for g in grupos],
+        'gradosAcademicos': [
+            {'id': 1, 'nombre': 'Licenciatura'},
+            {'id': 2, 'nombre': 'Maestría'},
+            {'id': 3, 'nombre': 'Doctorado'},
+            {'id': 4, 'nombre': 'Post-Doctorado'}
+        ],
+        'categoriasUTN': [
+            {'id': 1, 'nombre': 'Categoría I'},
+            {'id': 2, 'nombre': 'Categoría II'},
+            {'id': 3, 'nombre': 'Categoría III'},
+            {'id': 4, 'nombre': 'Categoría IV'},
+            {'id': 5, 'nombre': 'Categoría V'}
+        ],
+        'dedicaciones': [
+            {'id': 1, 'nombre': 'Simple'},
+            {'id': 2, 'nombre': 'Semi-Exclusiva'},
+            {'id': 3, 'nombre': 'Exclusiva'}
+        ],
+        'programasIncentivos': [
+            {'id': 1, 'nombre': 'Programa Nacional de Incentivos'},
+            {'id': 2, 'nombre': 'Programa Provincial'},
+            {'id': 3, 'nombre': 'Otro'}
+        ],
+        'cursosCatedras': [
+            {'id': 1, 'nombre': 'Análisis Matemático'},
+            {'id': 2, 'nombre': 'Álgebra'},
+            {'id': 3, 'nombre': 'Física'},
+            {'id': 4, 'nombre': 'Química'},
+            {'id': 5, 'nombre': 'Programación'}
+        ],
+        'roles': [
+            {'id': 1, 'nombre': 'Profesor Titular'},
+            {'id': 2, 'nombre': 'Profesor Adjunto'},
+            {'id': 3, 'nombre': 'Jefe de Trabajos Prácticos'},
+            {'id': 4, 'nombre': 'Auxiliar Docente'}
+        ]
+    }, status=status.HTTP_200_OK)
+
 # ViewSets for models
 class ProgramaActividadesViewSet(viewsets.ModelViewSet):
     queryset = ProgramaActividades.objects.all()
