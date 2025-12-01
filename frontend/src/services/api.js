@@ -165,6 +165,136 @@ export const getOpcionesPerfil = async () => {
   }
 };
 
+// Función para crear grupo de investigación
+export const crearGrupo = async (grupoData) => {
+  const token = getAccessToken();
+  
+  if (!token) {
+    throw new Error('No hay sesión activa');
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/grupos/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        nombre: grupoData.nombreGrupo,
+        sigla: grupoData.siglasGrupo,
+        facultadReginalAsignada: grupoData.facultad,
+        correo: grupoData.correo,
+        fuenteFinanciamiento: grupoData.financiamiento,
+        organigrama: grupoData.objetivos
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Error al crear el grupo');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error creando grupo:', error);
+    throw error;
+  }
+};
+
+// Función para obtener todos los grupos
+export const obtenerGrupos = async () => {
+  const token = getAccessToken();
+  
+  if (!token) {
+    throw new Error('No hay sesión activa');
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/grupos/`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error('Error al obtener los grupos');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error obteniendo grupos:', error);
+    throw error;
+  }
+};
+
+// Función para actualizar grupo de investigación
+export const actualizarGrupo = async (grupoId, grupoData) => {
+  const token = getAccessToken();
+  
+  if (!token) {
+    throw new Error('No hay sesión activa');
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/grupos/${grupoId}/`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        nombre: grupoData.nombreGrupo,
+        sigla: grupoData.siglasGrupo,
+        facultadReginalAsignada: grupoData.facultad,
+        correo: grupoData.correo,
+        fuenteFinanciamiento: grupoData.financiamiento,
+        organigrama: grupoData.objetivos
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Error al actualizar el grupo');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error actualizando grupo:', error);
+    throw error;
+  }
+};
+
+// Función para eliminar grupo de investigación
+export const eliminarGrupo = async (grupoId) => {
+  const token = getAccessToken();
+  
+  if (!token) {
+    throw new Error('No hay sesión activa');
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/grupos/${grupoId}/`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error('Error al eliminar el grupo');
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error eliminando grupo:', error);
+    throw error;
+  }
+};
+
 export default {
   login,
   logout,
@@ -173,5 +303,9 @@ export default {
   getUser,
   getPerfil,
   actualizarPerfil,
-  getOpcionesPerfil
+  getOpcionesPerfil,
+  crearGrupo,
+  obtenerGrupos,
+  actualizarGrupo,
+  eliminarGrupo
 };

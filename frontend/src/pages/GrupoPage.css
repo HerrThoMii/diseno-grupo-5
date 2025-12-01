@@ -107,12 +107,12 @@
 }
 
 .btn-edit-grupo:hover {
-  background-color: #555;
+  background-color: #c49acc;
   transform: scale(1.05);
 }
 
 .btn-delete-grupo:hover {
-  background-color: #dc2626;
+  background-color: #c49acc;
   transform: scale(1.05);
 }
 

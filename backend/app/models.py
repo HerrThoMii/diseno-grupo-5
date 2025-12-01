@@ -19,7 +19,7 @@ class GrupoInvestigacion(models.Model):
     sigla = models.CharField(max_length=45)
     fuenteFinanciamiento = models.TextField()
     ProgramaActividades = models.ForeignKey(
-        ProgramaActividades, on_delete=models.CASCADE
+        ProgramaActividades, on_delete=models.CASCADE, null=True, blank=True
     )
 
     def __str__(self):
