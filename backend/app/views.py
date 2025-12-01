@@ -125,6 +125,7 @@ def actualizar_perfil(request, oidpersona):
     serializer = PersonaSerializer(persona, data=request.data, partial=True)
 
     if serializer.is_valid():
+        serializer.save()
         return Response({
             'mensaje': 'Perfil actualizado exitosamente',
             'persona': serializer.data

@@ -118,12 +118,36 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
 }
 
 .perfil-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.btn-delete-image-overlay {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background-color: rgba(220, 38, 38, 0.9);
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: white;
+  transition: all 0.2s;
+  z-index: 10;
+}
+
+.btn-delete-image-overlay:hover {
+  background-color: rgba(185, 28, 28, 1);
+  transform: scale(1.1);
 }
 
 .perfil-image-placeholder {

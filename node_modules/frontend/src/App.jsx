@@ -1,5 +1,6 @@
 import './App.css'
 import React, { useState, useEffect } from 'react';
+import { logout as authLogout } from './utils/auth';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './components/login'
 import Register from './components/register'
@@ -42,6 +43,8 @@ function App() {
   };
 
   const handleLogout = () => {
+    // clear local auth tokens and state
+    try { authLogout(); } catch (e) { /* ignore */ }
     setIsAuthenticated(false);
     setUserName('nombre del usuario');
     setUserData(null);

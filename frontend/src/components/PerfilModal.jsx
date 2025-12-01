@@ -1,21 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { X, User, Mail, Clock, Briefcase, Building2, Lock, ChevronDown } from 'lucide-react';
+import { X, User, Lock, Trash2 } from 'lucide-react';
 import './PerfilModal.css';
-import { getPerfil, actualizarPerfil, getUser, getOpcionesPerfil } from '../services/api';
+import { getPerfil, actualizarPerfil, getUser } from '../services/api';
 
 const PerfilModal = ({ isOpen, onClose, userData, onUpdateUserData = () => {} }) => {
   const [formData, setFormData] = useState(null);
-  const [opciones, setOpciones] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showChangePassword, setShowChangePassword] = useState(false);
-  const [showTipoPersonalDropdown, setShowTipoPersonalDropdown] = useState(false);
-  const [showGradoDropdown, setShowGradoDropdown] = useState(false);
-  const [showCategoriaDropdown, setShowCategoriaDropdown] = useState(false);
-  const [showDedicacionDropdown, setShowDedicacionDropdown] = useState(false);
-  const [showIncentivosDropdown, setShowIncentivosDropdown] = useState(false);
-  const [showCursoDropdown, setShowCursoDropdown] = useState(false);
-  const [showRolDropdown, setShowRolDropdown] = useState(false);
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
     newPassword: '',
@@ -26,18 +18,8 @@ const PerfilModal = ({ isOpen, onClose, userData, onUpdateUserData = () => {} })
   useEffect(() => {
     if (isOpen && userData) {
       loadPerfil();
-      loadOpciones();
     }
   }, [isOpen, userData]);
-
-  const loadOpciones = async () => {
-    try {
-      const data = await getOpcionesPerfil();
-      setOpciones(data);
-    } catch (err) {
-      console.error('Error cargando opciones:', err);
-    }
-  };
 
   const loadPerfil = async () => {
     setIsLoading(true);
@@ -73,24 +55,12 @@ const PerfilModal = ({ isOpen, onClose, userData, onUpdateUserData = () => {} })
     );
   }
 
-  if (!formData || !opciones) return null;
+  if (!formData) return null;
 
   const user = formData;
 
   const handleInputChange = (field, value) => {
     setFormData({ ...formData, [field]: value });
-  };
-
-  const handleMultiSelectToggle = (field, valueId) => {
-    const currentValues = formData[field] || [];
-    const newValues = currentValues.includes(valueId)
-      ? currentValues.filter(v => v !== valueId)
-      : [...currentValues, valueId];
-    setFormData({ ...formData, [field]: newValues });
-  };
-
-  const handleSingleSelectChange = (field, valueId) => {
-    setFormData({ ...formData, [field]: valueId });
   };
 
   const handleSave = async () => {
@@ -140,51 +110,9 @@ const PerfilModal = ({ isOpen, onClose, userData, onUpdateUserData = () => {} })
     }
   };
 
-  const MultiSelect = ({ label, field, backendOptions, currentIds, onToggle, showDropdown, setShowDropdown, isMulti = true }) => {
-    if (!backendOptions) return null;
-
-    const displayValue = currentIds && currentIds.length > 0
-      ? backendOptions.filter(opt => currentIds.includes(opt.id)).map(opt => opt.nombre).join(', ')
-      : `Seleccionar ${label.toLowerCase()}...`;
-
-    const handleSelect = (optionId) => {
-      onToggle(field, optionId);
-      // Cerrar dropdown para radio buttons (single-select) después de seleccionar
-      if (!isMulti) {
-        setShowDropdown(false);
-      }
-    };
-
-    return (
-      <div className="perfil-field">
-        <label>{label}</label>
-        <div className="multi-select-container">
-          <div 
-            className="multi-select-display"
-            onClick={() => setShowDropdown(!showDropdown)}
-          >
-            <span className="multi-select-text">
-              {displayValue}
-            </span>
-            <ChevronDown size={18} className={`multi-select-chevron ${showDropdown ? 'rotated' : ''}`} />
-          </div>
-          {showDropdown && (
-            <div className="multi-select-dropdown">
-              {backendOptions.map(option => (
-                <label key={option.id} className="multi-select-option">
-                  <input
-                    type={isMulti ? "checkbox" : "radio"}
-                    checked={currentIds ? currentIds.includes(option.id) : false}
-                    onChange={() => handleSelect(option.id)}
-                  />
-                  <span>{option.nombre}</span>
-                </label>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    );
+  const handleDeleteImage = () => {
+    setImagePreview(null);
+    handleInputChange('imagenPerfil', '');
   };
 
   return (
@@ -207,7 +135,12 @@ const PerfilModal = ({ isOpen, onClose, userData, onUpdateUserData = () => {} })
             <div className="perfil-image-section">
               <div className="perfil-image-container">
                 {imagePreview || user.imagenPerfil ? (
-                  <img src={imagePreview || user.imagenPerfil} alt="Perfil" className="perfil-image" />
+                  <>
+                    <img src={imagePreview || user.imagenPerfil} alt="Perfil" className="perfil-image" />
+                    <button className="btn-delete-image-overlay" onClick={handleDeleteImage} title="Eliminar imagen">
+                      <X size={20} />
+                    </button>
+                  </>
                 ) : (
                   <div className="perfil-image-placeholder">
                     <User size={40} />
@@ -304,152 +237,6 @@ const PerfilModal = ({ isOpen, onClose, userData, onUpdateUserData = () => {} })
                     </div>
                   </div>
                 </div>
-              )}
-            </div>
-          </div>
-
-          {/* Información Laboral */}
-          <div className="perfil-section">
-            <h3 className="perfil-section-title">
-              <Briefcase size={20} />
-              Información Laboral
-            </h3>
-            <div className="perfil-grid">
-              {opciones && (
-                <MultiSelect
-                  label="Tipo de Personal"
-                  field="tipoDePersonal"
-                  backendOptions={opciones.tipos_personal}
-                  currentIds={user.tipoDePersonal || []}
-                  onToggle={handleMultiSelectToggle}
-                  showDropdown={showTipoPersonalDropdown}
-                  setShowDropdown={setShowTipoPersonalDropdown}
-                  isMulti={true}
-                />
-              )}
-              <div className="perfil-field">
-                <label>Horas Semanales</label>
-                <input
-                  type="number"
-                  value={user.horasSemanales || ''}
-                  className="perfil-input"
-                  onChange={(e) => handleInputChange('horasSemanales', e.target.value)}
-                />
-              </div>
-              <div className="perfil-field full-width">
-                <label>Grupo de Investigación</label>
-                <input
-                  type="text"
-                  value={user.GrupoInvestigacion || ''}
-                  className="perfil-input"
-                  onChange={(e) => handleInputChange('GrupoInvestigacion', e.target.value)}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Información Académica */}
-          <div className="perfil-section">
-            <h3 className="perfil-section-title">
-              <Building2 size={20} />
-              Información Académica
-            </h3>
-            <div className="perfil-grid">
-              {opciones && (
-                <>
-                  <MultiSelect
-                    label="Grado Académico"
-                    field="gradoAcademico"
-                    backendOptions={opciones.grados_academicos}
-                    currentIds={user.gradoAcademico || []}
-                    onToggle={handleMultiSelectToggle}
-                    showDropdown={showGradoDropdown}
-                    setShowDropdown={setShowGradoDropdown}
-                    isMulti={true}
-                  />
-                  <MultiSelect
-                    label="Categoría UTN"
-                    field="categoriaUtn"
-                    backendOptions={opciones.categorias_utn}
-                    currentIds={user.categoriaUtn || []}
-                    onToggle={handleMultiSelectToggle}
-                    showDropdown={showCategoriaDropdown}
-                    setShowDropdown={setShowCategoriaDropdown}
-                    isMulti={true}
-                  />
-                  <MultiSelect
-                    label="Dedicación"
-                    field="dedicacion"
-                    backendOptions={opciones.dedicaciones}
-                    currentIds={user.dedicacion ? [user.dedicacion] : []}
-                    onToggle={handleSingleSelectChange}
-                    showDropdown={showDedicacionDropdown}
-                    setShowDropdown={setShowDedicacionDropdown}
-                    isMulti={false}
-                  />
-                  <MultiSelect
-                    label="Programa de Incentivos"
-                    field="programaDeIncentivos"
-                    backendOptions={opciones.programas_incentivos}
-                    currentIds={user.programaDeIncentivos ? [user.programaDeIncentivos] : []}
-                    onToggle={handleSingleSelectChange}
-                    showDropdown={showIncentivosDropdown}
-                    setShowDropdown={setShowIncentivosDropdown}
-                    isMulti={false}
-                  />
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Actividad Docente */}
-          <div className="perfil-section">
-            <h3 className="perfil-section-title">
-              <Building2 size={20} />
-              Actividad Docente
-            </h3>
-            <div className="perfil-grid">
-              {opciones && (
-                <>
-                  <MultiSelect
-                    label="Curso/Cátedra"
-                    field="denominacionCursoCatedra"
-                    backendOptions={opciones.cursos_catedras}
-                    currentIds={user.denominacionCursoCatedra || []}
-                    onToggle={handleMultiSelectToggle}
-                    showDropdown={showCursoDropdown}
-                    setShowDropdown={setShowCursoDropdown}
-                    isMulti={true}
-                  />
-                  <MultiSelect
-                    label="Rol Desempeñado"
-                    field="rolDesempenado"
-                    backendOptions={opciones.roles_desempenados}
-                    currentIds={user.rolDesempenado || []}
-                    onToggle={handleMultiSelectToggle}
-                    showDropdown={showRolDropdown}
-                    setShowDropdown={setShowRolDropdown}
-                    isMulti={true}
-                  />
-                  <div className="perfil-field">
-                    <label>Período Inicio</label>
-                    <input
-                      type="date"
-                      value={user.fechaPeriodoDictadoInicio || ''}
-                      className="perfil-input"
-                      onChange={(e) => handleInputChange('fechaPeriodoDictadoInicio', e.target.value)}
-                    />
-                  </div>
-                  <div className="perfil-field">
-                    <label>Período Fin</label>
-                    <input
-                      type="date"
-                      value={user.fechaPeriodoDictadoFin || ''}
-                      className="perfil-input"
-                      onChange={(e) => handleInputChange('fechaPeriodoDictadoFin', e.target.value)}
-                    />
-                  </div>
-                </>
               )}
             </div>
           </div>

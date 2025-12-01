@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import './AgregarTrabajoRealizado.css';
-import { crearTrabajoPublicado, listarGrupos, listarAutores, listarTiposTrabajoPublicado, crearAutor, isAuthenticated } from '../services/api';
+import { actualizarTrabajoPublicado, listarGrupos, listarAutores, listarTiposTrabajoPublicado, isAuthenticated } from '../services/api';
 
-export default function AgregarTrabajoRealizado({ isOpen, onClose, onAdd }) {
-  // Fields match backend model TrabajoPublicado: autor, titulo, tipoTrabajoPublicado, GrupoInvestigacion
+export default function EditarTrabajoModal({ isOpen, onClose, onUpdate, trabajo }) {
   const [formData, setFormData] = useState({
     titulo: '',
     ISSN: '',
@@ -18,9 +17,6 @@ export default function AgregarTrabajoRealizado({ isOpen, onClose, onAdd }) {
   const [grupos, setGrupos] = useState([]);
   const [autores, setAutores] = useState([]);
   const [tipos, setTipos] = useState([]);
-  const [showNewAuthor, setShowNewAuthor] = useState(false);
-  const [newAuthor, setNewAuthor] = useState({ nombre: '', apellido: '' });
-  const [creatingAuthor, setCreatingAuthor] = useState(false);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
@@ -28,8 +24,6 @@ export default function AgregarTrabajoRealizado({ isOpen, onClose, onAdd }) {
 
   useEffect(() => {
     let mounted = true;
-    // Only fetch protected lists if the user appears authenticated. If the token is missing
-    // or expired we'll avoid triggering background 401s that force a logout.
     if (!isAuthenticated()) {
       setGrupos([]);
       setAutores([]);
@@ -39,14 +33,11 @@ export default function AgregarTrabajoRealizado({ isOpen, onClose, onAdd }) {
 
     if (!isOpen) return () => { mounted = false };
 
-    console.log('Cargando datos del modal...');
+    console.log('Cargando datos del modal de edición...');
     setLoadingData(true);
     Promise.all([listarGrupos(), listarAutores(), listarTiposTrabajoPublicado()])
       .then(([gr, au, tp]) => {
         if (!mounted) return;
-        console.log('Grupos recibidos:', gr);
-        console.log('Autores recibidos:', au);
-        console.log('Tipos recibidos:', tp);
         setGrupos(Array.isArray(gr) ? gr : []);
         setAutores(Array.isArray(au) ? au : []);
         setTipos(Array.isArray(tp) ? tp : []);
@@ -62,7 +53,23 @@ export default function AgregarTrabajoRealizado({ isOpen, onClose, onAdd }) {
         if (mounted) setLoadingData(false);
       });
     return () => { mounted = false };
-  }, [isOpen]); // Recargar cuando se abre el modal
+  }, [isOpen]);
+
+  // Cargar datos del trabajo cuando se abre el modal
+  useEffect(() => {
+    if (trabajo && isOpen) {
+      setFormData({
+        titulo: trabajo.titulo || '',
+        ISSN: trabajo.ISSN || '',
+        editorial: trabajo.editorial || '',
+        nombreRevista: trabajo.nombreRevista || '',
+        pais: trabajo.pais || '',
+        tipoTrabajoPublicado: trabajo.tipoTrabajoPublicado || '',
+        Autor: trabajo.Autor || '',
+        GrupoInvestigacion: trabajo.GrupoInvestigacion || ''
+      });
+    }
+  }, [trabajo, isOpen]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -85,38 +92,26 @@ export default function AgregarTrabajoRealizado({ isOpen, onClose, onAdd }) {
     setLoading(true);
     setSubmitError('');
 
-    // Map UI fields to backend TrabajoPublicado fields (use model field names)
     const payload = {
       titulo: formData.titulo,
       ISSN: formData.ISSN || '',
       editorial: formData.editorial || '',
       nombreRevista: formData.nombreRevista || '',
       pais: formData.pais || '',
-      // backend will set default estado to "Realizado"; do not send estado from UI
       tipoTrabajoPublicado: parseInt(formData.tipoTrabajoPublicado, 10) || null,
       Autor: parseInt(formData.Autor, 10),
       GrupoInvestigacion: parseInt(formData.GrupoInvestigacion, 10)
     };
 
-    crearTrabajoPublicado(payload)
-      .then(created => {
-        const id = created?.oidTrabajoPublicado ?? created?.id ?? Date.now();
-        const tipoObj = tipos.find(t => (t.oidTipoTrabajoPublicado ?? t.id) === (parseInt(formData.tipoTrabajoPublicado, 10) || null));
-        const autorObj = autores.find(a => (a.oidAutor ?? a.id) === parseInt(formData.Autor, 10));
-        const uiItem = {
-          id,
-          autor: autorObj ? `${autorObj.nombre} ${autorObj.apellido}` : '',
-          titulo: formData.titulo,
-          tipoTrabajoPublicado: tipoObj ? (tipoObj.nombre || '') : '',
-          raw: created
-        };
-        if (onAdd) onAdd(uiItem);
-        // close modal after successful creation (parent may also choose to close)
+    const trabajoId = trabajo.oidTrabajoPublicado || trabajo.id;
+    
+    actualizarTrabajoPublicado(trabajoId, payload)
+      .then(updated => {
+        if (onUpdate) onUpdate(updated);
         onClose && onClose();
-        setFormData({ titulo: '', ISSN: '', editorial: '', nombreRevista: '', pais: '', tipoTrabajoPublicado: '', Autor: '', GrupoInvestigacion: '' });
       })
       .catch(err => {
-        let msg = err.message || 'Error al crear trabajo';
+        let msg = err.message || 'Error al actualizar trabajo';
         try {
           const parsed = JSON.parse(msg);
           if (parsed.detail) msg = parsed.detail;
@@ -127,58 +122,13 @@ export default function AgregarTrabajoRealizado({ isOpen, onClose, onAdd }) {
       .finally(() => setLoading(false));
   };
 
-  const handleNewAuthorChange = (e) => {
-    const { name, value } = e.target;
-    setNewAuthor(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleCreateAuthor = () => {
-    // create a simple author with nombre & apellido
-    if (!newAuthor.nombre.trim() && !newAuthor.apellido.trim()) {
-      console.warn('No se puede crear autor sin nombre ni apellido');
-      return;
-    }
-    setCreatingAuthor(true);
-    setSubmitError('');
-    
-    const autorData = { 
-      nombre: newAuthor.nombre.trim(), 
-      apellido: newAuthor.apellido.trim() 
-    };
-    
-    console.log('Creando autor con datos:', autorData);
-    
-    crearAutor(autorData)
-      .then(created => {
-        console.log('Autor creado exitosamente:', created);
-        const id = created?.oidAutor ?? created?.id;
-        const newA = created || { oidAutor: id, nombre: newAuthor.nombre.trim(), apellido: newAuthor.apellido.trim() };
-        setAutores(prev => {
-          const updated = [...prev, newA];
-          console.log('Lista de autores actualizada:', updated);
-          return updated;
-        });
-        setFormData(prev => ({ ...prev, Autor: id }));
-        setNewAuthor({ nombre: '', apellido: '' });
-        setShowNewAuthor(false);
-      })
-      .catch(err => {
-        // show error inline
-        console.error('Error al crear autor:', err);
-        let msg = err.message || 'Error al crear autor';
-        try { const parsed = JSON.parse(msg); if (parsed.detail) msg = parsed.detail; } catch(e){}
-        setSubmitError(msg);
-      })
-      .finally(() => setCreatingAuthor(false));
-  };
-
   if (!isOpen) return null;
 
   return (
     <div className="atr-overlay">
       <div className="atr-modal">
         <div className="atr-header">
-          <h2>Agregar Trabajo Realizado</h2>
+          <h2>Editar Trabajo</h2>
           <button className="atr-close" onClick={onClose}><X size={24} /></button>
         </div>
 
@@ -192,36 +142,14 @@ export default function AgregarTrabajoRealizado({ isOpen, onClose, onAdd }) {
           <div className="atr-form-group">
             <label htmlFor="Autor">Autor</label>
             <select id="Autor" name="Autor" value={formData.Autor || ''} onChange={handleChange} className={errors.Autor ? 'error' : ''}>
-              <option value="">-- Seleccione autor ({autores.length} disponibles) --</option>
+              <option value="">-- Seleccione autor --</option>
               {autores.map(a => {
                 const pk = a.oidAutor ?? a.id;
                 return <option key={pk} value={pk}>{`${a.nombre} ${a.apellido}`}</option>;
               })}
             </select>
             {errors.Autor && <div className="atr-error">{errors.Autor}</div>}
-            <div className="atr-author-actions">
-              {!showNewAuthor ? (
-                <button type="button" className="atr-btn-add" onClick={() => { setShowNewAuthor(true); setSubmitError(''); }}>
-                  Agregar autor
-                </button>
-              ) : (
-                <button type="button" className="atr-btn-cancel-mini" onClick={() => { setShowNewAuthor(false); setNewAuthor({ nombre: '', apellido: '' }); setSubmitError(''); }}>
-                  Cancelar
-                </button>
-              )}
-            </div>
           </div>
-
-          {showNewAuthor && (
-            <div className="atr-form-group">
-              <label aria-hidden="true">&nbsp;</label>
-              <div className="atr-new-author">
-                <input className="atr-input" name="nombre" placeholder="Nombre" value={newAuthor.nombre} onChange={handleNewAuthorChange} />
-                <input className="atr-input" name="apellido" placeholder="Apellido" value={newAuthor.apellido} onChange={handleNewAuthorChange} />
-                <button type="button" onClick={handleCreateAuthor} disabled={creatingAuthor} className="atr-btn-primary atr-btn-small">{creatingAuthor ? 'Creando...' : 'Agregar'}</button>
-              </div>
-            </div>
-          )}
 
           <div className="atr-form-group">
             <label htmlFor="titulo">Título del Trabajo</label>
@@ -249,12 +177,10 @@ export default function AgregarTrabajoRealizado({ isOpen, onClose, onAdd }) {
             <input id="pais" name="pais" value={formData.pais} onChange={handleChange} />
           </div>
 
-          {/* Estado must be managed by backend and default to "Realizado"; hidden from users */}
-
           <div className="atr-form-group">
             <label htmlFor="tipoTrabajoPublicado">Tipo de Trabajo</label>
             <select id="tipoTrabajoPublicado" name="tipoTrabajoPublicado" value={formData.tipoTrabajoPublicado || ''} onChange={handleChange}>
-              <option value="">-- Seleccione tipo ({tipos.length} disponibles) --</option>
+              <option value="">-- Seleccione tipo --</option>
               {tipos.map(t => {
                 const pk = t.oidTipoTrabajoPublicado ?? t.id;
                 return <option key={pk} value={pk}>{t.nombre ?? `#${pk}`}</option>;
@@ -262,12 +188,10 @@ export default function AgregarTrabajoRealizado({ isOpen, onClose, onAdd }) {
             </select>
           </div>
 
-          
-
           <div className="atr-form-group">
             <label htmlFor="GrupoInvestigacion">Grupo de Investigación</label>
             <select id="GrupoInvestigacion" name="GrupoInvestigacion" value={formData.GrupoInvestigacion || ''} onChange={handleChange} className={errors.GrupoInvestigacion ? 'error' : ''}>
-              <option value="">-- Seleccione grupo ({grupos.length} disponibles) --</option>
+              <option value="">-- Seleccione grupo --</option>
               {grupos.map(g => {
                 const pk = g.oidGrupoInvestigacion ?? g.id;
                 return <option key={pk} value={pk}>{g.nombre ?? `#${pk}`}</option>;
@@ -280,7 +204,7 @@ export default function AgregarTrabajoRealizado({ isOpen, onClose, onAdd }) {
 
           <div className="atr-buttons">
             <button type="button" className="atr-btn-cancel" onClick={onClose} disabled={loading}>Cancelar</button>
-            <button type="submit" className="atr-btn-submit" disabled={loading}>{loading ? 'Creando...' : 'Agregar'}</button>
+            <button type="submit" className="atr-btn-submit" disabled={loading}>{loading ? 'Actualizando...' : 'Guardar Cambios'}</button>
           </div>
         </form>
       </div>
