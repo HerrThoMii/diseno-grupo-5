@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, User, Lock, Trash2 } from 'lucide-react';
+import { X, User, Lock } from 'lucide-react';
 import './PerfilModal.css';
 import { getPerfil, actualizarPerfil, getUser } from '../services/api';
 
@@ -13,7 +13,6 @@ const PerfilModal = ({ isOpen, onClose, userData, onUpdateUserData = () => {} })
     newPassword: '',
     confirmPassword: ''
   });
-  const [imagePreview, setImagePreview] = useState(null);
 
   useEffect(() => {
     if (isOpen && userData) {
@@ -98,23 +97,6 @@ const PerfilModal = ({ isOpen, onClose, userData, onUpdateUserData = () => {} })
     setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
   };
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-        handleInputChange('imagenPerfil', reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleDeleteImage = () => {
-    setImagePreview(null);
-    handleInputChange('imagenPerfil', '');
-  };
-
   return (
     <div className="perfil-modal-overlay" onClick={onClose}>
       <div className="perfil-modal-content" onClick={(e) => e.stopPropagation()}>
@@ -132,34 +114,6 @@ const PerfilModal = ({ isOpen, onClose, userData, onUpdateUserData = () => {} })
               <User size={20} />
               Información Personal
             </h3>
-            <div className="perfil-image-section">
-              <div className="perfil-image-container">
-                {imagePreview || user.imagenPerfil ? (
-                  <>
-                    <img src={imagePreview || user.imagenPerfil} alt="Perfil" className="perfil-image" />
-                    <button className="btn-delete-image-overlay" onClick={handleDeleteImage} title="Eliminar imagen">
-                      <X size={20} />
-                    </button>
-                  </>
-                ) : (
-                  <div className="perfil-image-placeholder">
-                    <User size={40} />
-                  </div>
-                )}
-              </div>
-              <div className="perfil-image-actions">
-                <label htmlFor="image-upload" className="btn-upload-image">
-                  Subir Imagen
-                </label>
-                <input
-                  id="image-upload"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  style={{ display: 'none' }}
-                />
-              </div>
-            </div>
             <div className="perfil-grid">
               <div className="perfil-field">
                 <label>Nombre</label>
