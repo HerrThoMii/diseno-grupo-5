@@ -12,11 +12,11 @@ class ProgramaActividades(models.Model):
 
 class GrupoInvestigacion(models.Model):
     oidGrupoInvestigacion = models.AutoField(primary_key=True, unique=True)
-    nombre = models.CharField(max_length=45)
+    nombre = models.CharField(max_length=45, unique=True)
     facultadReginalAsignada = models.TextField()
-    correo = models.TextField()
+    correo = models.TextField(unique=True)
     organigrama = models.TextField()
-    sigla = models.CharField(max_length=45)
+    sigla = models.CharField(max_length=45, unique=True)
     fuenteFinanciamiento = models.TextField()
     ProgramaActividades = models.ForeignKey(
         ProgramaActividades, on_delete=models.CASCADE
@@ -32,7 +32,7 @@ class Patente(models.Model):
     GrupoInvestigacion = models.ForeignKey(
         GrupoInvestigacion, on_delete=models.CASCADE
     )
-    numero = models.CharField(max_length=100, blank=True)
+    numero = models.CharField(max_length=100, unique=True)
     fecha = models.DateField(null=True, blank=True)
     inventor = models.CharField(max_length=200, blank=True)
 
@@ -53,7 +53,7 @@ class Registro(models.Model):
     TipoDeRegistro = models.ForeignKey(
         TipoDeRegistro, on_delete=models.CASCADE
     )
-    Patente = models.ForeignKey(
+    Patente = models.OneToOneField(
         Patente, on_delete=models.CASCADE
     )
 
@@ -200,8 +200,8 @@ class TipoTrabajoPublicado(models.Model):
 
 class TrabajoPublicado(models.Model):
     oidTrabajoPublicado = models.AutoField(primary_key=True, unique=True)
-    titulo = models.TextField()
-    ISSN = models.CharField(max_length=55)
+    titulo = models.TextField(unique=True)
+    ISSN = models.CharField(max_length=55, unique=True)
     editorial = models.CharField(max_length=255)
     nombreRevista = models.CharField(max_length=255)
     pais = models.CharField(max_length=255)
@@ -255,7 +255,7 @@ class TrabajoPresentado(models.Model):
     ciudad = models.TextField()
     fechaInicio = models.DateTimeField()
     nombreReunion = models.TextField()
-    tituloTrabajo = models.TextField()
+    tituloTrabajo = models.TextField(unique=True)
     GrupoInvestigacion = models.ForeignKey(
         GrupoInvestigacion, on_delete=models.CASCADE
     )
