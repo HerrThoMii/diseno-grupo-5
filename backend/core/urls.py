@@ -12,7 +12,8 @@ from app.views import (
     ParteExternaViewSet, EquipamientoInfraestructuraViewSet,
     TrabajoPresentadoViewSet, ActividadXPersonaViewSet,
     login, perfil, actualizar_perfil, eliminar_persona, listar_personas, refresh_token, get_opciones_perfil, RegistroViewSet, PatenteViewSet, AutorViewSet, TipoTrabajoPublicadoViewSet, TipoDeRegistroViewSet,
-    IntegranteMemoriaViewSet, ActividadMemoriaViewSet, PublicacionMemoriaViewSet, PatenteMemoriaViewSet, ProyectoMemoriaViewSet
+    IntegranteMemoriaViewSet, ActividadMemoriaViewSet, PublicacionMemoriaViewSet, PatenteMemoriaViewSet, ProyectoMemoriaViewSet,
+    recuperar_password, restablecer_password
 )
 from app.memoria_views import MemoriaAnualViewSet
 
@@ -60,6 +61,8 @@ urlpatterns = [
     path('api/auth/persona/<int:oidpersona>/eliminar/', eliminar_persona, name='eliminar_persona'),
     path('api/auth/refresh/', refresh_token, name='refresh_token'),
     path('api/auth/opciones-perfil/', get_opciones_perfil, name='opciones_perfil'),
+    path('api/auth/recuperar-password/', recuperar_password, name='recuperar_password'),
+    path('api/auth/restablecer-password/', restablecer_password, name='restablecer_password'),
 ]
 
 # media serving removed (file uploads disabled)

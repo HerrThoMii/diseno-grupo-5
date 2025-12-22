@@ -7,9 +7,31 @@ function HomePage() {
 
   useEffect(() => {
     const loadUserName = () => {
-      const userData = localStorage.getItem('user');
-      const userName = userData ? JSON.parse(userData).nombre : 'Usuario';
-      setNombre(userName);
+      try {
+        const userData = localStorage.getItem('userData');
+        console.log('userData raw:', userData);
+        
+        if (userData) {
+          const parsedData = JSON.parse(userData);
+          console.log('userData parsed:', parsedData);
+          
+          // Intentar obtener el nombre de diferentes campos posibles
+          const userName = parsedData.nombre || 
+                          parsedData.name || 
+                          parsedData.nombres || 
+                          parsedData.usuario || 
+                          'Usuario';
+          
+          console.log('userName final:', userName);
+          setNombre(userName);
+        } else {
+          console.log('No hay userData en localStorage');
+          setNombre('Usuario');
+        }
+      } catch (error) {
+        console.error('Error al cargar nombre de usuario:', error);
+        setNombre('Usuario');
+      }
     };
 
     // Cargar nombre inicial

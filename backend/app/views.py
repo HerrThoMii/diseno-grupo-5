@@ -5,6 +5,8 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.hashers import make_password, check_password
+from django.core.mail import send_mail
+from django.conf import settings
 from .models import (
     ProgramaActividades, GrupoInvestigacion, InformeRendicionCuentas,
     Erogacion, ProyectoInvestigacion, LineaDeInvestigacion, Actividad,
@@ -362,3 +364,173 @@ class ProyectoMemoriaViewSet(viewsets.ModelViewSet):
     queryset = ProyectoMemoria.objects.all()
     serializer_class = ProyectoMemoriaSerializer
     filterset_fields = ['MemoriaAnual']
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def recuperar_password(request):
+    """
+    Endpoint para solicitar recuperación de contraseña.
+    Genera un token temporal y lo envía por email.
+    """
+    correo = request.data.get('correo')
+    
+    print(f"\n{'='*60}")
+    print(f"RECUPERAR PASSWORD - Request recibido")
+    print(f"Email solicitado: {correo}")
+    print(f"{'='*60}")
+    
+    if not correo:
+        print("✗ Error: Email no proporcionado")
+        return Response(
+            {'error': 'El email es requerido'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    try:
+        persona = Persona.objects.get(correo=correo)
+        print(f"✓ Persona encontrada: {persona.nombre} {persona.apellido}")
+        
+        # Generar token de recuperación con timestamp
+        import secrets
+        import time
+        import base64
+        
+        timestamp = int(time.time())
+        token_data = f"{persona.oidpersona}:{timestamp}"
+        token = base64.urlsafe_b64encode(token_data.encode()).decode()
+        
+        # URL de recuperación
+        reset_url = f"http://localhost:5173/reset-password?token={token}"
+        
+        # Enviar email
+        subject = 'Recuperación de Contraseña - UTN'
+        message = f'''
+Hola {persona.nombre},
+
+Has solicitado recuperar tu contraseña.
+
+Para restablecer tu contraseña, haz clic en el siguiente enlace:
+{reset_url}
+
+Este enlace expirará en 24 horas.
+
+Si no solicitaste este cambio, puedes ignorar este mensaje.
+
+Saludos,
+Equipo UTN
+        '''
+        
+        print(f"Intentando enviar email a: {correo}")
+        print(f"Desde: {settings.DEFAULT_FROM_EMAIL}")
+        
+        try:
+            result = send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [correo],
+                fail_silently=False,
+            )
+            print(f"✓ Email enviado exitosamente (result={result})")
+            print(f"Token: {token}")
+            print(f"Enlace: {reset_url}")
+        except Exception as e:
+            print(f"✗ Error al enviar email: {type(e).__name__}: {str(e)}")
+            print(f"Token para desarrollo: {token}")
+            print(f"Enlace para desarrollo: {reset_url}")
+            import traceback
+            traceback.print_exc()
+        
+    except Persona.DoesNotExist:
+        print(f"✗ No existe persona con email: {correo}")
+        pass
+    
+    print(f"{'='*60}\n")
+    
+    return Response(
+        {'mensaje': 'Si el email existe, recibirás un enlace de recuperación'},
+        status=status.HTTP_200_OK
+    )
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def restablecer_password(request):
+    """
+    Endpoint para restablecer la contraseña usando el token.
+    """
+    token = request.data.get('token')
+    nueva_password = request.data.get('password')
+    
+    print(f"\n{'='*60}")
+    print(f"RESTABLECER PASSWORD - Request recibido")
+    print(f"{'='*60}")
+    
+    if not token or not nueva_password:
+        print("✗ Error: Token o contraseña no proporcionados")
+        return Response(
+            {'error': 'Token y contraseña son requeridos'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Validar longitud de contraseña
+    if len(nueva_password) < 6:
+        print("✗ Error: Contraseña muy corta")
+        return Response(
+            {'error': 'La contraseña debe tener al menos 6 caracteres'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    try:
+        # Decodificar el token
+        import base64
+        import time
+        
+        token_data = base64.urlsafe_b64decode(token.encode()).decode()
+        oidpersona, timestamp = token_data.split(':')
+        oidpersona = int(oidpersona)
+        timestamp = int(timestamp)
+        
+        # Verificar que el token no haya expirado (24 horas = 86400 segundos)
+        current_time = int(time.time())
+        if current_time - timestamp > 86400:
+            print("✗ Error: Token expirado")
+            return Response(
+                {'error': 'El enlace ha expirado. Solicita uno nuevo.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Buscar la persona
+        try:
+            persona = Persona.objects.get(oidpersona=oidpersona)
+            print(f"✓ Persona encontrada: {persona.nombre} {persona.apellido}")
+            
+            # Actualizar la contraseña
+            persona.contrasena = make_password(nueva_password)
+            persona.save()
+            
+            print(f"✓ Contraseña actualizada exitosamente")
+            print(f"{'='*60}\n")
+            
+            return Response(
+                {'mensaje': 'Contraseña restablecida exitosamente'},
+                status=status.HTTP_200_OK
+            )
+            
+        except Persona.DoesNotExist:
+            print(f"✗ Error: Persona no encontrada (oid={oidpersona})")
+            return Response(
+                {'error': 'Token inválido'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    
+    except Exception as e:
+        print(f"✗ Error al procesar token: {type(e).__name__}: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        print(f"{'='*60}\n")
+        return Response(
+            {'error': 'Token inválido o corrupto'},
+            status=status.HTTP_400_BAD_REQUEST
+        )

@@ -12,6 +12,7 @@ import RegistrosPage from './pages/RegistrosPage'
 import GrupoPage from './pages/GrupoPage'
 import AcercaDePage from './pages/AcercaDePage'
 import VerMemorias from './components/VerMemorias'
+import ResetPasswordPage from './pages/ResetPasswordPage'
 import { getUser } from './services/api';
 
 function App() {
@@ -70,6 +71,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Login onLogin={handleLogin} />} />
           <Route path="/register" element={<Register onRegister={handleRegister} />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </BrowserRouter>

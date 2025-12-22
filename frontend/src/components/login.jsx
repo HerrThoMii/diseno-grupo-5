@@ -69,8 +69,11 @@ const Login = ({ onLogin = () => {} }) => {
             console.log('Login exitoso!');
             console.log('Usuario:', response.persona);
             
+            // Disparar evento para que HomePage actualice el nombre
+            window.dispatchEvent(new Event('userDataUpdated'));
+            
             // Login exitoso - llamar al callback con el nombre del usuario
-            const userName = response.persona.nombre || formData.email.split('@')[0];
+            const userName = response.persona.nombre || response.persona.name || formData.email.split('@')[0];
             onLogin(userName);
             
         } catch (error) {
