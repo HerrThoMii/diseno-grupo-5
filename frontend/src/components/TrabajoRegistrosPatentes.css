@@ -212,6 +212,40 @@
   color: #999;
 }
 
+.trp-item-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.action-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background-color: #f5f5f5;
+  color: #666;
+}
+
+.action-button:hover {
+  transform: scale(1.1);
+}
+
+.edit-button:hover {
+  background-color: #c49acc;
+  color: white;
+}
+
+.delete-button:hover {
+  background-color: #c49acc;
+  color: white;
+}
+
 .trp-action-buttons {
   display: flex;
   gap: 8px;

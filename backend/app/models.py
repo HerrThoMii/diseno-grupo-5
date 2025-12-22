@@ -12,11 +12,11 @@ class ProgramaActividades(models.Model):
 
 class GrupoInvestigacion(models.Model):
     oidGrupoInvestigacion = models.AutoField(primary_key=True, unique=True)
-    nombre = models.CharField(max_length=45)
+    nombre = models.CharField(max_length=45, unique=True)
     facultadReginalAsignada = models.TextField()
-    correo = models.TextField()
+    correo = models.TextField(unique=True)
     organigrama = models.TextField()
-    sigla = models.CharField(max_length=45)
+    sigla = models.CharField(max_length=45, unique=True)
     fuenteFinanciamiento = models.TextField()
     ProgramaActividades = models.ForeignKey(
         ProgramaActividades, on_delete=models.CASCADE
@@ -32,14 +32,31 @@ class Patente(models.Model):
     GrupoInvestigacion = models.ForeignKey(
         GrupoInvestigacion, on_delete=models.CASCADE
     )
+    numero = models.CharField(max_length=100, unique=True)
+    fecha = models.DateField(null=True, blank=True)
+    inventor = models.CharField(max_length=200, blank=True)
+
+    def __str__(self):
+        return f"{self.descripcion} ({self.numero})"
+
+class TipoDeRegistro(models.Model):
+    oidTipoDeRegistro = models.AutoField(primary_key=True, unique=True)
+    nombre = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.nombre
+
 
 class Registro(models.Model):
     oidRegistro = models.AutoField(primary_key=True, unique=True)
     descripcion = models.TextField()
-    tipoRegistro = models.TextField(max_length=45)
-    Patente = models.ForeignKey(
+    TipoDeRegistro = models.ForeignKey(
+        TipoDeRegistro, on_delete=models.CASCADE
+    )
+    Patente = models.OneToOneField(
         Patente, on_delete=models.CASCADE
     )
+
 
 class InformeRendicionCuentas(models.Model):
     oidInformeRendicionCuentas = models.AutoField(primary_key=True, unique=True)
@@ -88,7 +105,6 @@ class LineaDeInvestigacion(models.Model):
     )
 
 
-
 class Actividad(models.Model):
     oidActividad = models.AutoField(primary_key=True, unique=True)
     descripcion = models.TextField()
@@ -101,6 +117,10 @@ class Actividad(models.Model):
         LineaDeInvestigacion, on_delete=models.CASCADE
     )
 
+class TipoDePersonal(models.Model):
+    nombre = models.CharField(max_length=100)
+    def __str__(self):
+        return self.nombre
 
 class Persona(models.Model):
     oidpersona = models.AutoField(primary_key=True, unique=True)
@@ -109,10 +129,14 @@ class Persona(models.Model):
     correo = models.EmailField(unique=True)
     contrasena = models.CharField(max_length=128)
     horasSemanales = models.IntegerField()
-    tipoDePersonal = models.TextField()
+    tipoDePersonal = models.ForeignKey(TipoDePersonal, on_delete=models.SET_NULL, null=True, blank=True)
     GrupoInvestigacion = models.ForeignKey(
-        GrupoInvestigacion, on_delete=models.CASCADE
+        GrupoInvestigacion, on_delete=models.CASCADE, null=True, blank=True
     )
+
+    @property
+    def is_authenticated(self):
+        return True
 
     def __str__(self):
         return f"{self.nombre} {self.apellido}"
@@ -164,11 +188,30 @@ class DocumentacionBiblioteca(models.Model):
     )
 
 
+class Autor(models.Model):
+    oidAutor = models.AutoField(primary_key=True, unique=True)
+    nombre = models.CharField(max_length=45)
+    apellido = models.CharField(max_length=45)
+
+
+class TipoTrabajoPublicado(models.Model):
+    oidTipoTrabajoPublicado = models.AutoField(primary_key=True, unique=True)
+    nombre = models.CharField(max_length=100)
+
 class TrabajoPublicado(models.Model):
     oidTrabajoPublicado = models.AutoField(primary_key=True, unique=True)
-    autor = models.TextField()
-    titulo = models.TextField()
-    tipoTrabajoPublicado = models.TextField()
+    titulo = models.TextField(unique=True)
+    ISSN = models.CharField(max_length=55, unique=True)
+    editorial = models.CharField(max_length=255)
+    nombreRevista = models.CharField(max_length=255)
+    pais = models.CharField(max_length=255)
+    estado = models.CharField(max_length=55, default='Realizado')
+    tipoTrabajoPublicado = models.ForeignKey(
+        TipoTrabajoPublicado, on_delete=models.CASCADE
+    )
+    Autor = models.ForeignKey(
+        Autor, on_delete=models.CASCADE
+    )
     GrupoInvestigacion = models.ForeignKey(
         GrupoInvestigacion, on_delete=models.CASCADE
     )
@@ -212,7 +255,7 @@ class TrabajoPresentado(models.Model):
     ciudad = models.TextField()
     fechaInicio = models.DateTimeField()
     nombreReunion = models.TextField()
-    tituloTrabajo = models.TextField()
+    tituloTrabajo = models.TextField(unique=True)
     GrupoInvestigacion = models.ForeignKey(
         GrupoInvestigacion, on_delete=models.CASCADE
     )
@@ -229,114 +272,96 @@ class ActividadXPersona(models.Model):
 
 class MemoriaAnual(models.Model):
     oidMemoriaAnual = models.AutoField(primary_key=True, unique=True)
-    anio = models.IntegerField()
+    ano = models.IntegerField()
     fechaCreacion = models.DateTimeField(auto_now_add=True)
-    fechaActualizacion = models.DateTimeField(auto_now=True)
-    GrupoInvestigacion = models.ForeignKey(
-        GrupoInvestigacion, on_delete=models.CASCADE, related_name='memorias'
-    )
-    director = models.ForeignKey(
-        Persona, on_delete=models.SET_NULL, null=True, related_name='memorias_como_director'
-    )
-    vicedirector = models.ForeignKey(
-        Persona, on_delete=models.SET_NULL, null=True, related_name='memorias_como_vicedirector'
-    )
-
-    class Meta:
-        unique_together = ('anio', 'GrupoInvestigacion')
-        ordering = ['-anio']
-
+    fechaModificacion = models.DateTimeField(auto_now=True)
+    
+    # Información General (Tab 1)
+    fechaInicio = models.DateField(null=True, blank=True)
+    fechaFin = models.DateField(null=True, blank=True)
+    
+    # Integrantes del Grupo (Tab 2)
+    director = models.CharField(max_length=200, blank=True)
+    vicedirector = models.CharField(max_length=200, blank=True)
+    
+    # Actividades Desarrolladas (Tab 3)
+    objetivosGenerales = models.TextField(blank=True)
+    objetivosEspecificos = models.TextField(blank=True)
+    actividadesRealizadas = models.TextField(blank=True)
+    resultadosObtenidos = models.TextField(blank=True)
+    
+    # Relaciones con otras tablas (many-to-many)
+    integrantes = models.ManyToManyField(Persona, through='IntegranteMemoria', related_name='memorias', blank=True)
+    actividades = models.ManyToManyField(Actividad, through='ActividadMemoria', related_name='memorias', blank=True)
+    publicaciones = models.ManyToManyField(TrabajoPublicado, through='PublicacionMemoria', related_name='memorias', blank=True)
+    patentes = models.ManyToManyField(Patente, through='PatenteMemoria', related_name='memorias', blank=True)
+    proyectos = models.ManyToManyField(ProyectoInvestigacion, through='ProyectoMemoria', related_name='memorias', blank=True)
+    
+    # Relación con el Grupo
+    GrupoInvestigacion = models.ForeignKey(GrupoInvestigacion, on_delete=models.CASCADE, related_name='memorias', null=True, blank=True)
+    
     def __str__(self):
-        return f"Memoria {self.anio} - {self.GrupoInvestigacion.nombre}"
+        return f"Memoria Anual {self.ano} - {self.GrupoInvestigacion.nombre if self.GrupoInvestigacion else 'Sin grupo'}"
 
 
 class IntegranteMemoria(models.Model):
     oidIntegranteMemoria = models.AutoField(primary_key=True, unique=True)
-    MemoriaAnual = models.ForeignKey(
-        MemoriaAnual, on_delete=models.CASCADE, related_name='integrantes'
-    )
-    persona = models.ForeignKey(Persona, on_delete=models.CASCADE)
-    rol = models.CharField(max_length=100)
-    horasSemanales = models.IntegerField()
-
+    MemoriaAnual = models.ForeignKey(MemoriaAnual, on_delete=models.CASCADE)
+    Persona = models.ForeignKey(Persona, on_delete=models.CASCADE)
+    rol = models.CharField(max_length=100, blank=True)
+    dedicacion = models.CharField(max_length=100, blank=True)
+    
+    class Meta:
+        unique_together = ('MemoriaAnual', 'Persona')
+    
     def __str__(self):
-        return f"{self.persona.nombre} {self.persona.apellido} - {self.rol}"
-
-
-class TrabajoMemoria(models.Model):
-    oidTrabajoMemoria = models.AutoField(primary_key=True, unique=True)
-    MemoriaAnual = models.ForeignKey(
-        MemoriaAnual, on_delete=models.CASCADE, related_name='trabajos'
-    )
-    ciudad = models.CharField(max_length=100)
-    fecha = models.DateField()
-    nombreReunion = models.TextField()
-    titulo = models.TextField()
-
-    def __str__(self):
-        return self.titulo
+        return f"{self.Persona.nombre} - {self.MemoriaAnual}"
 
 
 class ActividadMemoria(models.Model):
     oidActividadMemoria = models.AutoField(primary_key=True, unique=True)
-    MemoriaAnual = models.ForeignKey(
-        MemoriaAnual, on_delete=models.CASCADE, related_name='actividades_memoria'
-    )
-    titulo = models.CharField(max_length=200)
-    descripcion = models.TextField()
-    fecha = models.DateField()
-    tipo = models.CharField(max_length=50)
-
+    MemoriaAnual = models.ForeignKey(MemoriaAnual, on_delete=models.CASCADE)
+    Actividad = models.ForeignKey(Actividad, on_delete=models.CASCADE)
+    observaciones = models.TextField(blank=True)
+    
+    class Meta:
+        unique_together = ('MemoriaAnual', 'Actividad')
+    
     def __str__(self):
-        return self.titulo
+        return f"{self.Actividad.nombre} - {self.MemoriaAnual}"
 
 
 class PublicacionMemoria(models.Model):
     oidPublicacionMemoria = models.AutoField(primary_key=True, unique=True)
-    MemoriaAnual = models.ForeignKey(
-        MemoriaAnual, on_delete=models.CASCADE, related_name='publicaciones_memoria'
-    )
-    titulo = models.TextField()
-    autor = models.TextField()
-    revista = models.CharField(max_length=200)
-    anio = models.IntegerField()
-
+    MemoriaAnual = models.ForeignKey(MemoriaAnual, on_delete=models.CASCADE)
+    TrabajoPublicado = models.ForeignKey(TrabajoPublicado, on_delete=models.CASCADE)
+    
+    class Meta:
+        unique_together = ('MemoriaAnual', 'TrabajoPublicado')
+    
     def __str__(self):
-        return self.titulo
+        return f"{self.TrabajoPublicado.titulo} - {self.MemoriaAnual}"
 
 
 class PatenteMemoria(models.Model):
     oidPatenteMemoria = models.AutoField(primary_key=True, unique=True)
-    MemoriaAnual = models.ForeignKey(
-        MemoriaAnual, on_delete=models.CASCADE, related_name='patentes_memoria'
-    )
-    titulo = models.TextField()
-    numero = models.CharField(max_length=100)
-    fecha = models.DateField()
-    estado = models.CharField(max_length=50)
-
+    MemoriaAnual = models.ForeignKey(MemoriaAnual, on_delete=models.CASCADE)
+    Patente = models.ForeignKey(Patente, on_delete=models.CASCADE)
+    
+    class Meta:
+        unique_together = ('MemoriaAnual', 'Patente')
+    
     def __str__(self):
-        return self.titulo
+        return f"{self.Patente.descripcion} - {self.MemoriaAnual}"
 
 
 class ProyectoMemoria(models.Model):
     oidProyectoMemoria = models.AutoField(primary_key=True, unique=True)
-    MemoriaAnual = models.ForeignKey(
-        MemoriaAnual, on_delete=models.CASCADE, related_name='proyectos_memoria'
-    )
-    nombre = models.CharField(max_length=200)
-    estado = models.CharField(max_length=50)
-    fechaInicio = models.DateField()
-    fechaFin = models.DateField(null=True, blank=True)
-    responsable = models.TextField()
-    responsableTitulo = models.CharField(max_length=200, blank=True)
-    presupuesto = models.CharField(max_length=100, blank=True)
-    colaboradores = models.TextField(blank=True)
-    colaboradoresTitulo = models.CharField(max_length=200, blank=True)
-    objetivos = models.TextField(blank=True)
-    objetivosTitulo = models.CharField(max_length=200, blank=True)
-    resultados = models.TextField(blank=True)
-    resultadosTitulo = models.CharField(max_length=200, blank=True)
-
+    MemoriaAnual = models.ForeignKey(MemoriaAnual, on_delete=models.CASCADE)
+    ProyectoInvestigacion = models.ForeignKey(ProyectoInvestigacion, on_delete=models.CASCADE)
+    
+    class Meta:
+        unique_together = ('MemoriaAnual', 'ProyectoInvestigacion')
+    
     def __str__(self):
-        return self.nombre
+        return f"{self.ProyectoInvestigacion.nombre} - {self.MemoriaAnual}"

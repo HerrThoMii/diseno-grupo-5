@@ -49,7 +49,7 @@
   align-items: center;
   padding: 24px 28px;
   border-bottom: 1px solid #e5e7eb;
-  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  background: linear-gradient(135deg, #c49acc 0%, #c49acc 100%);
   color: white;
   border-radius: 12px 12px 0 0;
 }
@@ -118,6 +118,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
 }
 
 .perfil-image {
@@ -126,10 +127,33 @@
   object-fit: cover;
 }
 
+.btn-delete-image-overlay {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background-color: rgba(220, 38, 38, 0.9);
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: white;
+  transition: all 0.2s;
+  z-index: 10;
+}
+
+.btn-delete-image-overlay:hover {
+  background-color: rgba(185, 28, 28, 1);
+  transform: scale(1.1);
+}
+
 .perfil-image-placeholder {
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  background: linear-gradient(135deg, #c49acc 0%, #c49acc 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -143,7 +167,7 @@
 
 .btn-upload-image {
   padding: 8px 16px;
-  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  background: linear-gradient(135deg, #c49acc 0%, #c49acc 100%);
   color: white;
   border: none;
   border-radius: 6px;
@@ -206,7 +230,7 @@
 
 .perfil-input:focus {
   outline: none;
-  border-color: #7c3aed;
+  border-color: #c49acc;
   box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
 }
 
@@ -232,7 +256,7 @@
 .perfil-email svg,
 .perfil-hours svg,
 .perfil-grupo svg {
-  color: #7c3aed;
+  color: #c49acc;
   flex-shrink: 0;
 }
 
@@ -267,7 +291,7 @@
 }
 
 .btn-perfil-save {
-  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  background: linear-gradient(135deg, #c49acc 0%, #c49acc 100%);
   color: white;
 }
 
@@ -282,7 +306,7 @@
   justify-content: center;
   gap: 8px;
   padding: 10px 16px;
-  background-color: #7c3aed;
+  background-color: #c49acc;
   color: white;
   border: none;
   border-radius: 6px;
@@ -294,7 +318,7 @@
 }
 
 .btn-change-password:hover {
-  background-color: #6d28d9;
+  background-color: #c49acc;
 }
 
 .password-section {
@@ -352,7 +376,7 @@
 }
 
 .btn-password-save {
-  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  background: linear-gradient(135deg, #c49acc 0%, #c49acc 100%);
   color: white;
 }
 
@@ -378,7 +402,7 @@
 }
 
 .multi-select-display:hover {
-  border-color: #7c3aed;
+  border-color: #c49acc;
 }
 
 .multi-select-text {
@@ -425,11 +449,12 @@
   background-color: #f9fafb;
 }
 
-.multi-select-option input[type="checkbox"] {
+.multi-select-option input[type="checkbox"],
+.multi-select-option input[type="radio"] {
   width: 18px;
   height: 18px;
   cursor: pointer;
-  accent-color: #7c3aed;
+  accent-color: #c49acc;
 }
 
 .multi-select-option span {

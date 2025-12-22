@@ -3,11 +3,11 @@ from .models import (
     ProgramaActividades, GrupoInvestigacion, InformeRendicionCuentas,
     Erogacion, ProyectoInvestigacion, LineaDeInvestigacion, Actividad,
     Persona, ActividadDocente, InvestigadorDocente, BecarioPersonalFormacion,
-    Investigador, DocumentacionBiblioteca, TrabajoPublicado,
+    Investigador, DocumentacionBiblioteca, TrabajoPublicado, Autor, TipoTrabajoPublicado,
     ActividadTransferencia, ParteExterna, EquipamientoInfraestructura,
-    TrabajoPresentado, ActividadXPersona, Patente, Registro,
-    MemoriaAnual, IntegranteMemoria, TrabajoMemoria, ActividadMemoria,
-    PublicacionMemoria, PatenteMemoria, ProyectoMemoria
+    TrabajoPresentado, ActividadXPersona, Patente, TipoDeRegistro, Registro,
+    MemoriaAnual, IntegranteMemoria, ActividadMemoria, PublicacionMemoria, 
+    PatenteMemoria, ProyectoMemoria
 )
 
 
@@ -48,11 +48,32 @@ class PatenteSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
 
 
+class TipoDeRegistroSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TipoDeRegistro
+        fields = '__all__'
+        read_only_fields = ['id']
+
+
 class RegistroSerializer(serializers.ModelSerializer):
     class Meta:
         model = Registro
         fields = '__all__'
         read_only_fields = ['id']
+
+
+class AutorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Autor
+        fields = '__all__'
+        read_only_fields = ['oidAutor']
+
+
+class TipoTrabajoPublicadoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TipoTrabajoPublicado
+        fields = '__all__'
+        read_only_fields = ['oidTipoTrabajoPublicado']
 
 
 class InformeRendicionCuentasSerializer(serializers.ModelSerializer):
@@ -123,6 +144,8 @@ class ActividadSerializer(serializers.ModelSerializer):
 
 
 class PersonaSerializer(serializers.ModelSerializer):
+    tipoDePersonalNombre = serializers.CharField(source='tipoDePersonal.nombre', read_only=True, allow_null=True)
+    
     class Meta:
         model = Persona
         fields = [
@@ -133,6 +156,7 @@ class PersonaSerializer(serializers.ModelSerializer):
             'apellido',
             'horasSemanales',
             'tipoDePersonal',
+            'tipoDePersonalNombre',
             'GrupoInvestigacion'
         ]
 
@@ -198,10 +222,16 @@ class DocumentacionBibliotecaSerializer(serializers.ModelSerializer):
 
 
 class TrabajoPublicadoSerializer(serializers.ModelSerializer):
+    # Campos anidados para lectura
+    Autor_detalle = AutorSerializer(source='Autor', read_only=True)
+    tipoTrabajoPublicado_detalle = TipoTrabajoPublicadoSerializer(source='tipoTrabajoPublicado', read_only=True)
+    GrupoInvestigacion_detalle = GrupoInvestigacionSerializer(source='GrupoInvestigacion', read_only=True)
+    
     class Meta:
         model = TrabajoPublicado
         fields = '__all__'
-        read_only_fields = ['id']
+        # Solo el oid es read-only, estado puede ser actualizado
+        read_only_fields = ['oidTrabajoPublicado']
 
 
 class ActividadTransferenciaSerializer(serializers.ModelSerializer):
@@ -260,133 +290,75 @@ class ActividadXPersonaSerializer(serializers.ModelSerializer):
         ]
 
 
-# Serializers para Memoria Anual
-
 class IntegranteMemoriaSerializer(serializers.ModelSerializer):
-    persona_nombre = serializers.CharField(source='persona.nombre', read_only=True)
-    persona_apellido = serializers.CharField(source='persona.apellido', read_only=True)
-    
     class Meta:
         model = IntegranteMemoria
-        fields = [
-            'oidIntegranteMemoria',
-            'MemoriaAnual',
-            'persona',
-            'persona_nombre',
-            'persona_apellido',
-            'rol',
-            'horasSemanales'
-        ]
-
-
-class TrabajoMemoriaSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = TrabajoMemoria
-        fields = [
-            'oidTrabajoMemoria',
-            'MemoriaAnual',
-            'ciudad',
-            'fecha',
-            'nombreReunion',
-            'titulo'
-        ]
+        fields = '__all__'
 
 
 class ActividadMemoriaSerializer(serializers.ModelSerializer):
     class Meta:
         model = ActividadMemoria
-        fields = [
-            'oidActividadMemoria',
-            'MemoriaAnual',
-            'titulo',
-            'descripcion',
-            'fecha',
-            'tipo'
-        ]
+        fields = '__all__'
 
 
 class PublicacionMemoriaSerializer(serializers.ModelSerializer):
     class Meta:
         model = PublicacionMemoria
-        fields = [
-            'oidPublicacionMemoria',
-            'MemoriaAnual',
-            'titulo',
-            'autor',
-            'revista',
-            'anio'
-        ]
+        fields = '__all__'
 
 
 class PatenteMemoriaSerializer(serializers.ModelSerializer):
     class Meta:
         model = PatenteMemoria
-        fields = [
-            'oidPatenteMemoria',
-            'MemoriaAnual',
-            'titulo',
-            'numero',
-            'fecha',
-            'estado'
-        ]
+        fields = '__all__'
 
 
 class ProyectoMemoriaSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProyectoMemoria
-        fields = [
-            'oidProyectoMemoria',
-            'MemoriaAnual',
-            'nombre',
-            'estado',
-            'fechaInicio',
-            'fechaFin',
-            'responsable',
-            'responsableTitulo',
-            'presupuesto',
-            'colaboradores',
-            'colaboradoresTitulo',
-            'objetivos',
-            'objetivosTitulo',
-            'resultados',
-            'resultadosTitulo'
-        ]
+        fields = '__all__'
 
 
 class MemoriaAnualSerializer(serializers.ModelSerializer):
-    director_nombre = serializers.CharField(source='director.nombre', read_only=True)
-    director_apellido = serializers.CharField(source='director.apellido', read_only=True)
-    vicedirector_nombre = serializers.CharField(source='vicedirector.nombre', read_only=True)
-    vicedirector_apellido = serializers.CharField(source='vicedirector.apellido', read_only=True)
-    grupo_nombre = serializers.CharField(source='GrupoInvestigacion.nombre', read_only=True)
-    
-    integrantes = IntegranteMemoriaSerializer(many=True, read_only=True)
-    trabajos = TrabajoMemoriaSerializer(many=True, read_only=True)
-    actividades_memoria = ActividadMemoriaSerializer(many=True, read_only=True)
-    publicaciones_memoria = PublicacionMemoriaSerializer(many=True, read_only=True)
-    patentes_memoria = PatenteMemoriaSerializer(many=True, read_only=True)
-    proyectos_memoria = ProyectoMemoriaSerializer(many=True, read_only=True)
+    director_nombre = serializers.SerializerMethodField()
+    vicedirector_nombre = serializers.SerializerMethodField()
     
     class Meta:
         model = MemoriaAnual
         fields = [
             'oidMemoriaAnual',
-            'anio',
+            'ano',
             'fechaCreacion',
-            'fechaActualizacion',
-            'GrupoInvestigacion',
-            'grupo_nombre',
+            'fechaModificacion',
             'director',
             'director_nombre',
-            'director_apellido',
             'vicedirector',
             'vicedirector_nombre',
-            'vicedirector_apellido',
-            'integrantes',
-            'trabajos',
-            'actividades_memoria',
-            'publicaciones_memoria',
-            'patentes_memoria',
-            'proyectos_memoria'
+            'objetivosGenerales',
+            'objetivosEspecificos',
+            'actividadesRealizadas',
+            'resultadosObtenidos',
+            'GrupoInvestigacion'
         ]
-        read_only_fields = ['fechaCreacion', 'fechaActualizacion']
+        read_only_fields = ['oidMemoriaAnual', 'fechaCreacion', 'fechaModificacion']
+    
+    def get_director_nombre(self, obj):
+        if obj.director:
+            try:
+                from .models import Persona
+                persona = Persona.objects.get(oidpersona=int(obj.director))
+                return f"{persona.nombre} {persona.apellido}"
+            except (Persona.DoesNotExist, ValueError):
+                return obj.director
+        return None
+    
+    def get_vicedirector_nombre(self, obj):
+        if obj.vicedirector:
+            try:
+                from .models import Persona
+                persona = Persona.objects.get(oidpersona=int(obj.vicedirector))
+                return f"{persona.nombre} {persona.apellido}"
+            except (Persona.DoesNotExist, ValueError):
+                return obj.vicedirector
+        return None

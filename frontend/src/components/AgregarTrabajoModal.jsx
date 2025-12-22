@@ -1,174 +1,140 @@
-import React, { useState } from 'react';
-import './AgregarTrabajoModal.css';
+import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
+import './AgregarTrabajoModal.css';
+import { crearTrabajoPresentado, listarGrupos } from '../services/api';
 
-const AgregarTrabajoModal = ({ isOpen, onClose, onAdd }) => {
+export default function AgregarTrabajoModal({ isOpen, onClose, onAdd }) {
   const [formData, setFormData] = useState({
     ciudad: '',
     fechaInicio: '',
     nombreReunion: '',
-    titulo: ''
+    tituloTrabajo: '',
+    GrupoInvestigacion: ''
   });
 
+  const [grupos, setGrupos] = useState([]);
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+
+  useEffect(() => {
+    let mounted = true;
+    listarGrupos()
+      .then(data => { if (!mounted) return; setGrupos(Array.isArray(data) ? data : []); })
+      .catch(() => { if (!mounted) return; setGrupos([]); });
+    return () => { mounted = false };
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    // Limpiar error del campo cuando el usuario escribe
-    if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
-    }
+    setFormData(prev => ({ ...prev, [name]: value }));
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
   };
 
   const validate = () => {
     const newErrors = {};
-    
-    if (!formData.ciudad.trim()) {
-      newErrors.ciudad = 'La ciudad es requerida';
-    }
-    
-    if (!formData.fechaInicio) {
-      newErrors.fechaInicio = 'La fecha de inicio es requerida';
-    }
-    
-    if (!formData.nombreReunion.trim()) {
-      newErrors.nombreReunion = 'El nombre de la reunión es requerido';
-    }
-    
-    if (!formData.titulo.trim()) {
-      newErrors.titulo = 'El título del trabajo es requerido';
-    }
-    
+    if (!formData.tituloTrabajo.trim()) newErrors.tituloTrabajo = 'El título es requerido';
+    if (!formData.fechaInicio) newErrors.fechaInicio = 'La fecha de inicio es requerida';
+    if (!formData.ciudad.trim()) newErrors.ciudad = 'La ciudad es requerida';
+    if (!formData.GrupoInvestigacion) newErrors.GrupoInvestigacion = 'Seleccione un grupo';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
-    if (validate()) {
-      const nuevoTrabajo = {
-        id: Date.now(),
-        ...formData
-      };
-      
-      onAdd(nuevoTrabajo);
-      
-      // Resetear formulario
-      setFormData({
-        ciudad: '',
-        fechaInicio: '',
-        nombreReunion: '',
-        titulo: ''
-      });
-      setErrors({});
-    }
-  };
+    if (!validate()) return;
+    setLoading(true);
+    setSubmitError('');
 
-  const handleClose = () => {
-    setFormData({
-      ciudad: '',
-      fechaInicio: '',
-      nombreReunion: '',
-      titulo: ''
-    });
-    setErrors({});
-    onClose();
+    const payload = {
+      ciudad: formData.ciudad,
+      fechaInicio: formData.fechaInicio, // expect ISO datetime
+      nombreReunion: formData.nombreReunion,
+      tituloTrabajo: formData.tituloTrabajo,
+      GrupoInvestigacion: parseInt(formData.GrupoInvestigacion, 10)
+    };
+
+    crearTrabajoPresentado(payload)
+      .then(created => {
+        const id = created?.oidTrabajoPresentado ?? created?.id ?? Date.now();
+        const uiTrabajo = {
+          id,
+          ciudad: created?.ciudad ?? payload.ciudad,
+          fechaInicio: created?.fechaInicio ?? payload.fechaInicio,
+          nombreReunion: created?.nombreReunion ?? payload.nombreReunion,
+          tituloTrabajo: created?.tituloTrabajo ?? payload.tituloTrabajo,
+          raw: created
+        };
+        onAdd && onAdd(uiTrabajo);
+        setFormData({ ciudad: '', fechaInicio: '', nombreReunion: '', tituloTrabajo: '', GrupoInvestigacion: '' });
+      })
+      .catch(err => {
+        let msg = err.message || 'Error al crear trabajo';
+        try {
+          const parsed = JSON.parse(msg);
+          if (parsed.detail) msg = parsed.detail;
+          else if (typeof parsed === 'object') msg = Object.entries(parsed).map(([k,v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`).join(' | ');
+        } catch (e) {}
+        setSubmitError(msg);
+      })
+      .finally(() => setLoading(false));
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay" onClick={handleClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>Agregar Trabajo</h2>
-          <button className="modal-close" onClick={handleClose}>
-            <X size={24} />
-          </button>
+    <div className="atm-overlay">
+      <div className="atm-modal">
+        <div className="atm-header">
+          <h2>Agregar Trabajo Presentado</h2>
+          <button className="atm-close" onClick={onClose}><X size={24} /></button>
         </div>
 
-        <form onSubmit={handleSubmit} className="modal-form">
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="ciudad">Ciudad *</label>
-              <input
-                type="text"
-                id="ciudad"
-                name="ciudad"
-                value={formData.ciudad}
-                onChange={handleChange}
-                className={errors.ciudad ? 'error' : ''}
-                placeholder="Ingrese la ciudad"
-              />
-              {errors.ciudad && <span className="error-message">{errors.ciudad}</span>}
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="fechaInicio">Fecha de Inicio *</label>
-              <input
-                type="date"
-                id="fechaInicio"
-                name="fechaInicio"
-                value={formData.fechaInicio}
-                onChange={handleChange}
-                className={errors.fechaInicio ? 'error' : ''}
-              />
-              {errors.fechaInicio && <span className="error-message">{errors.fechaInicio}</span>}
-            </div>
+        <form className="atm-form" onSubmit={handleSubmit}>
+          <div className="atm-form-group">
+            <label htmlFor="tituloTrabajo">Título del Trabajo</label>
+            <input id="tituloTrabajo" name="tituloTrabajo" value={formData.tituloTrabajo} onChange={handleChange} className={errors.tituloTrabajo ? 'error' : ''} />
+            {errors.tituloTrabajo && <div className="atm-error">{errors.tituloTrabajo}</div>}
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="nombreReunion">Nombre de la Reunión *</label>
-              <input
-                type="text"
-                id="nombreReunion"
-                name="nombreReunion"
-                value={formData.nombreReunion}
-                onChange={handleChange}
-                className={errors.nombreReunion ? 'error' : ''}
-                placeholder="Ingrese el nombre de la reunión"
-              />
-              {errors.nombreReunion && <span className="error-message">{errors.nombreReunion}</span>}
-            </div>
+          <div className="atm-form-group">
+            <label htmlFor="fechaInicio">Fecha y hora inicio</label>
+            <input id="fechaInicio" name="fechaInicio" type="datetime-local" value={formData.fechaInicio} onChange={handleChange} className={errors.fechaInicio ? 'error' : ''} />
+            {errors.fechaInicio && <div className="atm-error">{errors.fechaInicio}</div>}
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="titulo">Título del Trabajo *</label>
-              <input
-                type="text"
-                id="titulo"
-                name="titulo"
-                value={formData.titulo}
-                onChange={handleChange}
-                className={errors.titulo ? 'error' : ''}
-                placeholder="Ingrese el título del trabajo"
-              />
-              {errors.titulo && <span className="error-message">{errors.titulo}</span>}
-            </div>
+          <div className="atm-form-group">
+            <label htmlFor="ciudad">Ciudad</label>
+            <input id="ciudad" name="ciudad" value={formData.ciudad} onChange={handleChange} className={errors.ciudad ? 'error' : ''} />
+            {errors.ciudad && <div className="atm-error">{errors.ciudad}</div>}
           </div>
 
-          <div className="modal-footer">
-            <button type="button" className="btn-cancel" onClick={handleClose}>
-              Cancelar
-            </button>
-            <button type="submit" className="btn-submit">
-              Agregar Trabajo
-            </button>
+          <div className="atm-form-group">
+            <label htmlFor="nombreReunion">Nombre de la reunión</label>
+            <input id="nombreReunion" name="nombreReunion" value={formData.nombreReunion} onChange={handleChange} />
+          </div>
+
+          <div className="atm-form-group">
+            <label htmlFor="GrupoInvestigacion">Grupo de Investigación</label>
+            <select id="GrupoInvestigacion" name="GrupoInvestigacion" value={formData.GrupoInvestigacion || ''} onChange={handleChange} className={errors.GrupoInvestigacion ? 'error' : ''}>
+              <option value="">-- Seleccione --</option>
+              {grupos.map(g => {
+                const pk = g.oidGrupoInvestigacion ?? g.id;
+                return <option key={pk} value={pk}>{g.nombre ?? `#${pk}`}</option>;
+              })}
+            </select>
+            {errors.GrupoInvestigacion && <div className="atm-error">{errors.GrupoInvestigacion}</div>}
+          </div>
+
+          {submitError && <div className="atm-submit-error">{submitError}</div>}
+
+          <div className="atm-buttons">
+            <button type="button" className="atm-btn-cancel" onClick={onClose} disabled={loading}>Cancelar</button>
+            <button type="submit" className="atm-btn-submit" disabled={loading}>{loading ? 'Creando...' : 'Agregar Trabajo'}</button>
           </div>
         </form>
       </div>
     </div>
   );
-};
-
-export default AgregarTrabajoModal;
+}

@@ -1,17 +1,140 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './MemoriaAnual.css';
-import { ChevronDown, Plus, Trash2, Edit } from 'lucide-react';
+import { ChevronDown, Plus, Trash2, Edit, Search } from 'lucide-react';
+import { obtenerGrupos, obtenerPersonas, crearPersona, obtenerOpcionesPerfil, listarTrabajosPresentados, crearTrabajoPresentado, listarActividades, crearActividad, listarLineasInvestigacion, listarTrabajosPublicados, crearTrabajoPublicado, actualizarTrabajoPublicado, eliminarTrabajoPublicado, listarAutores, listarTiposTrabajoPublicado, listarPatentes, crearPatente, actualizarPatente, eliminarPatente, listarProyectos, crearProyecto, actualizarProyecto, eliminarProyecto } from '../services/api';
 
 const API_BASE_URL = 'http://127.0.0.1:8000/api';
 
 const MemoriaAnual = () => {
+  const integrantesSearchRef = useRef(null);
+  const trabajosSearchRef = useRef(null);
+  const actividadesSearchRef = useRef(null);
+  const publicacionesSearchRef = useRef(null);
+  const patentesSearchRef = useRef(null);
+  const proyectosSearchRef = useRef(null);
   const [activeTab, setActiveTab] = useState('general');
   const [memoriaId, setMemoriaId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [editingIndex, setEditingIndex] = useState({ integrantes: null, trabajos: null, proyectos: null });
   const [modalField, setModalField] = useState({ show: false, index: null, field: '', value: '', title: '', type: '' });
+  const [searchTerms, setSearchTerms] = useState({
+    integrantes: '',
+    trabajos: '',
+    actividades: '',
+    publicaciones: '',
+    patentes: '',
+    proyectos: '',
+  });
+  const [integrantesPagination, setIntegrantesPagination] = useState({
+    currentPage: 1,
+    itemsPerPage: 3,
+  });
+  const [trabajosPagination, setTrabajosPagination] = useState({
+    currentPage: 1,
+    itemsPerPage: 5,
+  });
+  const [actividadesPagination, setActividadesPagination] = useState({
+    currentPage: 1,
+    itemsPerPage: 5,
+  });
+  const [publicacionesPagination, setPublicacionesPagination] = useState({
+    currentPage: 1,
+    itemsPerPage: 5,
+  });
+  const [patentesPagination, setPatentesPagination] = useState({
+    currentPage: 1,
+    itemsPerPage: 5,
+  });
+  const [proyectosPagination, setProyectosPagination] = useState({
+    currentPage: 1,
+    itemsPerPage: 5,
+  });
+  const [showIntegranteModal, setShowIntegranteModal] = useState(false);
+  const [showTrabajoModal, setShowTrabajoModal] = useState(false);
+  const [showActividadModal, setShowActividadModal] = useState(false);
+  const [showPublicacionModal, setShowPublicacionModal] = useState(false);
+  const [showPatenteModal, setShowPatenteModal] = useState(false);
+  const [showProyectoModal, setShowProyectoModal] = useState(false);
+  const [showPersonaDropdown, setShowPersonaDropdown] = useState(false);
+  const [showIntegrantesSearchDropdown, setShowIntegrantesSearchDropdown] = useState(false);
+  const [showTrabajosSearchDropdown, setShowTrabajosSearchDropdown] = useState(false);
+  const [showActividadesSearchDropdown, setShowActividadesSearchDropdown] = useState(false);
+  const [showPublicacionesSearchDropdown, setShowPublicacionesSearchDropdown] = useState(false);
+  const [publicacionesDropdownSearch, setPublicacionesDropdownSearch] = useState('');
+  const [showPatentesSearchDropdown, setShowPatentesSearchDropdown] = useState(false);
+  const [showProyectosSearchDropdown, setShowProyectosSearchDropdown] = useState(false);
+  const [personaSearchTerm, setPersonaSearchTerm] = useState('');
+  const [selectedPersonaId, setSelectedPersonaId] = useState('');
+  const [horasSemanales, setHorasSemanales] = useState(40);
+  const [newPersonaData, setNewPersonaData] = useState({
+    nombre: '',
+    apellido: '',
+    correo: '',
+    contrasena: '',
+    horasSemanales: 40,
+    tipoDePersonal: '',
+    GrupoInvestigacion: null
+  });
+  const [newTrabajoData, setNewTrabajoData] = useState({
+    ciudad: '',
+    fechaInicio: new Date().toISOString().split('T')[0],
+    nombreReunion: '',
+    tituloTrabajo: '',
+    GrupoInvestigacion: null
+  });
+  const [newActividadData, setNewActividadData] = useState({
+    descripcion: '',
+    fechaInicio: new Date().toISOString().split('T')[0],
+    fechaFin: new Date().toISOString().split('T')[0],
+    nro: 0,
+    presupuestoAsignado: 0,
+    resultadosEsperados: '',
+    LineaDeInvestigacion: null
+  });
+  const [grupos, setGrupos] = useState([]);
+  const [personas, setPersonas] = useState([]);
+  const [opcionesPerfil, setOpcionesPerfil] = useState(null);
+  const [trabajosDisponibles, setTrabajosDisponibles] = useState([]);
+  const [actividadesDisponibles, setActividadesDisponibles] = useState([]);
+  const [lineasInvestigacion, setLineasInvestigacion] = useState([]);
+  const [publicacionesDisponibles, setPublicacionesDisponibles] = useState([]);
+  const [autores, setAutores] = useState([]);
+  const [tiposTrabajoPublicado, setTiposTrabajoPublicado] = useState([]);
+  const [patentesDisponibles, setPatentesDisponibles] = useState([]);
+  const [proyectosDisponibles, setProyectosDisponibles] = useState([]);
+  const [newPublicacionData, setNewPublicacionData] = useState({
+    titulo: '',
+    ISSN: '',
+    editorial: '',
+    nombreRevista: '',
+    pais: '',
+    estado: 'Publicado',
+    tipoTrabajoPublicado: null,
+    Autor: null,
+    GrupoInvestigacion: null
+  });
+  const [newPatenteData, setNewPatenteData] = useState({
+    descripcion: '',
+    tipo: '',
+    numero: '',
+    fecha: '',
+    inventor: '',
+    GrupoInvestigacion: null
+  });
+  const [newProyectoData, setNewProyectoData] = useState({
+    nombre: '',
+    codigoProyecto: '',
+    descripcion: '',
+    tipoProyecto: '',
+    fechaInicio: '',
+    fechaFinalizacion: '',
+    fuenteFinanciamiento: '',
+    logrosObtenidos: '',
+    GrupoInvestigacion: null
+  });
+  const [editingProyectoIndex, setEditingProyectoIndex] = useState(null);
   const [formData, setFormData] = useState({
-    ano: '',
+    ano: new Date().getFullYear().toString(),
     grupo: '',
     director: '',
     vicedirector: '',
@@ -24,32 +147,310 @@ const MemoriaAnual = () => {
   });
 
   const tabs = [
-    { id: 'general', label: 'General' },
-    { id: 'integrantes', label: 'Integrantes' },
+    { id: 'general', label: 'General e Integrantes' },
     { id: 'trabajos', label: 'Trabajos' },
     { id: 'actividades', label: 'Actividades' },
     { id: 'publicaciones', label: 'Publicaciones' },
     { id: 'patentes', label: 'Patentes' },
     { id: 'proyectos', label: 'Proyectos' },
+    { id: 'guardar', label: 'Guardar' },
   ];
 
   // Cargar datos al montar el componente
   useEffect(() => {
-    loadMemoriaData();
+    // No cargar memoria existente, estamos creando una nueva
+    // loadMemoriaData();
+    loadGrupos();
+    loadPersonas();
+    loadOpcionesPerfil();
+    loadTrabajosDisponibles();
+    loadActividadesDisponibles();
+    loadLineasInvestigacion();
+    loadPublicacionesDisponibles();
+    loadAutores();
+    loadTiposTrabajoPublicado();
+    loadPatentesDisponibles();
+    loadProyectosDisponibles();
   }, []);
+
+  // Cerrar dropdown al hacer click fuera
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (integrantesSearchRef.current && !integrantesSearchRef.current.contains(event.target)) {
+        setShowIntegrantesSearchDropdown(false);
+      }
+      if (trabajosSearchRef.current && !trabajosSearchRef.current.contains(event.target)) {
+        setShowTrabajosSearchDropdown(false);
+      }
+      if (actividadesSearchRef.current && !actividadesSearchRef.current.contains(event.target)) {
+        setShowActividadesSearchDropdown(false);
+      }
+      if (publicacionesSearchRef.current && !publicacionesSearchRef.current.contains(event.target)) {
+        setShowPublicacionesSearchDropdown(false);
+      }
+      if (patentesSearchRef.current && !patentesSearchRef.current.contains(event.target)) {
+        setShowPatentesSearchDropdown(false);
+      }
+      if (proyectosSearchRef.current && !proyectosSearchRef.current.contains(event.target)) {
+        setShowProyectosSearchDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Función para cargar grupos
+  const loadGrupos = async () => {
+    try {
+      const gruposData = await obtenerGrupos();
+      setGrupos(gruposData);
+    } catch (error) {
+      console.error('Error cargando grupos:', error);
+    }
+  };
+
+  // Función para cargar personas
+  const loadPersonas = async () => {
+    try {
+      const personasData = await obtenerPersonas();
+      console.log('Personas recibidas:', personasData);
+      console.log('Directores:', personasData.filter(p => p.tipoDePersonalNombre && p.tipoDePersonalNombre.toLowerCase() === 'director'));
+      console.log('Vicedirectores:', personasData.filter(p => p.tipoDePersonalNombre && p.tipoDePersonalNombre.toLowerCase() === 'vicedirector'));
+      setPersonas(personasData);
+    } catch (error) {
+      console.error('Error cargando personas:', error);
+    }
+  };
+
+  // Función para cargar opciones de perfil
+  const loadOpcionesPerfil = async () => {
+    try {
+      const opciones = await obtenerOpcionesPerfil();
+      console.log('Opciones de perfil:', opciones);
+      setOpcionesPerfil(opciones);
+    } catch (error) {
+      console.error('Error cargando opciones de perfil:', error);
+    }
+  };
+
+  // Función para cargar trabajos presentados
+  const loadTrabajosDisponibles = async () => {
+    try {
+      const trabajosData = await listarTrabajosPresentados();
+      console.log('Trabajos recibidos:', trabajosData);
+      const trabajosArr = Array.isArray(trabajosData) ? trabajosData : [];
+      setTrabajosDisponibles(trabajosArr);
+    } catch (error) {
+      console.error('Error cargando trabajos:', error);
+    }
+  };
+
+  // Función para cargar actividades
+  const loadActividadesDisponibles = async () => {
+    try {
+      const actividadesData = await listarActividades();
+      console.log('Actividades recibidas:', actividadesData);
+      const actividadesArr = Array.isArray(actividadesData) ? actividadesData : [];
+      setActividadesDisponibles(actividadesArr);
+    } catch (error) {
+      console.error('Error cargando actividades:', error);
+    }
+  };
+
+  // Función para cargar líneas de investigación
+  const loadLineasInvestigacion = async () => {
+    try {
+      const lineasData = await listarLineasInvestigacion();
+      console.log('Líneas de investigación recibidas:', lineasData);
+      const lineasArr = Array.isArray(lineasData) ? lineasData : [];
+      setLineasInvestigacion(lineasArr);
+    } catch (error) {
+      console.error('Error cargando líneas de investigación:', error);
+    }
+  };
+
+  // Función para cargar publicaciones disponibles
+  const loadPublicacionesDisponibles = async () => {
+    try {
+      const publicacionesData = await listarTrabajosPublicados();
+      console.log('Trabajos publicados recibidos:', publicacionesData);
+      const publicacionesArr = Array.isArray(publicacionesData) ? publicacionesData : [];
+      // Filtrar trabajos con estado 'Realizado' o 'Publicado'
+      const publicados = publicacionesArr.filter(p => 
+        p.estado === 'Publicado' || p.estado === 'Realizado'
+      );
+      setPublicacionesDisponibles(publicados);
+    } catch (error) {
+      console.error('Error cargando publicaciones:', error);
+    }
+  };
+
+  // Función para cargar autores
+  const loadAutores = async () => {
+    try {
+      const autoresData = await listarAutores();
+      console.log('Autores recibidos:', autoresData);
+      const autoresArr = Array.isArray(autoresData) ? autoresData : [];
+      setAutores(autoresArr);
+    } catch (error) {
+      console.error('Error cargando autores:', error);
+    }
+  };
+
+  // Función para cargar tipos de trabajo publicado
+  const loadTiposTrabajoPublicado = async () => {
+    try {
+      const tiposData = await listarTiposTrabajoPublicado();
+      console.log('Tipos de trabajo publicado recibidos:', tiposData);
+      const tiposArr = Array.isArray(tiposData) ? tiposData : [];
+      setTiposTrabajoPublicado(tiposArr);
+    } catch (error) {
+      console.error('Error cargando tipos de trabajo publicado:', error);
+    }
+  };
+
+  // Función para cargar patentes disponibles
+  const loadPatentesDisponibles = async () => {
+    try {
+      const patentesData = await listarPatentes();
+      console.log('Patentes recibidas:', patentesData);
+      const patentesArr = Array.isArray(patentesData) ? patentesData : [];
+      setPatentesDisponibles(patentesArr);
+    } catch (error) {
+      console.error('Error cargando patentes:', error);
+    }
+  };
+
+  // Función para cargar proyectos disponibles
+  const loadProyectosDisponibles = async () => {
+    try {
+      const proyectosData = await listarProyectos();
+      console.log('Proyectos recibidos:', proyectosData);
+      const proyectosArr = Array.isArray(proyectosData) ? proyectosData : [];
+      setProyectosDisponibles(proyectosArr);
+    } catch (error) {
+      console.error('Error cargando proyectos:', error);
+    }
+  };
+
+  // Filtrar personas disponibles para integrantes (sin Director ni Vicedirector)
+  const getPersonasDisponibles = () => {
+    const disponibles = personas.filter(p => 
+      p.tipoDePersonalNombre && 
+      p.tipoDePersonalNombre.toLowerCase() !== 'director' && 
+      p.tipoDePersonalNombre.toLowerCase() !== 'vicedirector'
+    );
+    console.log('Personas disponibles:', disponibles);
+    return disponibles;
+  };
+
+  // Filtrar personas por término de búsqueda
+  const getPersonasFiltradas = () => {
+    const disponibles = getPersonasDisponibles();
+    if (!personaSearchTerm.trim()) {
+      console.log('Sin término de búsqueda, mostrando todas:', disponibles);
+      return disponibles;
+    }
+    
+    const term = personaSearchTerm.toLowerCase();
+    const filtradas = disponibles.filter(p =>
+      (p.nombre && p.nombre.toLowerCase().includes(term)) ||
+      (p.apellido && p.apellido.toLowerCase().includes(term))
+    );
+    console.log('Personas filtradas:', filtradas);
+    return filtradas;
+  };
+
+  // Seleccionar una persona del dropdown
+  const handleSelectPersona = (persona) => {
+    setPersonaSearchTerm(`${persona.nombre} ${persona.apellido}`);
+    setSelectedPersonaId(persona.oidpersona);
+    setShowPersonaDropdown(false);
+  };
+
+  // Seleccionar persona desde el buscador de la tabla
+  const handleSelectPersonaFromSearch = async (persona) => {
+    console.log('Seleccionando persona:', persona);
+    
+    // Verificar si ya existe en la lista
+    const yaExiste = formData.integrantes.some(i => i.oidPersona === persona.oidpersona);
+    if (yaExiste) {
+      alert('Esta persona ya está agregada como integrante');
+      setSearchTerms({...searchTerms, integrantes: ''});
+      setShowIntegrantesSearchDropdown(false);
+      return;
+    }
+    
+    // Si no hay memoria creada, solo agregar a la lista local
+    if (!memoriaId) {
+      const nuevoIntegrante = {
+        oidPersona: persona.oidpersona,
+        persona_nombre: persona.nombre,
+        persona_apellido: persona.apellido,
+        rol: persona.tipoDePersonalNombre || '',
+        dedicacion: '',
+        temp: true
+      };
+      
+      setFormData(prev => ({
+        ...prev,
+        integrantes: [...prev.integrantes, nuevoIntegrante]
+      }));
+      
+      setSearchTerms({...searchTerms, integrantes: ''});
+      setShowIntegrantesSearchDropdown(false);
+      return;
+    }
+
+    const nuevoIntegrante = {
+      MemoriaAnual: memoriaId,
+      persona: persona.oidpersona,
+      horasSemanales: 40
+    };
+
+    console.log('Enviando integrante:', nuevoIntegrante);
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/memorias-integrantes/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(nuevoIntegrante)
+      });
+      
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('Error del servidor:', errorText);
+        alert('Error al agregar integrante: ' + errorText);
+        return;
+      }
+      
+      const data = await res.json();
+      console.log('Respuesta del servidor:', data);
+      
+      await loadIntegrantes(memoriaId);
+      setSearchTerms({...searchTerms, integrantes: ''});
+      setShowIntegrantesSearchDropdown(false);
+      console.log('Integrante agregado exitosamente');
+    } catch (error) {
+      console.error('Error agregando integrante:', error);
+      alert('Error al agregar integrante: ' + error.message);
+    }
+  };
 
   // Función para cargar todos los datos de la memoria
   const loadMemoriaData = async () => {
     try {
       setLoading(true);
       
-      // Primero obtenemos la memoria más reciente o creamos una nueva
+      // Primero obtenemos la memoria más reciente
       const memoriasRes = await fetch(`${API_BASE_URL}/memorias/`);
       const memorias = await memoriasRes.json();
       
-      let currentMemoria;
       if (memorias.length > 0) {
-        currentMemoria = memorias[0]; // Tomar la primera memoria
+        const currentMemoria = memorias[0]; // Tomar la primera memoria
         setMemoriaId(currentMemoria.oidMemoriaAnual);
         
         // Cargar todos los datos relacionados
@@ -69,9 +470,11 @@ const MemoriaAnual = () => {
           director: currentMemoria.director,
           vicedirector: currentMemoria.vicedirector
         }));
+        
+        console.log('Memoria cargada:', currentMemoria);
+      } else {
+        console.log('No hay memorias creadas');
       }
-      
-      console.log('Datos de memoria cargados exitosamente');
     } catch (error) {
       console.error('Error cargando datos de memoria:', error);
     } finally {
@@ -79,9 +482,63 @@ const MemoriaAnual = () => {
     }
   };
 
+  // Función para guardar/crear la memoria anual
+  const saveMemoriaData = async () => {
+    const memoriaData = {
+      anio: parseInt(formData.ano),
+      GrupoInvestigacion: formData.grupo || null,
+      director: formData.director || null,
+      vicedirector: formData.vicedirector || null
+    };
+
+    try {
+      if (memoriaId) {
+        // Actualizar memoria existente
+        const res = await fetch(`${API_BASE_URL}/memorias/${memoriaId}/`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(memoriaData)
+        });
+        
+        if (res.ok) {
+          const data = await res.json();
+          console.log('Memoria actualizada:', data);
+          alert('Memoria anual actualizada exitosamente');
+        } else {
+          const error = await res.text();
+          console.error('Error actualizando memoria:', error);
+          alert('Error al actualizar la memoria');
+        }
+      } else {
+        // Crear nueva memoria
+        const res = await fetch(`${API_BASE_URL}/memorias/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(memoriaData)
+        });
+        
+        if (res.ok) {
+          const data = await res.json();
+          setMemoriaId(data.oidMemoriaAnual);
+          console.log('Memoria creada:', data);
+          alert('Memoria anual creada exitosamente');
+        } else {
+          const error = await res.text();
+          console.error('Error creando memoria:', error);
+          alert('Error al crear la memoria');
+        }
+      }
+    } catch (error) {
+      console.error('Error guardando memoria:', error);
+      alert('Error al guardar la memoria: ' + error.message);
+    }
+  };
+
   const loadIntegrantes = async (memoriaId) => {
+    console.log('Cargando integrantes para memoria:', memoriaId);
     const res = await fetch(`${API_BASE_URL}/memorias-integrantes/?memoria=${memoriaId}`);
     const data = await res.json();
+    console.log('Integrantes cargados:', data);
     setFormData(prev => ({ ...prev, integrantes: data }));
   };
 
@@ -116,17 +573,96 @@ const MemoriaAnual = () => {
   };
 
   // Handlers para Integrantes
-  const handleAddIntegrante = async () => {
+  const handleAddIntegrante = () => {
+    setShowIntegranteModal(true);
+    setNewPersonaData({
+      nombre: '',
+      apellido: '',
+      correo: '',
+      contrasena: '',
+      horasSemanales: 40,
+      tipoDePersonal: '',
+      GrupoInvestigacion: null
+    });
+  };
+
+  const handleCreatePersona = async () => {
+    // Validar campos requeridos
+    if (!newPersonaData.nombre || !newPersonaData.apellido || !newPersonaData.correo || !newPersonaData.contrasena) {
+      alert('Por favor completa todos los campos requeridos (nombre, apellido, correo, contraseña)');
+      return;
+    }
+
+    try {
+      // Crear la persona
+      const personaCreada = await crearPersona(newPersonaData);
+      console.log('Persona creada:', personaCreada);
+
+      // Recargar la lista de personas
+      await loadPersonas();
+
+      // Agregar automáticamente como integrante
+      if (!memoriaId) {
+        // Si no hay memoria, agregar a la lista temporal
+        const nuevoIntegrante = {
+          persona: personaCreada.oidpersona,
+          persona_nombre: personaCreada.nombre,
+          persona_apellido: personaCreada.apellido,
+          rol: personaCreada.tipoDePersonalNombre || 'Sin rol',
+          horasSemanales: newPersonaData.horasSemanales,
+          temp: true
+        };
+        setFormData(prev => ({
+          ...prev,
+          integrantes: [...prev.integrantes, nuevoIntegrante]
+        }));
+      } else {
+        // Si hay memoria, guardar en el backend
+        const response = await fetch(`${API_BASE_URL}/memorias-integrantes/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+          },
+          body: JSON.stringify({
+            memoriaAnual: memoriaId,
+            persona: personaCreada.oidpersona,
+            rol: personaCreada.tipoDePersonalNombre || 'Sin rol',
+            horasSemanales: newPersonaData.horasSemanales
+          })
+        });
+
+        if (response.ok) {
+          await loadMemoriaData();
+        } else {
+          throw new Error('Error al agregar integrante');
+        }
+      }
+
+      // Cerrar modal y resetear
+      setShowIntegranteModal(false);
+      alert('Persona creada y agregada como integrante exitosamente');
+    } catch (error) {
+      console.error('Error creando persona:', error);
+      alert('Error al crear la persona: ' + error.message);
+    }
+  };
+
+  const handleSaveIntegrante = async () => {
     if (!memoriaId) {
-      alert('Primero debes crear una memoria anual en la pestaña General');
+      alert('Primero debes crear una memoria anual');
+      return;
+    }
+
+    if (!selectedPersonaId) {
+      alert('Debes seleccionar una persona');
       return;
     }
 
     const nuevoIntegrante = {
       MemoriaAnual: memoriaId,
-      persona: 1, // Temporal, deberías obtener esto de un selector
-      rol: 'Investigador',
-      horasSemanales: 40
+      persona: selectedPersonaId,
+      horasSemanales: horasSemanales
     };
 
     try {
@@ -136,24 +672,33 @@ const MemoriaAnual = () => {
         body: JSON.stringify(nuevoIntegrante)
       });
       const data = await res.json();
-      setFormData(prev => ({ ...prev, integrantes: [...prev.integrantes, data] }));
+      await loadIntegrantes(memoriaId);
+      setShowIntegranteModal(false);
       console.log('Integrante agregado:', data);
     } catch (error) {
       console.error('Error agregando integrante:', error);
     }
   };
 
-  const handleRemoveIntegrante = async (id) => {
+  const handleRemoveIntegrante = async (integrante) => {
     if (!window.confirm('¿Estás seguro de eliminar este integrante?')) return;
 
-    try {
-      await fetch(`${API_BASE_URL}/memorias-integrantes/${id}/`, {
-        method: 'DELETE'
-      });
+    // Si es temporal (no guardado aún), solo remover de la lista local
+    if (integrante.temp || !memoriaId) {
       setFormData(prev => ({
         ...prev,
-        integrantes: prev.integrantes.filter(i => i.oidIntegranteMemoria !== id)
+        integrantes: prev.integrantes.filter(i => i.persona !== integrante.persona)
       }));
+      console.log('Integrante temporal eliminado');
+      return;
+    }
+
+    // Si está guardado en el backend, eliminar vía API
+    try {
+      await fetch(`${API_BASE_URL}/memorias-integrantes/${integrante.oidIntegranteMemoria}/`, {
+        method: 'DELETE'
+      });
+      await loadIntegrantes(memoriaId);
       console.log('Integrante eliminado');
     } catch (error) {
       console.error('Error eliminando integrante:', error);
@@ -181,44 +726,78 @@ const MemoriaAnual = () => {
   };
 
   // Handlers para Trabajos
-  const handleAddTrabajo = async () => {
-    if (!memoriaId) {
-      alert('Primero debes crear una memoria anual en la pestaña General');
+  const handleAddTrabajo = () => {
+    setShowTrabajoModal(true);
+    setNewTrabajoData({
+      ciudad: '',
+      fechaInicio: new Date().toISOString().split('T')[0],
+      nombreReunion: '',
+      tituloTrabajo: '',
+      GrupoInvestigacion: formData.grupo || null
+    });
+  };
+
+  const handleCreateTrabajo = async () => {
+    // Validar campos requeridos
+    if (!newTrabajoData.ciudad || !newTrabajoData.nombreReunion || !newTrabajoData.tituloTrabajo) {
+      alert('Por favor completa todos los campos requeridos (ciudad, nombre reunión, título)');
       return;
     }
 
-    const nuevoTrabajo = {
-      MemoriaAnual: memoriaId,
-      ciudad: 'Buenos Aires',
-      fecha: new Date().toISOString().split('T')[0],
-      nombreReunion: '',
-      titulo: ''
-    };
-
     try {
-      const res = await fetch(`${API_BASE_URL}/memorias-trabajos/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(nuevoTrabajo)
-      });
-      const data = await res.json();
-      setFormData(prev => ({ ...prev, trabajos: [...prev.trabajos, data] }));
-      console.log('Trabajo agregado:', data);
+      // Crear el trabajo presentado
+      const trabajoCreado = await crearTrabajoPresentado(newTrabajoData);
+      console.log('Trabajo creado:', trabajoCreado);
+
+      // Recargar la lista de trabajos disponibles
+      await loadTrabajosDisponibles();
+
+      // Agregar automáticamente a la lista local
+      const nuevoTrabajo = {
+        oidTrabajoPresentado: trabajoCreado.oidTrabajoPresentado,
+        ciudad: trabajoCreado.ciudad,
+        fechaInicio: trabajoCreado.fechaInicio,
+        nombreReunion: trabajoCreado.nombreReunion,
+        tituloTrabajo: trabajoCreado.tituloTrabajo,
+        temp: true
+      };
+      
+      setFormData(prev => ({
+        ...prev,
+        trabajos: [...prev.trabajos, nuevoTrabajo]
+      }));
+
+      // Cerrar modal y resetear
+      setShowTrabajoModal(false);
+      alert('Trabajo creado y agregado exitosamente');
     } catch (error) {
-      console.error('Error agregando trabajo:', error);
+      console.error('Error creando trabajo:', error);
+      alert('Error al crear el trabajo: ' + error.message);
     }
   };
 
-  const handleRemoveTrabajo = async (id) => {
+  const handleRemoveTrabajo = async (index) => {
+    const trabajo = formData.trabajos[index];
+    
+    // Si es temporal, solo eliminar de la lista local
+    if (trabajo.temp) {
+      setFormData(prev => ({
+        ...prev,
+        trabajos: prev.trabajos.filter((_, i) => i !== index)
+      }));
+      return;
+    }
+
+    // Si no es temporal, eliminar del backend
     if (!window.confirm('¿Estás seguro de eliminar este trabajo?')) return;
 
     try {
-      await fetch(`${API_BASE_URL}/memorias-trabajos/${id}/`, {
+      await fetch(`${API_BASE_URL}/memorias-trabajos/${trabajo.oidTrabajoMemoria}/`, {
         method: 'DELETE'
       });
       setFormData(prev => ({
         ...prev,
-        trabajos: prev.trabajos.filter(t => t.oidTrabajoMemoria !== id)
+        trabajos: prev.trabajos.filter((_, i) => i !== index)
       }));
       console.log('Trabajo eliminado');
     } catch (error) {
@@ -246,122 +825,480 @@ const MemoriaAnual = () => {
     }
   };
 
-  const handleAddProyecto = async () => {
-    if (!memoriaId) {
-      alert('Primero debes crear una memoria anual en la pestaña General');
-      return;
-    }
-
-    const nuevoProyecto = {
-      MemoriaAnual: memoriaId,
+  const handleAddProyecto = () => {
+    setEditingProyectoIndex(null);
+    setNewProyectoData({
       nombre: '',
-      estado: 'En curso',
-      fechaInicio: new Date().toISOString().split('T')[0],
-      fechaFin: null,
-      responsable: '',
-      responsableTitulo: '',
-      presupuesto: '',
-      colaboradores: '',
-      colaboradoresTitulo: '',
-      objetivos: '',
-      objetivosTitulo: '',
-      resultados: '',
-      resultadosTitulo: ''
-    };
+      codigoProyecto: '',
+      descripcion: '',
+      tipoProyecto: '',
+      fechaInicio: '',
+      fechaFinalizacion: '',
+      fuenteFinanciamiento: '',
+      logrosObtenidos: '',
+      GrupoInvestigacion: null
+    });
+    setShowProyectoModal(true);
+  };
 
+  const handleEditProyecto = (index) => {
+    const proyecto = formData.proyectos[index];
+    setEditingProyectoIndex(index);
+    setNewProyectoData({
+      nombre: proyecto.nombre || '',
+      codigoProyecto: proyecto.codigoProyecto || '',
+      descripcion: proyecto.descripcion || '',
+      tipoProyecto: proyecto.tipoProyecto || '',
+      fechaInicio: proyecto.fechaInicio || '',
+      fechaFinalizacion: proyecto.fechaFinalizacion || '',
+      fuenteFinanciamiento: proyecto.fuenteFinanciamiento || '',
+      logrosObtenidos: proyecto.logrosObtenidos || '',
+      GrupoInvestigacion: proyecto.GrupoInvestigacion
+    });
+    setShowProyectoModal(true);
+  };
+
+  const handleCreateProyecto = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/memorias-proyectos/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(nuevoProyecto)
+      // Validar campos requeridos
+      if (!newProyectoData.nombre.trim()) {
+        alert('El nombre del proyecto es requerido');
+        return;
+      }
+      if (!newProyectoData.codigoProyecto.trim()) {
+        alert('El código del proyecto es requerido');
+        return;
+      }
+      if (!newProyectoData.GrupoInvestigacion) {
+        alert('Debe seleccionar un grupo de investigación');
+        return;
+      }
+
+      // Si estamos editando
+      if (editingProyectoIndex !== null) {
+        const proyectoActual = formData.proyectos[editingProyectoIndex];
+        
+        // Si es un proyecto temporal (no guardado en backend aún)
+        if (proyectoActual.temp) {
+          // Actualizar el proyecto en el backend
+          const proyectoActualizado = await actualizarProyecto(
+            proyectoActual.oidProyectoInvestigacion,
+            {
+              nombre: newProyectoData.nombre,
+              codigoProyecto: newProyectoData.codigoProyecto,
+              descripcion: newProyectoData.descripcion,
+              tipoProyecto: newProyectoData.tipoProyecto,
+              fechaInicio: newProyectoData.fechaInicio || null,
+              fechaFinalizacion: newProyectoData.fechaFinalizacion || null,
+              fuenteFinanciamiento: newProyectoData.fuenteFinanciamiento,
+              logrosObtenidos: newProyectoData.logrosObtenidos,
+              objectType: 'ProyectoInvestigacion',
+              GrupoInvestigacion: newProyectoData.GrupoInvestigacion
+            }
+          );
+
+          // Actualizar en la lista local
+          setFormData(prev => ({
+            ...prev,
+            proyectos: prev.proyectos.map((p, i) => 
+              i === editingProyectoIndex ? {
+                ...proyectoActualizado,
+                temp: true
+              } : p
+            )
+          }));
+        } else {
+          // Si NO es temporal, solo actualizar localmente (edición inline)
+          setFormData(prev => ({
+            ...prev,
+            proyectos: prev.proyectos.map((p, i) => 
+              i === editingProyectoIndex ? {
+                ...p,
+                nombre: newProyectoData.nombre,
+                codigoProyecto: newProyectoData.codigoProyecto,
+                descripcion: newProyectoData.descripcion,
+                tipoProyecto: newProyectoData.tipoProyecto,
+                fechaInicio: newProyectoData.fechaInicio,
+                fechaFinalizacion: newProyectoData.fechaFinalizacion,
+                fuenteFinanciamiento: newProyectoData.fuenteFinanciamiento,
+                logrosObtenidos: newProyectoData.logrosObtenidos
+              } : p
+            )
+          }));
+        }
+
+        setShowProyectoModal(false);
+        setEditingProyectoIndex(null);
+        alert('Proyecto actualizado exitosamente');
+        return;
+      }
+
+      // Crear el proyecto en el backend
+      const proyectoCreado = await crearProyecto({
+        nombre: newProyectoData.nombre,
+        codigoProyecto: newProyectoData.codigoProyecto,
+        descripcion: newProyectoData.descripcion,
+        tipoProyecto: newProyectoData.tipoProyecto,
+        fechaInicio: newProyectoData.fechaInicio || null,
+        fechaFinalizacion: newProyectoData.fechaFinalizacion || null,
+        fuenteFinanciamiento: newProyectoData.fuenteFinanciamiento,
+        logrosObtenidos: newProyectoData.logrosObtenidos,
+        objectType: 'ProyectoInvestigacion',
+        GrupoInvestigacion: newProyectoData.GrupoInvestigacion
       });
-      const data = await res.json();
-      setFormData(prev => ({ ...prev, proyectos: [...prev.proyectos, data] }));
-      console.log('Proyecto agregado:', data);
+
+      console.log('Proyecto creado:', proyectoCreado);
+
+      // Recargar la lista de proyectos disponibles
+      await loadProyectosDisponibles();
+
+      // Agregar automáticamente a la grilla con temp: true
+      const nuevoProyecto = {
+        oidProyectoInvestigacion: proyectoCreado.oidProyectoInvestigacion || proyectoCreado.id,
+        nombre: proyectoCreado.nombre,
+        codigoProyecto: proyectoCreado.codigoProyecto,
+        descripcion: proyectoCreado.descripcion,
+        fechaInicio: proyectoCreado.fechaInicio,
+        fechaFinalizacion: proyectoCreado.fechaFinalizacion,
+        tipoProyecto: proyectoCreado.tipoProyecto,
+        fuenteFinanciamiento: proyectoCreado.fuenteFinanciamiento,
+        logrosObtenidos: proyectoCreado.logrosObtenidos,
+        temp: true
+      };
+
+      setFormData(prev => ({
+        ...prev,
+        proyectos: [...prev.proyectos, nuevoProyecto]
+      }));
+
+      // Limpiar formulario y cerrar modal
+      setNewProyectoData({
+        nombre: '',
+        codigoProyecto: '',
+        descripcion: '',
+        tipoProyecto: '',
+        fechaInicio: '',
+        fechaFinalizacion: '',
+        fuenteFinanciamiento: '',
+        logrosObtenidos: '',
+        GrupoInvestigacion: null
+      });
+      setShowProyectoModal(false);
+
+      alert('Proyecto creado y agregado exitosamente');
     } catch (error) {
-      console.error('Error agregando proyecto:', error);
+      console.error('Error creando proyecto:', error);
+      alert('Error al crear el proyecto: ' + error.message);
     }
   };
 
-  const handleRemoveProyecto = async (id) => {
+  const handleRemoveProyecto = async (index) => {
+    const proyecto = formData.proyectos[index];
+    
+    // Si es temporal, solo eliminar de la lista local
+    if (proyecto.temp) {
+      setFormData(prev => ({
+        ...prev,
+        proyectos: prev.proyectos.filter((_, i) => i !== index)
+      }));
+      return;
+    }
+
+    // Si no es temporal, eliminar del backend
     if (!window.confirm('¿Estás seguro de eliminar este proyecto?')) return;
 
     try {
-      await fetch(`${API_BASE_URL}/memorias-proyectos/${id}/`, {
-        method: 'DELETE'
-      });
+      const id = proyecto.oidProyectoInvestigacion || proyecto.id;
+      await eliminarProyecto(id);
       setFormData(prev => ({
         ...prev,
-        proyectos: prev.proyectos.filter(p => p.oidProyectoMemoria !== id)
+        proyectos: prev.proyectos.filter((_, i) => i !== index)
       }));
       console.log('Proyecto eliminado');
     } catch (error) {
       console.error('Error eliminando proyecto:', error);
+      alert('Error al eliminar el proyecto: ' + error.message);
     }
   };
 
-  const handleProyectoChange = async (id, field, value) => {
-    const proyecto = formData.proyectos.find(p => p.oidProyectoMemoria === id);
-    const updated = { ...proyecto, [field]: value };
-
+  const handleGuardarMemoria = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/memorias-proyectos/${id}/`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updated)
+      // Validaciones
+      if (!formData.ano) {
+        alert('Debe especificar el año de la memoria');
+        return;
+      }
+      if (!formData.grupo) {
+        alert('Debe seleccionar un grupo de investigación');
+        return;
+      }
+
+      // Confirmación final
+      if (!window.confirm(`¿Está seguro que desea guardar la Memoria Anual del año ${formData.ano}?\n\nEsta acción creará un registro permanente con todos los datos ingresados.`)) {
+        return;
+      }
+
+      // Preparar datos para enviar
+      const memoriaData = {
+        ano: parseInt(formData.ano),
+        fechaInicio: formData.fechaInicio || null,
+        fechaFin: formData.fechaFin || null,
+        director: formData.director || '',
+        objetivosGenerales: formData.objetivosGenerales || '',
+        objetivosEspecificos: formData.objetivosEspecificos || '',
+        actividadesRealizadas: formData.actividadesRealizadas || '',
+        resultadosObtenidos: formData.resultadosObtenidos || '',
+        GrupoInvestigacion: parseInt(formData.grupo),
+        
+        // Relaciones many-to-many (IDs de los registros)
+        integrantes: formData.integrantes?.map(i => ({
+          personaId: i.oidPersona || i.id,
+          rol: i.rol || '',
+          dedicacion: i.dedicacion || ''
+        })) || [],
+        
+        actividades: formData.actividades?.map(a => ({
+          actividadId: a.oidActividad || a.id,
+          observaciones: a.observaciones || ''
+        })) || [],
+        
+        publicaciones: formData.publicaciones?.map(p => p.oidTrabajoPublicado || p.id) || [],
+        
+        patentes: formData.patentes?.map(p => p.oidPatente || p.id) || [],
+        
+        proyectos: formData.proyectos?.map(p => p.oidProyectoInvestigacion || p.id) || []
+      };
+
+      console.log('Guardando memoria:', memoriaData);
+
+      // Llamar al endpoint para crear la memoria
+      const response = await fetch(`${API_BASE_URL}/memorias-anuales/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(memoriaData)
       });
-      const data = await res.json();
-      setFormData(prev => ({
-        ...prev,
-        proyectos: prev.proyectos.map(p => p.oidProyectoMemoria === id ? data : p)
-      }));
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(JSON.stringify(errorData));
+      }
+
+      const memoriaCreada = await response.json();
+      console.log('Memoria creada exitosamente:', memoriaCreada);
+
+      alert(`✅ Memoria Anual del año ${formData.ano} guardada exitosamente!\n\nID: ${memoriaCreada.oidMemoriaAnual}`);
+      
+      // Opcional: Limpiar el formulario o redirigir
+      // navigate('/memorias');
+      
     } catch (error) {
-      console.error('Error actualizando proyecto:', error);
+      console.error('Error guardando memoria:', error);
+      alert('Error al guardar la memoria: ' + error.message);
     }
   };
 
-  const handleAddActividad = async () => {
-    if (!memoriaId) {
-      alert('Primero debes crear una memoria anual en la pestaña General');
+  const handleProyectoChange = (index, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      proyectos: prev.proyectos.map((p, i) => 
+        i === index ? { ...p, [field]: value } : p
+      )
+    }));
+  };
+
+  const handleSaveProyecto = async (index) => {
+    const proyecto = formData.proyectos[index];
+    
+    // Si es temporal, no guardar en backend
+    if (proyecto.temp) {
+      alert('Este proyecto aún no está guardado. Se guardará al guardar la memoria.');
       return;
     }
 
-    const nuevaActividad = {
-      MemoriaAnual: memoriaId,
-      titulo: '',
-      descripcion: '',
-      fecha: new Date().toISOString().split('T')[0],
-      tipo: 'Seminario'
-    };
-
     try {
-      const res = await fetch(`${API_BASE_URL}/memorias-actividades/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(nuevaActividad)
-      });
-      const data = await res.json();
-      setFormData(prev => ({ ...prev, actividades: [...prev.actividades, data] }));
-      console.log('Actividad agregada:', data);
+      const id = proyecto.oidProyectoInvestigacion || proyecto.id;
+      const dataToUpdate = {
+        nombre: proyecto.nombre,
+        codigoProyecto: proyecto.codigoProyecto,
+        descripcion: proyecto.descripcion,
+        tipoProyecto: proyecto.tipoProyecto,
+        fechaInicio: proyecto.fechaInicio || null,
+        fechaFinalizacion: proyecto.fechaFinalizacion || null,
+        logrosObtenidos: proyecto.logrosObtenidos,
+        fuenteFinanciamiento: proyecto.fuenteFinanciamiento,
+        GrupoInvestigacion: proyecto.GrupoInvestigacion
+      };
+      
+      await actualizarProyecto(id, dataToUpdate);
+      alert('Proyecto actualizado exitosamente');
     } catch (error) {
-      console.error('Error agregando actividad:', error);
+      console.error('Error al actualizar el proyecto:', error);
+      alert('Error al actualizar el proyecto');
     }
   };
 
-  const handleRemoveActividad = async (id) => {
+  const handleAddActividad = () => {
+    setShowActividadModal(true);
+    setNewActividadData({
+      descripcion: '',
+      fechaInicio: new Date().toISOString().split('T')[0],
+      fechaFin: new Date().toISOString().split('T')[0],
+      nro: 0,
+      presupuestoAsignado: 0,
+      resultadosEsperados: '',
+      LineaDeInvestigacion: null
+    });
+  };
+
+  const handleCreateActividad = async () => {
+    // Validar campos requeridos
+    if (!newActividadData.descripcion || !newActividadData.fechaInicio || !newActividadData.LineaDeInvestigacion) {
+      alert('Por favor completa los campos requeridos (descripción, fecha inicio, línea de investigación)');
+      return;
+    }
+
+    try {
+      // Crear la actividad
+      const actividadCreada = await crearActividad(newActividadData);
+      console.log('Actividad creada:', actividadCreada);
+
+      // Recargar la lista de actividades disponibles
+      await loadActividadesDisponibles();
+
+      // Agregar automáticamente a la lista local
+      const nuevaActividad = {
+        oidActividad: actividadCreada.oidActividad,
+        descripcion: actividadCreada.descripcion,
+        fechaInicio: actividadCreada.fechaInicio,
+        fechaFin: actividadCreada.fechaFin,
+        temp: true
+      };
+      
+      setFormData(prev => ({
+        ...prev,
+        actividades: [...prev.actividades, nuevaActividad]
+      }));
+
+      // Cerrar modal y resetear
+      setShowActividadModal(false);
+      alert('Actividad creada y agregada exitosamente');
+    } catch (error) {
+      console.error('Error creando actividad:', error);
+      alert('Error al crear la actividad: ' + error.message);
+    }
+  };
+
+  const handleCreatePublicacion = async () => {
+    // Validar campos requeridos
+    if (!newPublicacionData.titulo || !newPublicacionData.GrupoInvestigacion || !newPublicacionData.tipoTrabajoPublicado || !newPublicacionData.Autor) {
+      alert('Por favor completa los campos requeridos (título, grupo, tipo de trabajo, autor)');
+      return;
+    }
+
+    try {
+      // Asegurar que estado sea 'Publicado'
+      const dataToSend = {
+        ...newPublicacionData,
+        estado: 'Publicado'
+      };
+
+      // Crear la publicación
+      const publicacionCreada = await crearTrabajoPublicado(dataToSend);
+      console.log('Publicación creada:', publicacionCreada);
+
+      // Recargar la lista de publicaciones disponibles
+      await loadPublicacionesDisponibles();
+
+      // Agregar automáticamente a la lista local
+      const nuevaPublicacion = {
+        oidTrabajoPublicado: publicacionCreada.oidTrabajoPublicado,
+        titulo: publicacionCreada.titulo,
+        nombreRevista: publicacionCreada.nombreRevista || '',
+        temp: true
+      };
+      
+      setFormData(prev => ({
+        ...prev,
+        publicaciones: [...prev.publicaciones, nuevaPublicacion]
+      }));
+
+      // Cerrar modal y resetear
+      setShowPublicacionModal(false);
+      setNewPublicacionData({
+        titulo: '',
+        ISSN: '',
+        editorial: '',
+        nombreRevista: '',
+        pais: '',
+        estado: 'Publicado',
+        tipoTrabajoPublicado: null,
+        Autor: null,
+        GrupoInvestigacion: null
+      });
+      alert('Publicación creada y agregada exitosamente');
+    } catch (error) {
+      console.error('Error creando publicación:', error);
+      alert('Error al crear la publicación: ' + error.message);
+    }
+  };
+
+  const handleRemoveActividad = async (index) => {
+    const actividad = formData.actividades[index];
+    
+    // Si es temporal, solo eliminar de la lista local
+    if (actividad.temp) {
+      setFormData(prev => ({
+        ...prev,
+        actividades: prev.actividades.filter((_, i) => i !== index)
+      }));
+      return;
+    }
+
+    // Si no es temporal, eliminar del backend
     if (!window.confirm('¿Estás seguro de eliminar esta actividad?')) return;
 
     try {
-      await fetch(`${API_BASE_URL}/memorias-actividades/${id}/`, {
+      await fetch(`${API_BASE_URL}/memorias-actividades/${actividad.oidActividadMemoria}/`, {
         method: 'DELETE'
       });
       setFormData(prev => ({
         ...prev,
-        actividades: prev.actividades.filter(a => a.oidActividadMemoria !== id)
+        actividades: prev.actividades.filter((_, i) => i !== index)
       }));
       console.log('Actividad eliminada');
     } catch (error) {
       console.error('Error eliminando actividad:', error);
+    }
+  };
+
+  const handleRemovePublicacion = async (index) => {
+    const publicacion = formData.publicaciones[index];
+    
+    // Si es temporal, solo eliminar de la lista local
+    if (publicacion.temp) {
+      setFormData(prev => ({
+        ...prev,
+        publicaciones: prev.publicaciones.filter((_, i) => i !== index)
+      }));
+      return;
+    }
+
+    // Si no es temporal, eliminar del backend
+    if (!window.confirm('¿Estás seguro de eliminar esta publicación?')) return;
+
+    try {
+      const id = publicacion.oidTrabajoPublicado || publicacion.id;
+      await eliminarTrabajoPublicado(id);
+      setFormData(prev => ({
+        ...prev,
+        publicaciones: prev.publicaciones.filter((_, i) => i !== index)
+      }));
+      console.log('Publicación eliminada');
+    } catch (error) {
+      console.error('Error eliminando publicación:', error);
+      alert('Error al eliminar la publicación: ' + error.message);
     }
   };
 
@@ -385,133 +1322,403 @@ const MemoriaAnual = () => {
     }
   };
 
-  const handleAddPublicacion = async () => {
-    if (!memoriaId) {
-      alert('Primero debes crear una memoria anual en la pestaña General');
+  // Funciones de filtrado para cada sección
+  const filterIntegrantes = () => {
+    if (!searchTerms.integrantes.trim()) return formData.integrantes;
+    const term = searchTerms.integrantes.toLowerCase();
+    return formData.integrantes.filter(integrante =>
+      (integrante.persona_nombre && integrante.persona_nombre.toLowerCase().includes(term)) ||
+      (integrante.persona_apellido && integrante.persona_apellido.toLowerCase().includes(term)) ||
+      (integrante.rol && integrante.rol.toLowerCase().includes(term))
+    );
+  };
+
+  // Seleccionar trabajo desde el buscador
+  const handleSelectTrabajoFromSearch = (trabajo) => {
+    console.log('Seleccionando trabajo:', trabajo);
+    
+    // Verificar si ya existe en la lista
+    const yaExiste = formData.trabajos.some(t => 
+      t.oidTrabajoPresentado === trabajo.oidTrabajoPresentado || t.id === trabajo.id
+    );
+    if (yaExiste) {
+      alert('Este trabajo ya está agregado');
+      setSearchTerms({...searchTerms, trabajos: ''});
+      setShowTrabajosSearchDropdown(false);
       return;
     }
+    
+    // Agregar a la lista local
+    const nuevoTrabajo = {
+      oidTrabajoPresentado: trabajo.oidTrabajoPresentado || trabajo.id,
+      ciudad: trabajo.ciudad || '',
+      fechaInicio: trabajo.fechaInicio || '',
+      nombreReunion: trabajo.nombreReunion || '',
+      tituloTrabajo: trabajo.tituloTrabajo || '',
+      temp: true
+    };
+    
+    setFormData(prev => ({
+      ...prev,
+      trabajos: [...prev.trabajos, nuevoTrabajo]
+    }));
+    
+    setSearchTerms({...searchTerms, trabajos: ''});
+    setShowTrabajosSearchDropdown(false);
+  };
 
+  const getTrabajosDisponibles = () => {
+    return trabajosDisponibles.filter(trabajo => {
+      const yaAgregado = formData.trabajos.some(t => 
+        t.oidTrabajoPresentado === trabajo.oidTrabajoPresentado || t.id === trabajo.id
+      );
+      return !yaAgregado;
+    });
+  };
+
+  // Seleccionar actividad desde el buscador
+  const handleSelectActividadFromSearch = (actividad) => {
+    console.log('Seleccionando actividad:', actividad);
+    
+    // Verificar si ya existe en la lista
+    const yaExiste = formData.actividades.some(a => 
+      a.oidActividad === actividad.oidActividad || a.id === actividad.id
+    );
+    if (yaExiste) {
+      alert('Esta actividad ya está agregada');
+      setSearchTerms({...searchTerms, actividades: ''});
+      setShowActividadesSearchDropdown(false);
+      return;
+    }
+    
+    // Agregar a la lista local
+    const nuevaActividad = {
+      oidActividad: actividad.oidActividad || actividad.id,
+      descripcion: actividad.descripcion || '',
+      fechaInicio: actividad.fechaInicio || '',
+      fechaFin: actividad.fechaFin || '',
+      temp: true
+    };
+    
+    setFormData(prev => ({
+      ...prev,
+      actividades: [...prev.actividades, nuevaActividad]
+    }));
+    
+    setSearchTerms({...searchTerms, actividades: ''});
+    setShowActividadesSearchDropdown(false);
+  };
+
+  const getActividadesDisponibles = () => {
+    return actividadesDisponibles.filter(actividad => {
+      const yaAgregado = formData.actividades.some(a => 
+        a.oidActividad === actividad.oidActividad || a.id === actividad.id
+      );
+      return !yaAgregado;
+    });
+  };
+
+  // Seleccionar publicación desde el buscador
+  const handleSelectPublicacionFromSearch = (publicacion) => {
+    const yaExiste = formData.publicaciones.some(p => 
+      p.oidTrabajoPublicado === publicacion.oidTrabajoPublicado
+    );
+    if (yaExiste) {
+      alert('Esta publicación ya está agregada');
+      setPublicacionesDropdownSearch('');
+      setShowPublicacionesSearchDropdown(false);
+      return;
+    }
+    
     const nuevaPublicacion = {
-      MemoriaAnual: memoriaId,
-      titulo: '',
-      autor: '',
-      revista: '',
-      anio: new Date().getFullYear()
+      oidTrabajoPublicado: publicacion.oidTrabajoPublicado,
+      titulo: publicacion.titulo || '',
+      nombreRevista: publicacion.nombreRevista || '',
+      estado: publicacion.estado || '',
+      temp: true
     };
-
-    try {
-      const res = await fetch(`${API_BASE_URL}/memorias-publicaciones/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(nuevaPublicacion)
-      });
-      const data = await res.json();
-      setFormData(prev => ({ ...prev, publicaciones: [...prev.publicaciones, data] }));
-      console.log('Publicación agregada:', data);
-    } catch (error) {
-      console.error('Error agregando publicación:', error);
-    }
+    
+    setFormData(prev => ({
+      ...prev,
+      publicaciones: [...prev.publicaciones, nuevaPublicacion]
+    }));
+    
+    // Mantener el dropdown abierto para seguir agregando
   };
 
-  const handleRemovePublicacion = async (id) => {
-    if (!window.confirm('¿Estás seguro de eliminar esta publicación?')) return;
+  const getPublicacionesDisponibles = () => {
+    return publicacionesDisponibles.filter(publicacion => {
+      const yaAgregado = formData.publicaciones.some(p => 
+        p.oidTrabajoPublicado === publicacion.oidTrabajoPublicado
+      );
+      return !yaAgregado;
+    });
+  };
 
+  // Seleccionar patente desde el buscador
+  const handleSelectPatenteFromSearch = (patente) => {
+    console.log('Seleccionando patente:', patente);
+    
+    const yaExiste = formData.patentes.some(p => 
+      p.oidPatente === patente.oidPatente || p.id === patente.id
+    );
+    if (yaExiste) {
+      alert('Esta patente ya está agregada');
+      setSearchTerms({...searchTerms, patentes: ''});
+      setShowPatentesSearchDropdown(false);
+      return;
+    }
+    
+    const nuevaPatente = {
+      oidPatente: patente.oidPatente || patente.id,
+      descripcion: patente.descripcion || '',
+      tipo: patente.tipo || '',
+      numero: patente.numero || '',
+      fecha: patente.fecha || '',
+      inventor: patente.inventor || '',
+      temp: true
+    };
+    
+    setFormData(prev => ({
+      ...prev,
+      patentes: [...prev.patentes, nuevaPatente]
+    }));
+    
+    setSearchTerms({...searchTerms, patentes: ''});
+    setShowPatentesSearchDropdown(false);
+  };
+
+  const getPatentesDisponibles = () => {
+    return patentesDisponibles.filter(patente => {
+      const yaAgregado = formData.patentes.some(p => 
+        p.oidPatente === patente.oidPatente || p.id === patente.id
+      );
+      return !yaAgregado;
+    });
+  };
+
+  // Seleccionar proyecto desde el buscador
+  const handleSelectProyectoFromSearch = (proyecto) => {
+    console.log('Seleccionando proyecto:', proyecto);
+    
+    const yaExiste = formData.proyectos.some(p => 
+      p.oidProyectoInvestigacion === proyecto.oidProyectoInvestigacion || p.id === proyecto.id
+    );
+    if (yaExiste) {
+      alert('Este proyecto ya está agregado');
+      setSearchTerms({...searchTerms, proyectos: ''});
+      setShowProyectosSearchDropdown(false);
+      return;
+    }
+    
+    const nuevoProyecto = {
+      oidProyectoInvestigacion: proyecto.oidProyectoInvestigacion || proyecto.id,
+      nombre: proyecto.nombre || '',
+      codigoProyecto: proyecto.codigoProyecto || '',
+      descripcion: proyecto.descripcion || '',
+      fechaInicio: proyecto.fechaInicio || '',
+      fechaFinalizacion: proyecto.fechaFinalizacion || '',
+      tipoProyecto: proyecto.tipoProyecto || '',
+      fuenteFinanciamiento: proyecto.fuenteFinanciamiento || '',
+      logrosObtenidos: proyecto.logrosObtenidos || '',
+      temp: true
+    };
+    
+    setFormData(prev => ({
+      ...prev,
+      proyectos: [...prev.proyectos, nuevoProyecto]
+    }));
+    
+    setSearchTerms({...searchTerms, proyectos: ''});
+    setShowProyectosSearchDropdown(false);
+  };
+
+  const getProyectosDisponibles = () => {
+    return proyectosDisponibles.filter(proyecto => {
+      const yaAgregado = formData.proyectos.some(p => 
+        p.oidProyectoInvestigacion === proyecto.oidProyectoInvestigacion || p.id === proyecto.id
+      );
+      return !yaAgregado;
+    });
+  };
+
+  const filterTrabajos = () => {
+    if (!searchTerms.trabajos.trim()) return formData.trabajos;
+    const term = searchTerms.trabajos.toLowerCase();
+    return formData.trabajos.filter(trabajo =>
+      (trabajo.ciudad && trabajo.ciudad.toLowerCase().includes(term)) ||
+      (trabajo.nombreReunion && trabajo.nombreReunion.toLowerCase().includes(term)) ||
+      (trabajo.tituloTrabajo && trabajo.tituloTrabajo.toLowerCase().includes(term))
+    );
+  };
+
+  const filterActividades = () => {
+    if (!searchTerms.actividades.trim()) return formData.actividades;
+    const term = searchTerms.actividades.toLowerCase();
+    return formData.actividades.filter(actividad =>
+      actividad.titulo.toLowerCase().includes(term) ||
+      actividad.tipo.toLowerCase().includes(term) ||
+      actividad.descripcion.toLowerCase().includes(term)
+    );
+  };
+
+  const filterPublicaciones = () => {
+    if (!searchTerms.publicaciones.trim()) return formData.publicaciones;
+    const term = searchTerms.publicaciones.toLowerCase();
+    return formData.publicaciones.filter(publicacion =>
+      (publicacion.titulo && publicacion.titulo.toLowerCase().includes(term)) ||
+      (publicacion.nombreRevista && publicacion.nombreRevista.toLowerCase().includes(term))
+    );
+  };
+
+  const filterPatentes = () => {
+    if (!searchTerms.patentes.trim()) return formData.patentes;
+    const term = searchTerms.patentes.toLowerCase();
+    return formData.patentes.filter(patente =>
+      (patente.descripcion && patente.descripcion.toLowerCase().includes(term)) ||
+      (patente.numero && patente.numero.toLowerCase().includes(term)) ||
+      (patente.tipo && patente.tipo.toLowerCase().includes(term))
+    );
+  };
+
+  const filterProyectos = () => {
+    if (!searchTerms.proyectos.trim()) return formData.proyectos;
+    const term = searchTerms.proyectos.toLowerCase();
+    return formData.proyectos.filter(proyecto =>
+      proyecto.nombre.toLowerCase().includes(term) ||
+      proyecto.estado.toLowerCase().includes(term) ||
+      proyecto.responsable.toLowerCase().includes(term)
+    );
+  };
+
+  const handleAddPatente = () => {
+    setShowPatenteModal(true);
+  };
+
+  const handleCreatePatente = async () => {
     try {
-      await fetch(`${API_BASE_URL}/memorias-publicaciones/${id}/`, {
-        method: 'DELETE'
+      // Validar campos requeridos
+      if (!newPatenteData.descripcion.trim()) {
+        alert('La descripción es requerida');
+        return;
+      }
+      if (!newPatenteData.GrupoInvestigacion) {
+        alert('Debe seleccionar un grupo de investigación');
+        return;
+      }
+
+      // Crear la patente en el backend
+      const patenteCreada = await crearPatente({
+        descripcion: newPatenteData.descripcion,
+        tipo: newPatenteData.tipo,
+        numero: newPatenteData.numero,
+        fecha: newPatenteData.fecha || null,
+        inventor: newPatenteData.inventor,
+        GrupoInvestigacion: newPatenteData.GrupoInvestigacion
       });
+
+      console.log('Patente creada:', patenteCreada);
+
+      // Recargar la lista de patentes disponibles
+      await loadPatentesDisponibles();
+
+      // Agregar automáticamente a la grilla con temp: true
+      const nuevaPatente = {
+        oidPatente: patenteCreada.oidPatente || patenteCreada.id,
+        descripcion: patenteCreada.descripcion,
+        tipo: patenteCreada.tipo,
+        numero: patenteCreada.numero,
+        fecha: patenteCreada.fecha,
+        inventor: patenteCreada.inventor,
+        temp: true
+      };
+
       setFormData(prev => ({
         ...prev,
-        publicaciones: prev.publicaciones.filter(p => p.oidPublicacionMemoria !== id)
+        patentes: [...prev.patentes, nuevaPatente]
       }));
-      console.log('Publicación eliminada');
+
+      // Limpiar formulario y cerrar modal
+      setNewPatenteData({
+        descripcion: '',
+        tipo: '',
+        numero: '',
+        fecha: '',
+        inventor: '',
+        GrupoInvestigacion: null
+      });
+      setShowPatenteModal(false);
+
+      alert('Patente creada y agregada exitosamente');
     } catch (error) {
-      console.error('Error eliminando publicación:', error);
+      console.error('Error creando patente:', error);
+      alert('Error al crear la patente: ' + error.message);
     }
   };
 
-  const handlePublicacionChange = async (id, field, value) => {
-    const publicacion = formData.publicaciones.find(p => p.oidPublicacionMemoria === id);
-    const updated = { ...publicacion, [field]: value };
-
-    try {
-      const res = await fetch(`${API_BASE_URL}/memorias-publicaciones/${id}/`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updated)
-      });
-      const data = await res.json();
+  const handleRemovePatente = async (index) => {
+    const patente = formData.patentes[index];
+    
+    // Si es temporal, solo eliminar de la lista local
+    if (patente.temp) {
       setFormData(prev => ({
         ...prev,
-        publicaciones: prev.publicaciones.map(p => p.oidPublicacionMemoria === id ? data : p)
+        patentes: prev.patentes.filter((_, i) => i !== index)
       }));
-    } catch (error) {
-      console.error('Error actualizando publicación:', error);
-    }
-  };
-
-  const handleAddPatente = async () => {
-    if (!memoriaId) {
-      alert('Primero debes crear una memoria anual en la pestaña General');
       return;
     }
 
-    const nuevaPatente = {
-      MemoriaAnual: memoriaId,
-      titulo: '',
-      numero: '',
-      fecha: new Date().toISOString().split('T')[0],
-      estado: 'En trámite'
-    };
-
-    try {
-      const res = await fetch(`${API_BASE_URL}/memorias-patentes/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(nuevaPatente)
-      });
-      const data = await res.json();
-      setFormData(prev => ({ ...prev, patentes: [...prev.patentes, data] }));
-      console.log('Patente agregada:', data);
-    } catch (error) {
-      console.error('Error agregando patente:', error);
-    }
-  };
-
-  const handleRemovePatente = async (id) => {
+    // Si no es temporal, eliminar del backend
     if (!window.confirm('¿Estás seguro de eliminar esta patente?')) return;
 
     try {
-      await fetch(`${API_BASE_URL}/memorias-patentes/${id}/`, {
-        method: 'DELETE'
-      });
+      const id = patente.oidPatente || patente.id;
+      await eliminarPatente(id);
       setFormData(prev => ({
         ...prev,
-        patentes: prev.patentes.filter(p => p.oidPatenteMemoria !== id)
+        patentes: prev.patentes.filter((_, i) => i !== index)
       }));
       console.log('Patente eliminada');
     } catch (error) {
       console.error('Error eliminando patente:', error);
+      alert('Error al eliminar la patente: ' + error.message);
     }
   };
 
-  const handlePatenteChange = async (id, field, value) => {
-    const patente = formData.patentes.find(p => p.oidPatenteMemoria === id);
-    const updated = { ...patente, [field]: value };
+  const handlePatenteChange = (index, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      patentes: prev.patentes.map((p, i) => 
+        i === index ? { ...p, [field]: value } : p
+      )
+    }));
+  };
+
+  const handleSavePatente = async (index) => {
+    const patente = formData.patentes[index];
+    
+    // Si es temporal, no guardar en backend
+    if (patente.temp) {
+      alert('Esta patente aún no está guardada. Se guardará al guardar la memoria.');
+      return;
+    }
 
     try {
-      const res = await fetch(`${API_BASE_URL}/memorias-patentes/${id}/`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updated)
-      });
-      const data = await res.json();
-      setFormData(prev => ({
-        ...prev,
-        patentes: prev.patentes.map(p => p.oidPatenteMemoria === id ? data : p)
-      }));
+      const id = patente.oidPatente || patente.id;
+      const dataToUpdate = {
+        descripcion: patente.descripcion,
+        tipo: patente.tipo,
+        numero: patente.numero,
+        fecha: patente.fecha || null,
+        inventor: patente.inventor,
+        GrupoInvestigacion: patente.GrupoInvestigacion
+      };
+      
+      await actualizarPatente(id, dataToUpdate);
+      alert('Patente actualizada correctamente');
     } catch (error) {
       console.error('Error actualizando patente:', error);
+      alert('Error al actualizar la patente: ' + error.message);
     }
   };
 
@@ -545,7 +1752,7 @@ const MemoriaAnual = () => {
 
       <div className="tabs-container">
         <div className="tabs-header">
-          {tabs.map((tab) => (
+          {tabs.filter(tab => activeTab !== 'guardar' || tab.id === 'guardar').map((tab) => (
             <button
               key={tab.id}
               className={`tab-button ${activeTab === tab.id ? 'active' : ''}`}
@@ -559,8 +1766,10 @@ const MemoriaAnual = () => {
         <div className="tab-panel">
           {activeTab === 'general' && (
             <div className="tab-content">
-              <div className="form-section">
-                <div className="form-group">
+              {/* Sección General */}
+              <h3 style={{ marginBottom: '20px', color: '#333', borderBottom: '2px solid #e8d4f8', paddingBottom: '10px' }}>Información General</h3>
+              <div className="form-section" style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+                <div className="form-group" style={{ width: '150px' }}>
                   <label>Año</label>
                   <input
                     type="number"
@@ -568,123 +1777,373 @@ const MemoriaAnual = () => {
                     onChange={(e) => setFormData({ ...formData, ano: e.target.value })}
                   />
                 </div>
-                <div className="form-group">
+                <div className="form-group" style={{ width: '250px' }}>
                   <label>Grupo</label>
                   <select value={formData.grupo} onChange={(e) => setFormData({ ...formData, grupo: e.target.value })}>
-                    <option value="">Seleccionar</option>
-                    <option value="grupo1">Grupo 1</option>
-                    <option value="grupo2">Grupo 2</option>
+                    <option value="">Seleccionar grupo</option>
+                    {grupos.map((grupo) => (
+                      <option key={grupo.oidGrupoInvestigacion} value={grupo.oidGrupoInvestigacion}>
+                        {grupo.sigla} - {grupo.nombre}
+                      </option>
+                    ))}
                   </select>
                 </div>
-                <div className="form-group">
+                <div className="form-group" style={{ flex: 1, minWidth: '250px' }}>
                   <label>Director</label>
                   <select
                     value={formData.director}
                     onChange={(e) => setFormData({ ...formData, director: e.target.value })}
                   >
                     <option value="">Seleccionar Director</option>
-                    <option value="director1">Director 1</option>
-                    <option value="director2">Director 2</option>
-                    <option value="director3">Director 3</option>
+                    {personas
+                      .filter(p => p.tipoDePersonalNombre && p.tipoDePersonalNombre.toLowerCase() === 'director')
+                      .map((persona) => (
+                        <option key={persona.oidpersona} value={persona.oidpersona}>
+                          {persona.nombre} {persona.apellido}
+                        </option>
+                      ))}
                   </select>
                 </div>
-                <div className="form-group">
+                <div className="form-group" style={{ flex: 1, minWidth: '250px' }}>
                   <label>Vicedirector</label>
                   <select
                     value={formData.vicedirector}
                     onChange={(e) => setFormData({ ...formData, vicedirector: e.target.value })}
                   >
                     <option value="">Seleccionar Vicedirector</option>
-                    <option value="vice1">Vicedirector 1</option>
-                    <option value="vice2">Vicedirector 2</option>
-                    <option value="vice3">Vicedirector 3</option>
+                    {personas
+                      .filter(p => p.tipoDePersonalNombre && p.tipoDePersonalNombre.toLowerCase() === 'vicedirector')
+                      .map((persona) => (
+                        <option key={persona.oidpersona} value={persona.oidpersona}>
+                          {persona.nombre} {persona.apellido}
+                        </option>
+                      ))}
                   </select>
                 </div>
               </div>
-            </div>
-          )}
 
-          {activeTab === 'integrantes' && (
-            <div className="tab-content">
-              <button className="btn-add" onClick={handleAddIntegrante}>
-                <Plus size={18} /> Agregar Integrante
-              </button>
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Nombre</th>
-                    <th>Apellido</th>
-                    <th>Rol</th>
-                    <th>Horas</th>
-                    <th>Acción</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {formData.integrantes.map((integrante, index) => (
-                    <tr key={index}>
-                      <td>
-                        <input
-                          type="text"
-                          value={integrante.nombre}
-                          onChange={(e) => handleIntegranteChange(index, 'nombre', e.target.value)}
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="text"
-                          value={integrante.apellido}
-                          onChange={(e) => handleIntegranteChange(index, 'apellido', e.target.value)}
-                        />
-                      </td>
-                      <td>
-                        <select
-                          value={integrante.rol}
-                          onChange={(e) => handleIntegranteChange(index, 'rol', e.target.value)}
-                        >
-                          <option value="">Seleccionar rol</option>
-                          <option value="Investigador">Investigador</option>
-                          <option value="Investigador Docente">Investigador Docente</option>
-                          <option value="Becario">Becario</option>
-                          <option value="Personal de Apoyo">Personal de Apoyo</option>
-                        </select>
-                      </td>
-                      <td>
-                        <input
-                          type="number"
-                          value={integrante.horas}
-                          onChange={(e) => handleIntegranteChange(index, 'horas', e.target.value)}
-                        />
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                          <button 
-                            className="btn-edit" 
-                            onClick={() => setEditingIndex({ ...editingIndex, integrantes: index })}
-                            title="Editar"
-                          >
-                            <Edit size={16} />
-                          </button>
-                          <button 
-                            className="btn-delete" 
-                            onClick={() => handleRemoveIntegrante(index)}
-                            title="Eliminar"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </td>
+              {/* Sección Integrantes */}
+              <div style={{ marginTop: '40px' }}>
+                <h3 style={{ marginBottom: '20px', color: '#333', borderBottom: '2px solid #e8d4f8', paddingBottom: '10px' }}>Integrantes</h3>
+                <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'stretch' }}>
+                  <div ref={integrantesSearchRef} style={{ flex: 1, position: 'relative' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '4px', padding: '8px' }}>
+                      <Search size={18} style={{ marginRight: '8px', color: '#666' }} />
+                      <input
+                        type="text"
+                        placeholder="Buscar o agregar integrante..."
+                        value={searchTerms.integrantes}
+                        onChange={(e) => {
+                          setSearchTerms({...searchTerms, integrantes: e.target.value});
+                          setShowIntegrantesSearchDropdown(true);
+                        }}
+                        onFocus={() => setShowIntegrantesSearchDropdown(true)}
+                        style={{ border: 'none', outline: 'none', flex: 1, fontSize: '14px' }}
+                      />
+                    </div>
+                    {showIntegrantesSearchDropdown && searchTerms.integrantes.trim() === '' && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '100%',
+                        left: 0,
+                        right: 0,
+                        maxHeight: '280px',
+                        overflowY: 'auto',
+                        backgroundColor: '#fff',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px',
+                        marginTop: '4px',
+                        zIndex: 1000,
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                      }}>
+                        {getPersonasDisponibles().length > 0 ? (
+                          getPersonasDisponibles().map((persona) => (
+                            <div
+                              key={persona.oidpersona}
+                              onClick={() => handleSelectPersonaFromSearch(persona)}
+                              style={{
+                                padding: '10px',
+                                cursor: 'pointer',
+                                borderBottom: '1px solid #f0f0f0'
+                              }}
+                              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#fff'}
+                            >
+                              <div style={{ fontWeight: '500' }}>{persona.nombre} {persona.apellido}</div>
+                              <div style={{ fontSize: '12px', color: '#666' }}>{persona.tipoDePersonalNombre || 'Sin tipo'}</div>
+                            </div>
+                          ))
+                        ) : (
+                          <div style={{ padding: '10px', color: '#999', textAlign: 'center' }}>
+                            No hay personas disponibles
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {showIntegrantesSearchDropdown && searchTerms.integrantes.trim() !== '' && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '100%',
+                        left: 0,
+                        right: 0,
+                        maxHeight: '280px',
+                        overflowY: 'auto',
+                        backgroundColor: '#fff',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px',
+                        marginTop: '4px',
+                        zIndex: 1000,
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                      }}>
+                        {(() => {
+                          const term = searchTerms.integrantes.toLowerCase();
+                          const filtradas = getPersonasDisponibles().filter(p =>
+                            (p.nombre && p.nombre.toLowerCase().includes(term)) ||
+                            (p.apellido && p.apellido.toLowerCase().includes(term))
+                          );
+                          return filtradas.length > 0 ? (
+                            filtradas.map((persona) => (
+                              <div
+                                key={persona.oidpersona}
+                                onClick={() => handleSelectPersonaFromSearch(persona)}
+                                style={{
+                                  padding: '10px',
+                                  cursor: 'pointer',
+                                  borderBottom: '1px solid #f0f0f0'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#fff'}
+                              >
+                                <div style={{ fontWeight: '500' }}>{persona.nombre} {persona.apellido}</div>
+                                <div style={{ fontSize: '12px', color: '#666' }}>{persona.tipoDePersonalNombre || 'Sin tipo'}</div>
+                              </div>
+                            ))
+                          ) : (
+                            <div style={{ padding: '10px', color: '#999', textAlign: 'center' }}>
+                              No se encontraron personas
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    )}
+                  </div>
+                  <button className="btn-add" onClick={handleAddIntegrante} style={{ whiteSpace: 'nowrap' }}>
+                    <Plus size={18} /> Crear Integrante
+                  </button>
+                </div>
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Nombre</th>
+                      <th>Apellido</th>
+                      <th>Rol</th>
+                      <th>Horas</th>
+                      <th>Acción</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {(() => {
+                      const filteredIntegrantes = filterIntegrantes();
+                      const { currentPage, itemsPerPage } = integrantesPagination;
+                      const startIndex = (currentPage - 1) * itemsPerPage;
+                      const endIndex = startIndex + itemsPerPage;
+                      const paginatedIntegrantes = filteredIntegrantes.slice(startIndex, endIndex);
+                      
+                      return paginatedIntegrantes.length > 0 ? (
+                        paginatedIntegrantes.map((integrante, index) => {
+                        return (
+                          <tr key={integrante.oidIntegranteMemoria}>
+                            <td>{integrante.persona_nombre || 'N/A'}</td>
+                            <td>{integrante.persona_apellido || 'N/A'}</td>
+                            <td>{integrante.rol || 'N/A'}</td>
+                            <td>{integrante.horasSemanales || 0}</td>
+                            <td>
+                              <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                                <button 
+                                  className="btn-delete" 
+                                  onClick={() => handleRemoveIntegrante(integrante)}
+                                  title="Eliminar"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    ) : (
+                      <tr>
+                        <td colSpan="5" style={{ textAlign: 'center', padding: '20px' }}>
+                          {searchTerms.integrantes.trim() ? (
+                            <p>No se encontraron resultados para "{searchTerms.integrantes}"</p>
+                          ) : (
+                            <p>No hay integrantes registrados</p>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                    })()}
+                  </tbody>
+                </table>
+                {(() => {
+                  const filteredIntegrantes = filterIntegrantes();
+                  const totalPages = Math.ceil(filteredIntegrantes.length / integrantesPagination.itemsPerPage);
+                  
+                  if (filteredIntegrantes.length <= integrantesPagination.itemsPerPage) return null;
+                  
+                  return (
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px', marginTop: '20px' }}>
+                      <button
+                        onClick={() => setIntegrantesPagination({ ...integrantesPagination, currentPage: integrantesPagination.currentPage - 1 })}
+                        disabled={integrantesPagination.currentPage === 1}
+                        style={{
+                          padding: '8px 16px',
+                          borderRadius: '4px',
+                          border: '1px solid #ddd',
+                          background: integrantesPagination.currentPage === 1 ? '#f5f5f5' : '#fff',
+                          cursor: integrantesPagination.currentPage === 1 ? 'not-allowed' : 'pointer',
+                          color: integrantesPagination.currentPage === 1 ? '#999' : '#333',
+                        }}
+                      >
+                        Anterior
+                      </button>
+                      <span style={{ fontSize: '14px', color: '#666' }}>
+                        Página {integrantesPagination.currentPage} de {totalPages}
+                      </span>
+                      <button
+                        onClick={() => setIntegrantesPagination({ ...integrantesPagination, currentPage: integrantesPagination.currentPage + 1 })}
+                        disabled={integrantesPagination.currentPage === totalPages}
+                        style={{
+                          padding: '8px 16px',
+                          borderRadius: '4px',
+                          border: '1px solid #ddd',
+                          background: integrantesPagination.currentPage === totalPages ? '#f5f5f5' : '#fff',
+                          cursor: integrantesPagination.currentPage === totalPages ? 'not-allowed' : 'pointer',
+                          color: integrantesPagination.currentPage === totalPages ? '#999' : '#333',
+                        }}
+                      >
+                        Siguiente
+                      </button>
+                    </div>
+                  );
+                })()}
+              </div>
             </div>
           )}
 
           {activeTab === 'trabajos' && (
             <div className="tab-content">
-              <button className="btn-add" onClick={handleAddTrabajo}>
-                <Plus size={18} /> Agregar Trabajo
-              </button>
+              <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'stretch' }}>
+                <div ref={trabajosSearchRef} style={{ flex: 1, position: 'relative' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '4px', padding: '8px' }}>
+                    <Search size={18} style={{ marginRight: '8px', color: '#666' }} />
+                    <input
+                      type="text"
+                      placeholder="Buscar o agregar trabajo..."
+                      value={searchTerms.trabajos}
+                      onChange={(e) => {
+                        setSearchTerms({...searchTerms, trabajos: e.target.value});
+                        setShowTrabajosSearchDropdown(true);
+                      }}
+                      onFocus={() => setShowTrabajosSearchDropdown(true)}
+                      style={{ border: 'none', outline: 'none', flex: 1, fontSize: '14px' }}
+                    />
+                  </div>
+                  {showTrabajosSearchDropdown && searchTerms.trabajos.trim() === '' && (
+                    <div style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      right: 0,
+                      maxHeight: '280px',
+                      overflowY: 'auto',
+                      backgroundColor: '#fff',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      marginTop: '4px',
+                      zIndex: 1000,
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                    }}>
+                      {getTrabajosDisponibles().length > 0 ? (
+                        getTrabajosDisponibles().map((trabajo) => (
+                          <div
+                            key={trabajo.oidTrabajoPresentado || trabajo.id}
+                            onClick={() => handleSelectTrabajoFromSearch(trabajo)}
+                            style={{
+                              padding: '10px',
+                              cursor: 'pointer',
+                              borderBottom: '1px solid #f0f0f0'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#fff'}
+                          >
+                            <div style={{ fontWeight: '500' }}>{trabajo.tituloTrabajo}</div>
+                            <div style={{ fontSize: '12px', color: '#666' }}>
+                              {trabajo.ciudad} - {trabajo.nombreReunion}
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div style={{ padding: '10px', color: '#999', textAlign: 'center' }}>
+                          No hay trabajos disponibles
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {showTrabajosSearchDropdown && searchTerms.trabajos.trim() !== '' && (
+                    <div style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      right: 0,
+                      maxHeight: '280px',
+                      overflowY: 'auto',
+                      backgroundColor: '#fff',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      marginTop: '4px',
+                      zIndex: 1000,
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                    }}>
+                      {(() => {
+                        const term = searchTerms.trabajos.toLowerCase();
+                        const filtrados = getTrabajosDisponibles().filter(t =>
+                          (t.ciudad && t.ciudad.toLowerCase().includes(term)) ||
+                          (t.nombreReunion && t.nombreReunion.toLowerCase().includes(term)) ||
+                          (t.tituloTrabajo && t.tituloTrabajo.toLowerCase().includes(term))
+                        );
+                        return filtrados.length > 0 ? (
+                          filtrados.map((trabajo) => (
+                            <div
+                              key={trabajo.oidTrabajoPresentado || trabajo.id}
+                              onClick={() => handleSelectTrabajoFromSearch(trabajo)}
+                              style={{
+                                padding: '10px',
+                                cursor: 'pointer',
+                                borderBottom: '1px solid #f0f0f0'
+                              }}
+                              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#fff'}
+                            >
+                              <div style={{ fontWeight: '500' }}>{trabajo.tituloTrabajo}</div>
+                              <div style={{ fontSize: '12px', color: '#666' }}>
+                                {trabajo.ciudad} - {trabajo.nombreReunion}
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div style={{ padding: '10px', color: '#999', textAlign: 'center' }}>
+                            No se encontraron trabajos
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
+                </div>
+                <button className="btn-add" onClick={handleAddTrabajo} style={{ whiteSpace: 'nowrap' }}>
+                  <Plus size={18} /> Agregar Trabajo
+                </button>
+              </div>
               <table className="data-table">
                 <thead>
                   <tr>
@@ -696,422 +2155,1645 @@ const MemoriaAnual = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {formData.trabajos.map((trabajo, index) => (
-                    <tr key={index}>
-                      <td>
-                        <select
-                          value={trabajo.ciudad}
-                          onChange={(e) => handleTrabajoChange(index, 'ciudad', e.target.value)}
-                        >
-                          <option value="">Seleccionar ciudad</option>
-                          <option value="Buenos Aires">Buenos Aires</option>
-                          <option value="Córdoba">Córdoba</option>
-                          <option value="Rosario">Rosario</option>
-                          <option value="Mendoza">Mendoza</option>
-                          <option value="San Miguel de Tucumán">San Miguel de Tucumán</option>
-                          <option value="La Plata">La Plata</option>
-                          <option value="Mar del Plata">Mar del Plata</option>
-                          <option value="Salta">Salta</option>
-                          <option value="Santa Fe">Santa Fe</option>
-                          <option value="San Juan">San Juan</option>
-                          <option value="Resistencia">Resistencia</option>
-                          <option value="Neuquén">Neuquén</option>
-                          <option value="Posadas">Posadas</option>
-                          <option value="Bahía Blanca">Bahía Blanca</option>
-                        </select>
-                      </td>
-                      <td>
-                        <input
-                          type="date"
-                          value={trabajo.fecha}
-                          onChange={(e) => handleTrabajoChange(index, 'fecha', e.target.value)}
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="text"
-                          value={trabajo.reunion}
-                          onChange={(e) => handleTrabajoChange(index, 'reunion', e.target.value)}
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="text"
-                          value={trabajo.titulo}
-                          onChange={(e) => handleTrabajoChange(index, 'titulo', e.target.value)}
-                        />
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                          <button 
-                            className="btn-edit" 
-                            onClick={() => setEditingIndex({ ...editingIndex, trabajos: index })}
-                            title="Editar"
-                          >
-                            <Edit size={16} />
-                          </button>
-                          <button 
-                            className="btn-delete" 
-                            onClick={() => handleRemoveTrabajo(index)}
-                            title="Eliminar"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                  {(() => {
+                    const { currentPage, itemsPerPage } = trabajosPagination;
+                    const startIndex = (currentPage - 1) * itemsPerPage;
+                    const endIndex = startIndex + itemsPerPage;
+                    const paginatedTrabajos = formData.trabajos.slice(startIndex, endIndex);
+                    
+                    return paginatedTrabajos.length > 0 ? (
+                      paginatedTrabajos.map((trabajo, paginatedIndex) => {
+                        const index = startIndex + paginatedIndex;
+                        const trabajoId = trabajo.oidTrabajoPresentado || trabajo.id;
+                        const fechaFormateada = trabajo.fechaInicio ? trabajo.fechaInicio.split('T')[0] : '';
+                        return (
+                          <tr key={trabajoId || index}>
+                            <td>{trabajo.ciudad || '-'}</td>
+                            <td>{fechaFormateada || '-'}</td>
+                            <td>{trabajo.nombreReunion || '-'}</td>
+                            <td>{trabajo.tituloTrabajo || '-'}</td>
+                            <td>
+                              <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                                <button 
+                                  className="btn-delete" 
+                                  onClick={() => handleRemoveTrabajo(index)}
+                                  title="Eliminar"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    ) : (
+                      <tr>
+                        <td colSpan="5" style={{ textAlign: 'center', padding: '20px' }}>
+                          <p>No hay trabajos agregados</p>
+                        </td>
+                      </tr>
+                    );
+                  })()}
                 </tbody>
               </table>
+              {formData.trabajos.length > trabajosPagination.itemsPerPage && (
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px', marginTop: '20px' }}>
+                  <button
+                    onClick={() => setTrabajosPagination(prev => ({
+                      ...prev,
+                      currentPage: Math.max(1, prev.currentPage - 1)
+                    }))}
+                    disabled={trabajosPagination.currentPage === 1}
+                    style={{
+                      padding: '8px 16px',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      backgroundColor: trabajosPagination.currentPage === 1 ? '#f5f5f5' : '#fff',
+                      cursor: trabajosPagination.currentPage === 1 ? 'not-allowed' : 'pointer',
+                      color: trabajosPagination.currentPage === 1 ? '#999' : '#333'
+                    }}
+                  >
+                    Anterior
+                  </button>
+                  <span style={{ fontSize: '14px', color: '#666' }}>
+                    Página {trabajosPagination.currentPage} de {Math.ceil(formData.trabajos.length / trabajosPagination.itemsPerPage)}
+                  </span>
+                  <button
+                    onClick={() => setTrabajosPagination(prev => ({
+                      ...prev,
+                      currentPage: Math.min(
+                        Math.ceil(formData.trabajos.length / prev.itemsPerPage),
+                        prev.currentPage + 1
+                      )
+                    }))}
+                    disabled={trabajosPagination.currentPage >= Math.ceil(formData.trabajos.length / trabajosPagination.itemsPerPage)}
+                    style={{
+                      padding: '8px 16px',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      backgroundColor: trabajosPagination.currentPage >= Math.ceil(formData.trabajos.length / trabajosPagination.itemsPerPage) ? '#f5f5f5' : '#fff',
+                      cursor: trabajosPagination.currentPage >= Math.ceil(formData.trabajos.length / trabajosPagination.itemsPerPage) ? 'not-allowed' : 'pointer',
+                      color: trabajosPagination.currentPage >= Math.ceil(formData.trabajos.length / trabajosPagination.itemsPerPage) ? '#999' : '#333'
+                    }}
+                  >
+                    Siguiente
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
         {activeTab === 'actividades' && (
           <div className="tab-content">
-            <button className="btn-add" onClick={handleAddActividad}>
-              <Plus size={18} /> Agregar Actividad
-            </button>
+            <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'stretch' }}>
+              <div ref={actividadesSearchRef} style={{ flex: 1, position: 'relative' }}>
+                <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '4px', padding: '8px' }}>
+                  <Search size={18} style={{ marginRight: '8px', color: '#666' }} />
+                  <input
+                    type="text"
+                    placeholder="Buscar o agregar actividad..."
+                    value={searchTerms.actividades}
+                    onChange={(e) => {
+                      setSearchTerms({...searchTerms, actividades: e.target.value});
+                      setShowActividadesSearchDropdown(true);
+                    }}
+                    onFocus={() => setShowActividadesSearchDropdown(true)}
+                    style={{ border: 'none', outline: 'none', flex: 1, fontSize: '14px' }}
+                  />
+                </div>
+                {showActividadesSearchDropdown && searchTerms.actividades.trim() === '' && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: 0,
+                    right: 0,
+                    maxHeight: '280px',
+                    overflowY: 'auto',
+                    backgroundColor: '#fff',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    marginTop: '4px',
+                    zIndex: 1000,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                  }}>
+                    {getActividadesDisponibles().length > 0 ? (
+                      getActividadesDisponibles().map((actividad) => (
+                        <div
+                          key={actividad.oidActividad || actividad.id}
+                          onClick={() => handleSelectActividadFromSearch(actividad)}
+                          style={{
+                            padding: '10px',
+                            cursor: 'pointer',
+                            borderBottom: '1px solid #f0f0f0'
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#fff'}
+                        >
+                          <div style={{ fontWeight: '500' }}>{actividad.descripcion}</div>
+                          <div style={{ fontSize: '12px', color: '#666' }}>
+                            {actividad.fechaInicio} - {actividad.fechaFin}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div style={{ padding: '10px', color: '#999', textAlign: 'center' }}>
+                        No hay actividades disponibles
+                      </div>
+                    )}
+                  </div>
+                )}
+                {showActividadesSearchDropdown && searchTerms.actividades.trim() !== '' && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: 0,
+                    right: 0,
+                    maxHeight: '280px',
+                    overflowY: 'auto',
+                    backgroundColor: '#fff',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    marginTop: '4px',
+                    zIndex: 1000,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                  }}>
+                    {(() => {
+                      const term = searchTerms.actividades.toLowerCase();
+                      const filtrados = getActividadesDisponibles().filter(a =>
+                        (a.descripcion && a.descripcion.toLowerCase().includes(term))
+                      );
+                      return filtrados.length > 0 ? (
+                        filtrados.map((actividad) => (
+                          <div
+                            key={actividad.oidActividad || actividad.id}
+                            onClick={() => handleSelectActividadFromSearch(actividad)}
+                            style={{
+                              padding: '10px',
+                              cursor: 'pointer',
+                              borderBottom: '1px solid #f0f0f0'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#fff'}
+                          >
+                            <div style={{ fontWeight: '500' }}>{actividad.descripcion}</div>
+                            <div style={{ fontSize: '12px', color: '#666' }}>
+                              {actividad.fechaInicio} - {actividad.fechaFin}
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div style={{ padding: '10px', color: '#999', textAlign: 'center' }}>
+                          No se encontraron actividades
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
+              </div>
+              <button className="btn-add" onClick={handleAddActividad} style={{ whiteSpace: 'nowrap' }}>
+                <Plus size={18} /> Agregar Actividad
+              </button>
+            </div>
             <table className="data-table">
               <thead>
                 <tr>
                   <th>Descripción</th>
-                  <th>Fecha</th>
-                  <th>Tipo</th>
-                  <th>Acciones</th>
+                  <th>Fecha Inicio</th>
+                  <th>Fecha Fin</th>
+                  <th>Acción</th>
                 </tr>
               </thead>
               <tbody>
-                {formData.actividades.map((actividad, index) => (
-                  <tr key={index}>
-                    <td>
-                      <button
-                        type="button"
-                        className="btn-field-edit"
-                        onClick={() => openFieldModal(index, 'descripcion', actividad.descripcion, actividad.titulo, 'actividad')}
-                      >
-                        {actividad.titulo || 'Descripción'}
-                      </button>
-                    </td>
-                    <td>
-                      <input
-                        type="date"
-                        value={actividad.fecha}
-                        onChange={(e) => handleActividadChange(index, 'fecha', e.target.value)}
-                      />
-                    </td>
-                    <td>
-                      <select
-                        value={actividad.tipo}
-                        onChange={(e) => handleActividadChange(index, 'tipo', e.target.value)}
-                      >
-                        <option value="">Seleccionar tipo</option>
-                        <option value="Congreso">Congreso</option>
-                        <option value="Seminario">Seminario</option>
-                        <option value="Taller">Taller</option>
-                        <option value="Conferencia">Conferencia</option>
-                        <option value="Curso">Curso</option>
-                        <option value="Otro">Otro</option>
-                      </select>
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                        <button
-                          type="button"
-                          className="btn-edit"
-                          onClick={() => setEditingIndex(editingIndex === index ? null : index)}
-                          title="Editar"
-                        >
-                          <Edit size={16} />
-                        </button>
-                        <button
-                          type="button"
-                          className="btn-delete"
-                          onClick={() => handleRemoveActividad(index)}
-                          title="Eliminar"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {(() => {
+                  const { currentPage, itemsPerPage } = actividadesPagination;
+                  const startIndex = (currentPage - 1) * itemsPerPage;
+                  const endIndex = startIndex + itemsPerPage;
+                  const paginatedActividades = formData.actividades.slice(startIndex, endIndex);
+                  
+                  return paginatedActividades.length > 0 ? (
+                    paginatedActividades.map((actividad, paginatedIndex) => {
+                      const index = startIndex + paginatedIndex;
+                      const actividadId = actividad.oidActividad || actividad.id;
+                      const fechaInicio = actividad.fechaInicio ? actividad.fechaInicio.split('T')[0] : '-';
+                      const fechaFin = actividad.fechaFin ? actividad.fechaFin.split('T')[0] : '-';
+                      return (
+                        <tr key={actividadId || index}>
+                          <td>{actividad.descripcion || '-'}</td>
+                          <td>{fechaInicio}</td>
+                          <td>{fechaFin}</td>
+                          <td>
+                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                              <button 
+                                className="btn-delete" 
+                                onClick={() => handleRemoveActividad(index)}
+                                title="Eliminar"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  ) : (
+                    <tr>
+                      <td colSpan="4" style={{ textAlign: 'center', padding: '20px' }}>
+                        <p>No hay actividades agregadas</p>
+                      </td>
+                    </tr>
+                  );
+                })()}
               </tbody>
             </table>
+            {formData.actividades.length > actividadesPagination.itemsPerPage && (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px', marginTop: '20px' }}>
+                <button
+                  onClick={() => setActividadesPagination(prev => ({
+                    ...prev,
+                    currentPage: Math.max(1, prev.currentPage - 1)
+                  }))}
+                  disabled={actividadesPagination.currentPage === 1}
+                  style={{
+                    padding: '8px 16px',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    backgroundColor: actividadesPagination.currentPage === 1 ? '#f5f5f5' : '#fff',
+                    cursor: actividadesPagination.currentPage === 1 ? 'not-allowed' : 'pointer',
+                    color: actividadesPagination.currentPage === 1 ? '#999' : '#333'
+                  }}
+                >
+                  Anterior
+                </button>
+                <span style={{ fontSize: '14px', color: '#666' }}>
+                  Página {actividadesPagination.currentPage} de {Math.ceil(formData.actividades.length / actividadesPagination.itemsPerPage)}
+                </span>
+                <button
+                  onClick={() => setActividadesPagination(prev => ({
+                    ...prev,
+                    currentPage: Math.min(
+                      Math.ceil(formData.actividades.length / prev.itemsPerPage),
+                      prev.currentPage + 1
+                    )
+                  }))}
+                  disabled={actividadesPagination.currentPage >= Math.ceil(formData.actividades.length / actividadesPagination.itemsPerPage)}
+                  style={{
+                    padding: '8px 16px',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    backgroundColor: actividadesPagination.currentPage >= Math.ceil(formData.actividades.length / actividadesPagination.itemsPerPage) ? '#f5f5f5' : '#fff',
+                    cursor: actividadesPagination.currentPage >= Math.ceil(formData.actividades.length / actividadesPagination.itemsPerPage) ? 'not-allowed' : 'pointer',
+                    color: actividadesPagination.currentPage >= Math.ceil(formData.actividades.length / actividadesPagination.itemsPerPage) ? '#999' : '#333'
+                  }}
+                >
+                  Siguiente
+                </button>
+              </div>
+            )}
           </div>
         )}
 
         {activeTab === 'publicaciones' && (
           <div className="tab-content">
-            <button className="btn-add" onClick={handleAddPublicacion}>
-              <Plus size={18} /> Agregar Publicación
-            </button>
+            <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'stretch' }}>
+              <div ref={publicacionesSearchRef} style={{ flex: 1, position: 'relative' }}>
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '4px', padding: '8px' }}>
+                  <Search size={18} style={{ marginRight: '8px', color: '#666' }} />
+                  <input
+                    type="text"
+                    placeholder="Buscar publicación por título o revista..."
+                    value={publicacionesDropdownSearch}
+                    onChange={(e) => {
+                      setPublicacionesDropdownSearch(e.target.value);
+                      setShowPublicacionesSearchDropdown(true);
+                    }}
+                    onFocus={() => setShowPublicacionesSearchDropdown(true)}
+                    style={{ border: 'none', outline: 'none', flex: 1, fontSize: '14px' }}
+                  />
+                </div>
+                {showPublicacionesSearchDropdown && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: 0,
+                    right: 0,
+                    maxHeight: '280px',
+                    overflowY: 'auto',
+                    backgroundColor: '#fff',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    marginTop: '4px',
+                    zIndex: 1000,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                  }}>
+                    {(() => {
+                      const term = publicacionesDropdownSearch.toLowerCase().trim();
+                      const disponibles = getPublicacionesDisponibles();
+                      const filtrados = term 
+                        ? disponibles.filter(p =>
+                            (p.titulo && p.titulo.toLowerCase().includes(term)) ||
+                            (p.nombreRevista && p.nombreRevista.toLowerCase().includes(term))
+                          )
+                        : disponibles;
+                      
+                      return filtrados.length > 0 ? (
+                        filtrados.map((publicacion) => (
+                          <div
+                            key={publicacion.oidTrabajoPublicado || publicacion.id}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSelectPublicacionFromSearch(publicacion);
+                            }}
+                            style={{
+                              padding: '10px',
+                              cursor: 'pointer',
+                              borderBottom: '1px solid #f0f0f0'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#fff'}
+                          >
+                            <div style={{ fontWeight: '500' }}>{publicacion.titulo}</div>
+                            <div style={{ fontSize: '12px', color: '#666' }}>
+                              {publicacion.nombreRevista || 'Sin revista'}
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div style={{ padding: '10px', color: '#999', textAlign: 'center' }}>
+                          {term ? `No se encontraron publicaciones para "${publicacionesDropdownSearch}"` : 'Escribe para buscar publicaciones'}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
+              </div>
+              <button className="btn-add" onClick={() => setShowPublicacionModal(true)} style={{ whiteSpace: 'nowrap' }}>
+                <Plus size={18} /> Agregar Publicación
+              </button>
+            </div>
             <table className="data-table">
               <thead>
                 <tr>
                   <th>Título</th>
-                  <th>Autor</th>
                   <th>Revista</th>
-                  <th>Año</th>
-                  <th>Acciones</th>
+                  <th>Estado</th>
+                  <th>Acción</th>
                 </tr>
               </thead>
               <tbody>
-                {formData.publicaciones.map((publicacion, index) => (
-                  <tr key={index}>
-                    <td>
-                      <input
-                        type="text"
-                        value={publicacion.titulo}
-                        onChange={(e) => handlePublicacionChange(index, 'titulo', e.target.value)}
-                        placeholder="Título"
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="text"
-                        value={publicacion.autor}
-                        onChange={(e) => handlePublicacionChange(index, 'autor', e.target.value)}
-                        placeholder="Autor"
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="text"
-                        value={publicacion.revista}
-                        onChange={(e) => handlePublicacionChange(index, 'revista', e.target.value)}
-                        placeholder="Revista"
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="number"
-                        value={publicacion.anio}
-                        onChange={(e) => handlePublicacionChange(index, 'anio', e.target.value)}
-                        placeholder="Año"
-                      />
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                        <button
-                          type="button"
-                          className="btn-edit"
-                          onClick={() => setEditingIndex(editingIndex === index ? null : index)}
-                          title="Editar"
-                        >
-                          <Edit size={16} />
-                        </button>
-                        <button
-                          type="button"
-                          className="btn-delete"
-                          onClick={() => handleRemovePublicacion(index)}
-                          title="Eliminar"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {(() => {
+                  const { currentPage, itemsPerPage } = publicacionesPagination;
+                  const startIndex = (currentPage - 1) * itemsPerPage;
+                  const endIndex = startIndex + itemsPerPage;
+                  const filteredPublicaciones = filterPublicaciones();
+                  const paginatedPublicaciones = filteredPublicaciones.slice(startIndex, endIndex);
+                  
+                  return paginatedPublicaciones.length > 0 ? (
+                    paginatedPublicaciones.map((publicacion, paginatedIndex) => {
+                      const originalIndex = formData.publicaciones.indexOf(publicacion);
+                      const publicacionId = publicacion.oidTrabajoPublicado || publicacion.id;
+                      return (
+                        <tr key={publicacionId || originalIndex}>
+                          <td>{publicacion.titulo || '-'}</td>
+                          <td>{publicacion.nombreRevista || '-'}</td>
+                          <td>{publicacion.estado || '-'}</td>
+                          <td>
+                            <button
+                              type="button"
+                              className="btn-delete"
+                              onClick={() => handleRemovePublicacion(originalIndex)}
+                              title="Eliminar"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  ) : (
+                    <tr>
+                      <td colSpan="4" style={{ textAlign: 'center', padding: '20px' }}>
+                        {searchTerms.publicaciones.trim() ? (
+                          `No se encontraron resultados para "${searchTerms.publicaciones}"`
+                        ) : (
+                          'No hay publicaciones agregadas'
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })()}
               </tbody>
             </table>
+            {(() => {
+              const filteredPublicaciones = filterPublicaciones();
+              return filteredPublicaciones.length > publicacionesPagination.itemsPerPage && (
+                <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center', gap: '10px' }}>
+                  <button
+                    className="btn-pagination"
+                    onClick={() => setPublicacionesPagination(prev => ({
+                      ...prev,
+                      currentPage: Math.max(1, prev.currentPage - 1)
+                    }))}
+                    disabled={publicacionesPagination.currentPage === 1}
+                    style={{
+                      padding: '8px 16px',
+                      backgroundColor: publicacionesPagination.currentPage === 1 ? '#ccc' : '#c49acc',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: publicacionesPagination.currentPage === 1 ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    Anterior
+                  </button>
+                  <span style={{ padding: '8px 16px', display: 'flex', alignItems: 'center' }}>
+                    Página {publicacionesPagination.currentPage} de {Math.ceil(filteredPublicaciones.length / publicacionesPagination.itemsPerPage)}
+                  </span>
+                  <button
+                    className="btn-pagination"
+                    onClick={() => setPublicacionesPagination(prev => ({
+                      ...prev,
+                      currentPage: Math.min(Math.ceil(filteredPublicaciones.length / prev.itemsPerPage), prev.currentPage + 1)
+                    }))}
+                    disabled={publicacionesPagination.currentPage >= Math.ceil(filteredPublicaciones.length / publicacionesPagination.itemsPerPage)}
+                    style={{
+                      padding: '8px 16px',
+                      backgroundColor: publicacionesPagination.currentPage >= Math.ceil(filteredPublicaciones.length / publicacionesPagination.itemsPerPage) ? '#ccc' : '#c49acc',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: publicacionesPagination.currentPage >= Math.ceil(filteredPublicaciones.length / publicacionesPagination.itemsPerPage) ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    Siguiente
+                  </button>
+                </div>
+              );
+            })()}
           </div>
         )}
 
           {activeTab === 'patentes' && (
             <div className="tab-content">
-              <button className="btn-add" onClick={handleAddPatente}>
-                <Plus size={18} /> Agregar Patente
-              </button>
+              <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'stretch' }}>
+                <div ref={patentesSearchRef} style={{ flex: 1, position: 'relative' }}>
+                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '4px', padding: '8px' }}>
+                    <Search size={18} style={{ marginRight: '8px', color: '#666' }} />
+                    <input
+                      type="text"
+                      placeholder="Buscar patente por descripción, número o tipo..."
+                      value={searchTerms.patentes}
+                      onChange={(e) => {
+                        setSearchTerms({...searchTerms, patentes: e.target.value});
+                        setShowPatentesSearchDropdown(true);
+                      }}
+                      onFocus={() => setShowPatentesSearchDropdown(true)}
+                      style={{ border: 'none', outline: 'none', flex: 1, fontSize: '14px' }}
+                    />
+                  </div>
+                  {showPatentesSearchDropdown && (
+                    <div style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      right: 0,
+                      maxHeight: '280px',
+                      overflowY: 'auto',
+                      backgroundColor: '#fff',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      marginTop: '4px',
+                      zIndex: 1000,
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                    }}>
+                      {(() => {
+                        const term = searchTerms.patentes.toLowerCase().trim();
+                        const disponibles = getPatentesDisponibles();
+                        console.log('Patentes disponibles:', disponibles);
+                        const filtradas = term
+                          ? disponibles.filter(p => 
+                              (p.descripcion && p.descripcion.toLowerCase().includes(term)) ||
+                              (p.numero && p.numero.toLowerCase().includes(term)) ||
+                              (p.tipo && p.tipo.toLowerCase().includes(term))
+                            )
+                          : disponibles;
+                        
+                        console.log('Patentes filtradas:', filtradas);
+                        
+                        return filtradas.length > 0 ? (
+                          filtradas.map((patente) => (
+                            <div
+                              key={patente.oidPatente || patente.id}
+                              onClick={() => handleSelectPatenteFromSearch(patente)}
+                              style={{
+                                padding: '10px',
+                                cursor: 'pointer',
+                                borderBottom: '1px solid #f0f0f0'
+                              }}
+                              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#fff'}
+                            >
+                              <div style={{ fontWeight: '500' }}>{patente.descripcion}</div>
+                              <div style={{ fontSize: '12px', color: '#666' }}>
+                                Número: {patente.numero} | Tipo: {patente.tipo} | Fecha: {patente.fecha}
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div style={{ padding: '10px', color: '#999', textAlign: 'center' }}>
+                            {term ? `No se encontraron patentes para "${searchTerms.patentes}"` : 'Escribe para buscar patentes'}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
+                </div>
+                <button className="btn-add" onClick={handleAddPatente} style={{ whiteSpace: 'nowrap' }}>
+                  <Plus size={18} /> Agregar Patente
+                </button>
+              </div>
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>Título</th>
+                    <th>Descripción</th>
+                    <th>Tipo</th>
                     <th>Número</th>
                     <th>Fecha</th>
-                    <th>Estado</th>
+                    <th>Inventor</th>
                     <th>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {formData.patentes.map((patente, index) => (
-                    <tr key={index}>
-                      <td>
-                        <input
-                          type="text"
-                          value={patente.titulo}
-                          onChange={(e) => handlePatenteChange(index, 'titulo', e.target.value)}
-                          placeholder="Título"
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="text"
-                          value={patente.numero}
-                          onChange={(e) => handlePatenteChange(index, 'numero', e.target.value)}
-                          placeholder="Número"
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="date"
-                          value={patente.fecha}
-                          onChange={(e) => handlePatenteChange(index, 'fecha', e.target.value)}
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="text"
-                          value={patente.estado}
-                          onChange={(e) => handlePatenteChange(index, 'estado', e.target.value)}
-                          placeholder="Estado"
-                        />
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                          <button
-                            type="button"
-                            className="btn-edit"
-                            onClick={() => setEditingIndex(editingIndex === index ? null : index)}
-                            title="Editar"
-                          >
-                            <Edit size={16} />
-                          </button>
-                          <button
-                            type="button"
-                            className="btn-delete"
-                            onClick={() => handleRemovePatente(index)}
-                            title="Eliminar"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                  {(() => {
+                    const { currentPage, itemsPerPage } = patentesPagination;
+                    const startIndex = (currentPage - 1) * itemsPerPage;
+                    const endIndex = startIndex + itemsPerPage;
+                    const filteredPatentes = filterPatentes();
+                    const paginatedPatentes = filteredPatentes.slice(startIndex, endIndex);
+                    
+                    return paginatedPatentes.length > 0 ? (
+                      paginatedPatentes.map((patente, paginatedIndex) => {
+                        const originalIndex = formData.patentes.indexOf(patente);
+                        return (
+                          <tr key={originalIndex}>
+                            <td>
+                              <input
+                                type="text"
+                                value={patente.descripcion}
+                                onChange={(e) => handlePatenteChange(originalIndex, 'descripcion', e.target.value)}
+                                placeholder="Descripción"
+                              />
+                            </td>
+                            <td>
+                              <select
+                                value={patente.tipo}
+                                onChange={(e) => handlePatenteChange(originalIndex, 'tipo', e.target.value)}
+                                style={{ width: '100%', padding: '8px' }}
+                              >
+                                <option value="">Seleccionar tipo</option>
+                                <option value="Patente Activa">Patente Activa</option>
+                                <option value="Patente en Trámite">Patente en Trámite</option>
+                                <option value="Patente Expirada">Patente Expirada</option>
+                              </select>
+                            </td>
+                            <td>
+                              <input
+                                type="text"
+                                value={patente.numero}
+                                onChange={(e) => handlePatenteChange(originalIndex, 'numero', e.target.value)}
+                                placeholder="Número"
+                              />
+                            </td>
+                            <td>
+                              <input
+                                type="date"
+                                value={patente.fecha}
+                                onChange={(e) => handlePatenteChange(originalIndex, 'fecha', e.target.value)}
+                              />
+                            </td>
+                            <td>
+                              <input
+                                type="text"
+                                value={patente.inventor}
+                                onChange={(e) => handlePatenteChange(originalIndex, 'inventor', e.target.value)}
+                                placeholder="Inventor"
+                              />
+                            </td>
+                            <td>
+                              <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                                {!patente.temp && (
+                                  <button
+                                    type="button"
+                                    className="btn-edit"
+                                    onClick={() => handleSavePatente(originalIndex)}
+                                    title="Guardar cambios"
+                                    style={{ backgroundColor: '#4CAF50' }}
+                                  >
+                                    💾
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  className="btn-delete"
+                                  onClick={() => handleRemovePatente(originalIndex)}
+                                  title="Eliminar"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    ) : (
+                      <tr>
+                        <td colSpan="5" style={{ textAlign: 'center', padding: '20px' }}>
+                          {searchTerms.patentes.trim() ? (
+                            `No se encontraron resultados para "${searchTerms.patentes}"`
+                          ) : (
+                            'No hay patentes registradas'
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })()}
                 </tbody>
               </table>
+              {(() => {
+                const filteredPatentes = filterPatentes();
+                return filteredPatentes.length > patentesPagination.itemsPerPage && (
+                  <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center', gap: '10px' }}>
+                    <button
+                      className="btn-pagination"
+                      onClick={() => setPatentesPagination(prev => ({
+                        ...prev,
+                        currentPage: Math.max(1, prev.currentPage - 1)
+                      }))}
+                      disabled={patentesPagination.currentPage === 1}
+                      style={{
+                        padding: '8px 16px',
+                        backgroundColor: patentesPagination.currentPage === 1 ? '#ccc' : '#c49acc',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: patentesPagination.currentPage === 1 ? 'not-allowed' : 'pointer'
+                      }}
+                    >
+                      Anterior
+                    </button>
+                    <span style={{ padding: '8px 16px', display: 'flex', alignItems: 'center' }}>
+                      Página {patentesPagination.currentPage} de {Math.ceil(filteredPatentes.length / patentesPagination.itemsPerPage)}
+                    </span>
+                    <button
+                      className="btn-pagination"
+                      onClick={() => setPatentesPagination(prev => ({
+                        ...prev,
+                        currentPage: Math.min(Math.ceil(filteredPatentes.length / prev.itemsPerPage), prev.currentPage + 1)
+                      }))}
+                      disabled={patentesPagination.currentPage >= Math.ceil(filteredPatentes.length / patentesPagination.itemsPerPage)}
+                      style={{
+                        padding: '8px 16px',
+                        backgroundColor: patentesPagination.currentPage >= Math.ceil(filteredPatentes.length / patentesPagination.itemsPerPage) ? '#ccc' : '#c49acc',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: patentesPagination.currentPage >= Math.ceil(filteredPatentes.length / patentesPagination.itemsPerPage) ? 'not-allowed' : 'pointer'
+                      }}
+                    >
+                      Siguiente
+                    </button>
+                  </div>
+                );
+              })()}
             </div>
           )}
 
           {activeTab === 'proyectos' && (
             <div className="tab-content">
-              <button className="btn-add" onClick={handleAddProyecto}>
-                <Plus size={18} /> Agregar Proyecto
-              </button>
+              <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'stretch' }}>
+                <div ref={proyectosSearchRef} style={{ flex: 1, position: 'relative' }}>
+                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '4px', padding: '8px' }}>
+                    <Search size={18} style={{ marginRight: '8px', color: '#666' }} />
+                    <input
+                      type="text"
+                      placeholder="Buscar proyecto por nombre o código..."
+                      value={searchTerms.proyectos}
+                      onChange={(e) => {
+                        setSearchTerms({...searchTerms, proyectos: e.target.value});
+                        setShowProyectosSearchDropdown(true);
+                      }}
+                      onFocus={() => setShowProyectosSearchDropdown(true)}
+                      style={{ border: 'none', outline: 'none', flex: 1, fontSize: '14px' }}
+                    />
+                  </div>
+                  {showProyectosSearchDropdown && (
+                    <div style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      right: 0,
+                      maxHeight: '280px',
+                      overflowY: 'auto',
+                      backgroundColor: '#fff',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      marginTop: '4px',
+                      zIndex: 1000,
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                    }}>
+                      {(() => {
+                        const term = searchTerms.proyectos.toLowerCase().trim();
+                        const disponibles = getProyectosDisponibles();
+                        console.log('Proyectos disponibles:', disponibles);
+                        const filtrados = term
+                          ? disponibles.filter(p => 
+                              (p.nombre && p.nombre.toLowerCase().includes(term)) ||
+                              (p.codigoProyecto && p.codigoProyecto.toLowerCase().includes(term)) ||
+                              (p.tipoProyecto && p.tipoProyecto.toLowerCase().includes(term))
+                            )
+                          : disponibles;
+                        
+                        console.log('Proyectos filtrados:', filtrados);
+                        
+                        return filtrados.length > 0 ? (
+                          filtrados.map((proyecto) => (
+                            <div
+                              key={proyecto.oidProyectoInvestigacion || proyecto.id}
+                              onClick={() => handleSelectProyectoFromSearch(proyecto)}
+                              style={{
+                                padding: '10px',
+                                cursor: 'pointer',
+                                borderBottom: '1px solid #f0f0f0'
+                              }}
+                              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#fff'}
+                            >
+                              <div style={{ fontWeight: '500' }}>{proyecto.nombre}</div>
+                              <div style={{ fontSize: '12px', color: '#666' }}>
+                                Código: {proyecto.codigoProyecto} | Tipo: {proyecto.tipoProyecto}
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div style={{ padding: '10px', color: '#999', textAlign: 'center' }}>
+                            {term ? `No se encontraron proyectos para "${searchTerms.proyectos}"` : 'Escribe para buscar proyectos'}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
+                </div>
+                <button className="btn-add" onClick={handleAddProyecto} style={{ whiteSpace: 'nowrap' }}>
+                  <Plus size={18} /> Agregar Proyecto
+                </button>
+              </div>
               <table className="data-table">
                 <thead>
                   <tr>
                     <th>Nombre</th>
-                    <th>Estado</th>
-                    <th>Inicio</th>
-                    <th>Fin</th>
-                    <th>Responsable</th>
-                    <th>Presupuesto</th>
-                    <th>Colaboradores</th>
-                    <th>Objetivos</th>
-                    <th>Resultados</th>
-                    <th>Acción</th>
+                    <th>Código</th>
+                    <th>Tipo Proyecto</th>
+                    <th>Fecha Inicio</th>
+                    <th>Fecha Finalización</th>
+                    <th>Descripción</th>
+                    <th>Logros</th>
+                    <th>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {formData.proyectos.map((proyecto, index) => (
-                    <tr key={index}>
-                      <td>
-                        <input
-                          type="text"
-                          value={proyecto.nombre}
-                          onChange={(e) => handleProyectoChange(index, 'nombre', e.target.value)}
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="text"
-                          value={proyecto.estado}
-                          onChange={(e) => handleProyectoChange(index, 'estado', e.target.value)}
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="date"
-                          value={proyecto.inicio}
-                          onChange={(e) => handleProyectoChange(index, 'inicio', e.target.value)}
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="date"
-                          value={proyecto.fin}
-                          onChange={(e) => handleProyectoChange(index, 'fin', e.target.value)}
-                        />
-                      </td>
-                      <td>
-                        <button
-                          type="button"
-                          className="btn-field-edit"
-                          onClick={() => openFieldModal(index, 'responsable', proyecto.responsable, proyecto.responsableTitulo)}
-                        >
-                          {proyecto.responsableTitulo || 'Responsable'}
-                        </button>
-                      </td>
-                      <td>
-                        <input
-                          type="text"
-                          value={proyecto.presupuesto}
-                          onChange={(e) => handleProyectoChange(index, 'presupuesto', e.target.value)}
-                        />
-                      </td>
-                      <td>
-                        <button
-                          type="button"
-                          className="btn-field-edit"
-                          onClick={() => openFieldModal(index, 'colaboradores', proyecto.colaboradores, proyecto.colaboradoresTitulo)}
-                        >
-                          {proyecto.colaboradoresTitulo || 'Colaboradores'}
-                        </button>
-                      </td>
-                      <td>
-                        <button
-                          type="button"
-                          className="btn-field-edit"
-                          onClick={() => openFieldModal(index, 'objetivos', proyecto.objetivos, proyecto.objetivosTitulo)}
-                        >
-                          {proyecto.objetivosTitulo || 'Objetivos'}
-                        </button>
-                      </td>
-                      <td>
-                        <button
-                          type="button"
-                          className="btn-field-edit"
-                          onClick={() => openFieldModal(index, 'resultados', proyecto.resultados, proyecto.resultadosTitulo)}
-                        >
-                          {proyecto.resultadosTitulo || 'Resultados'}
-                        </button>
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                          <button 
-                            className="btn-edit" 
-                            onClick={() => setEditingIndex({ ...editingIndex, proyectos: index })}
-                            title="Editar"
-                          >
-                            <Edit size={16} />
-                          </button>
-                          <button 
-                            className="btn-delete" 
-                            onClick={() => handleRemoveProyecto(index)}
-                            title="Eliminar"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                  {(() => {
+                    const { currentPage, itemsPerPage } = proyectosPagination;
+                    const startIndex = (currentPage - 1) * itemsPerPage;
+                    const endIndex = startIndex + itemsPerPage;
+                    const filteredProyectos = filterProyectos();
+                    const paginatedProyectos = filteredProyectos.slice(startIndex, endIndex);
+                    
+                    return paginatedProyectos.length > 0 ? (
+                      paginatedProyectos.map((proyecto, paginatedIndex) => {
+                        const originalIndex = formData.proyectos.indexOf(proyecto);
+                        return (
+                          <tr key={originalIndex}>
+                            <td>{proyecto.nombre || '-'}</td>
+                            <td>{proyecto.codigoProyecto || '-'}</td>
+                            <td>{proyecto.tipoProyecto || '-'}</td>
+                            <td>{proyecto.fechaInicio || '-'}</td>
+                            <td>{proyecto.fechaFinalizacion || '-'}</td>
+                            <td>{proyecto.descripcion || '-'}</td>
+                            <td>{proyecto.logrosObtenidos || '-'}</td>
+                            <td>
+                              <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                                <button 
+                                  className="btn-edit" 
+                                  onClick={() => handleEditProyecto(originalIndex)}
+                                  title="Editar"
+                                >
+                                  <Edit size={16} />
+                                </button>
+                                <button 
+                                  className="btn-delete" 
+                                  onClick={() => handleRemoveProyecto(originalIndex)}
+                                  title="Eliminar"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    ) : (
+                      <tr>
+                        <td colSpan="8" style={{ textAlign: 'center', padding: '20px' }}>
+                          {searchTerms.proyectos.trim() ? (
+                            `No se encontraron resultados para "${searchTerms.proyectos}"`
+                          ) : (
+                            'No hay proyectos registrados'
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })()}
                 </tbody>
               </table>
+              {(() => {
+                const filteredProyectos = filterProyectos();
+                return filteredProyectos.length > proyectosPagination.itemsPerPage && (
+                  <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center', gap: '10px' }}>
+                    <button
+                      className="btn-pagination"
+                      onClick={() => setProyectosPagination(prev => ({
+                        ...prev,
+                        currentPage: Math.max(1, prev.currentPage - 1)
+                      }))}
+                      disabled={proyectosPagination.currentPage === 1}
+                      style={{
+                        padding: '8px 16px',
+                        backgroundColor: proyectosPagination.currentPage === 1 ? '#ccc' : '#c49acc',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: proyectosPagination.currentPage === 1 ? 'not-allowed' : 'pointer'
+                      }}
+                    >
+                      Anterior
+                    </button>
+                    <span style={{ padding: '8px 16px', display: 'flex', alignItems: 'center' }}>
+                      Página {proyectosPagination.currentPage} de {Math.ceil(filteredProyectos.length / proyectosPagination.itemsPerPage)}
+                    </span>
+                    <button
+                      className="btn-pagination"
+                      onClick={() => setProyectosPagination(prev => ({
+                        ...prev,
+                        currentPage: Math.min(Math.ceil(filteredProyectos.length / prev.itemsPerPage), prev.currentPage + 1)
+                      }))}
+                      disabled={proyectosPagination.currentPage >= Math.ceil(filteredProyectos.length / proyectosPagination.itemsPerPage)}
+                      style={{
+                        padding: '8px 16px',
+                        backgroundColor: proyectosPagination.currentPage >= Math.ceil(filteredProyectos.length / proyectosPagination.itemsPerPage) ? '#ccc' : '#c49acc',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: proyectosPagination.currentPage >= Math.ceil(filteredProyectos.length / proyectosPagination.itemsPerPage) ? 'not-allowed' : 'pointer'
+                      }}
+                    >
+                      Siguiente
+                    </button>
+                  </div>
+                );
+              })()}
             </div>
           )}
         </div>
+
+        {/* Tab Guardar */}
+        {activeTab === 'guardar' && (
+          <div className="tab-content" style={{ 
+            maxHeight: 'calc(100vh - 200px)', 
+            overflowY: 'auto',
+            padding: '20px'
+          }}>
+            <div style={{ 
+              maxWidth: '800px', 
+              margin: '0 auto', 
+              padding: '40px', 
+              textAlign: 'center',
+              backgroundColor: '#fff',
+              borderRadius: '8px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+            }}>
+              <h2 style={{ marginBottom: '20px', color: '#333' }}>Guardar Memoria Anual</h2>
+              
+              <div style={{ 
+                backgroundColor: '#fff3cd', 
+                border: '1px solid #ffc107',
+                borderRadius: '8px',
+                padding: '20px',
+                marginBottom: '30px',
+                textAlign: 'left'
+              }}>
+                <h3 style={{ color: '#856404', marginBottom: '15px', fontSize: '18px' }}>
+                  Antes de guardar, verifique:
+                </h3>
+                <ul style={{ color: '#856404', lineHeight: '1.8', marginLeft: '20px' }}>
+                  <li>Que haya completado todos los campos del tab "General e Integrantes"</li>
+                  <li>Que haya agregado todos los integrantes necesarios</li>
+                  <li>Que haya registrado todos los trabajos realizados</li>
+                  <li>Que haya incluido todas las actividades desarrolladas</li>
+                  <li>Que haya agregado todas las publicaciones del año</li>
+                  <li>Que haya registrado todas las patentes correspondientes</li>
+                  <li>Que haya incluido todos los proyectos de investigación</li>
+                </ul>
+              </div>
+
+              <div style={{ 
+                backgroundColor: '#f8f9fa',
+                borderRadius: '8px',
+                padding: '20px',
+                marginBottom: '30px',
+                textAlign: 'left'
+              }}>
+                <h3 style={{ color: '#333', marginBottom: '15px', fontSize: '18px' }}>
+                  Resumen de la Memoria
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                  <div style={{ padding: '10px', backgroundColor: '#fff', borderRadius: '4px' }}>
+                    <strong>Año:</strong> {formData.ano}
+                  </div>
+                  <div style={{ padding: '10px', backgroundColor: '#fff', borderRadius: '4px' }}>
+                    <strong>Grupo:</strong> {formData.grupo ? 
+                      grupos.find(g => g.oidGrupoInvestigacion === parseInt(formData.grupo))?.nombre : 'No seleccionado'}
+                  </div>
+                  <div style={{ padding: '10px', backgroundColor: '#fff', borderRadius: '4px' }}>
+                    <strong>Integrantes:</strong> {formData.integrantes?.length || 0}
+                  </div>
+                  <div style={{ padding: '10px', backgroundColor: '#fff', borderRadius: '4px' }}>
+                    <strong>Trabajos:</strong> {formData.trabajos?.length || 0}
+                  </div>
+                  <div style={{ padding: '10px', backgroundColor: '#fff', borderRadius: '4px' }}>
+                    <strong>Actividades:</strong> {formData.actividades?.length || 0}
+                  </div>
+                  <div style={{ padding: '10px', backgroundColor: '#fff', borderRadius: '4px' }}>
+                    <strong>Publicaciones:</strong> {formData.publicaciones?.length || 0}
+                  </div>
+                  <div style={{ padding: '10px', backgroundColor: '#fff', borderRadius: '4px' }}>
+                    <strong>Patentes:</strong> {formData.patentes?.length || 0}
+                  </div>
+                  <div style={{ padding: '10px', backgroundColor: '#fff', borderRadius: '4px' }}>
+                    <strong>Proyectos:</strong> {formData.proyectos?.length || 0}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ 
+                backgroundColor: '#f3e5f5',
+                border: '1px solid #c49acc',
+                borderRadius: '8px',
+                padding: '20px',
+                marginBottom: '30px'
+              }}>
+                <h3 style={{ color: '#7b1fa2', marginBottom: '10px', fontSize: '16px' }}>
+                  ¿Está seguro que desea guardar la memoria anual?
+                </h3>
+                <p style={{ color: '#7b1fa2', margin: '0' }}>
+                  Esta acción creará un registro permanente de la memoria anual del año {formData.ano}.
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', gap: '20px', justifyContent: 'center', alignItems: 'center' }}>
+                <button 
+                  onClick={() => setActiveTab('general')}
+                  style={{
+                    backgroundColor: '#6c757d',
+                    color: '#fff',
+                    border: 'none',
+                    padding: '15px 30px',
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.3s'
+                  }}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = '#5a6268'}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = '#6c757d'}
+                >
+                  ← Revisar Datos
+                </button>
+                
+                <button 
+                  onClick={handleGuardarMemoria}
+                  style={{
+                    backgroundColor: '#c49acc',
+                    color: '#fff',
+                    border: 'none',
+                    padding: '15px 40px',
+                    fontSize: '18px',
+                    fontWeight: 'bold',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.3s'
+                  }}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = '#b388c4'}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = '#c49acc'}
+                >
+                  Guardar Memoria Anual
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal para agregar integrante */}
+        {showIntegranteModal && (
+          <div className="field-modal-overlay" onClick={() => setShowIntegranteModal(false)}>
+            <div className="field-modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+              <div className="field-modal-header">
+                <h3>Crear Integrante</h3>
+                <button className="field-modal-close" onClick={() => setShowIntegranteModal(false)}>×</button>
+              </div>
+              <div className="field-modal-body">
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div className="form-group">
+                    <label>Nombre *</label>
+                    <input
+                      type="text"
+                      value={newPersonaData.nombre}
+                      onChange={(e) => setNewPersonaData({...newPersonaData, nombre: e.target.value})}
+                      placeholder="Nombre"
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Apellido *</label>
+                    <input
+                      type="text"
+                      value={newPersonaData.apellido}
+                      onChange={(e) => setNewPersonaData({...newPersonaData, apellido: e.target.value})}
+                      placeholder="Apellido"
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Correo *</label>
+                    <input
+                      type="email"
+                      value={newPersonaData.correo}
+                      onChange={(e) => setNewPersonaData({...newPersonaData, correo: e.target.value})}
+                      placeholder="correo@ejemplo.com"
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Contraseña *</label>
+                    <input
+                      type="password"
+                      value={newPersonaData.contrasena}
+                      onChange={(e) => setNewPersonaData({...newPersonaData, contrasena: e.target.value})}
+                      placeholder="Contraseña"
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Horas Semanales</label>
+                    <input
+                      type="number"
+                      value={newPersonaData.horasSemanales}
+                      onChange={(e) => setNewPersonaData({...newPersonaData, horasSemanales: parseInt(e.target.value) || 0})}
+                      min="1"
+                      max="40"
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Tipo de Personal</label>
+                    <select
+                      value={newPersonaData.tipoDePersonal}
+                      onChange={(e) => setNewPersonaData({...newPersonaData, tipoDePersonal: e.target.value})}
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    >
+                      <option value="">Seleccionar tipo</option>
+                      {opcionesPerfil && opcionesPerfil.tiposPersonal && opcionesPerfil.tiposPersonal.map(tipo => (
+                        <option key={tipo.id} value={tipo.id}>{tipo.nombre}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                    <label>Grupo de Investigación</label>
+                    <select
+                      value={newPersonaData.GrupoInvestigacion || ''}
+                      onChange={(e) => setNewPersonaData({...newPersonaData, GrupoInvestigacion: e.target.value ? parseInt(e.target.value) : null})}
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    >
+                      <option value="">Sin grupo</option>
+                      {grupos.map(grupo => (
+                        <option key={grupo.oidGrupoInvestigacion} value={grupo.oidGrupoInvestigacion}>
+                          {grupo.nombre}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div className="field-modal-footer">
+                <button className="btn-cancel" onClick={() => setShowIntegranteModal(false)}>Cancelar</button>
+                <button className="btn-save" onClick={handleCreatePersona}>Crear y Agregar</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal para agregar trabajo */}
+        {showTrabajoModal && (
+          <div className="field-modal-overlay" onClick={() => setShowTrabajoModal(false)}>
+            <div className="field-modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+              <div className="field-modal-header">
+                <h3>Crear Trabajo Presentado</h3>
+                <button className="field-modal-close" onClick={() => setShowTrabajoModal(false)}>×</button>
+              </div>
+              <div className="field-modal-body">
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div className="form-group">
+                    <label>Ciudad *</label>
+                    <input
+                      type="text"
+                      value={newTrabajoData.ciudad}
+                      onChange={(e) => setNewTrabajoData({...newTrabajoData, ciudad: e.target.value})}
+                      placeholder="Ciudad"
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Fecha de Inicio *</label>
+                    <input
+                      type="date"
+                      value={newTrabajoData.fechaInicio}
+                      onChange={(e) => setNewTrabajoData({...newTrabajoData, fechaInicio: e.target.value})}
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    />
+                  </div>
+                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                    <label>Nombre de la Reunión *</label>
+                    <input
+                      type="text"
+                      value={newTrabajoData.nombreReunion}
+                      onChange={(e) => setNewTrabajoData({...newTrabajoData, nombreReunion: e.target.value})}
+                      placeholder="Nombre de la reunión"
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    />
+                  </div>
+                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                    <label>Título del Trabajo *</label>
+                    <input
+                      type="text"
+                      value={newTrabajoData.tituloTrabajo}
+                      onChange={(e) => setNewTrabajoData({...newTrabajoData, tituloTrabajo: e.target.value})}
+                      placeholder="Título del trabajo"
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    />
+                  </div>
+                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                    <label>Grupo de Investigación *</label>
+                    <select
+                      value={newTrabajoData.GrupoInvestigacion || ''}
+                      onChange={(e) => setNewTrabajoData({...newTrabajoData, GrupoInvestigacion: e.target.value ? parseInt(e.target.value) : null})}
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    >
+                      <option value="">Seleccionar grupo</option>
+                      {grupos.map(grupo => (
+                        <option key={grupo.oidGrupoInvestigacion} value={grupo.oidGrupoInvestigacion}>
+                          {grupo.nombre}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div className="field-modal-footer">
+                <button className="btn-cancel" onClick={() => setShowTrabajoModal(false)}>Cancelar</button>
+                <button className="btn-save" onClick={handleCreateTrabajo}>Crear y Agregar</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal para agregar actividad */}
+        {showActividadModal && (
+          <div className="field-modal-overlay" onClick={() => setShowActividadModal(false)}>
+            <div className="field-modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+              <div className="field-modal-header">
+                <h3>Crear Actividad</h3>
+                <button className="field-modal-close" onClick={() => setShowActividadModal(false)}>×</button>
+              </div>
+              <div className="field-modal-body">
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                    <label>Descripción *</label>
+                    <textarea
+                      value={newActividadData.descripcion}
+                      onChange={(e) => setNewActividadData({...newActividadData, descripcion: e.target.value})}
+                      placeholder="Descripción de la actividad"
+                      rows="3"
+                      style={{ width: '100%', padding: '8px', fontSize: '14px', resize: 'vertical' }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Fecha de Inicio *</label>
+                    <input
+                      type="date"
+                      value={newActividadData.fechaInicio}
+                      onChange={(e) => setNewActividadData({...newActividadData, fechaInicio: e.target.value})}
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Fecha de Fin</label>
+                    <input
+                      type="date"
+                      value={newActividadData.fechaFin}
+                      onChange={(e) => setNewActividadData({...newActividadData, fechaFin: e.target.value})}
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Número</label>
+                    <input
+                      type="number"
+                      value={newActividadData.nro}
+                      onChange={(e) => setNewActividadData({...newActividadData, nro: parseInt(e.target.value) || 0})}
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Presupuesto Asignado</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={newActividadData.presupuestoAsignado}
+                      onChange={(e) => setNewActividadData({...newActividadData, presupuestoAsignado: parseFloat(e.target.value) || 0})}
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    />
+                  </div>
+                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                    <label>Resultados Esperados</label>
+                    <textarea
+                      value={newActividadData.resultadosEsperados}
+                      onChange={(e) => setNewActividadData({...newActividadData, resultadosEsperados: e.target.value})}
+                      placeholder="Resultados esperados"
+                      rows="2"
+                      style={{ width: '100%', padding: '8px', fontSize: '14px', resize: 'vertical' }}
+                    />
+                  </div>
+                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                    <label>Línea de Investigación *</label>
+                    <select
+                      value={newActividadData.LineaDeInvestigacion || ''}
+                      onChange={(e) => setNewActividadData({...newActividadData, LineaDeInvestigacion: e.target.value ? parseInt(e.target.value) : null})}
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    >
+                      <option value="">Seleccionar línea de investigación</option>
+                      {lineasInvestigacion.map(linea => (
+                        <option key={linea.oidLineaDeInvestigacion} value={linea.oidLineaDeInvestigacion}>
+                          {linea.nombre}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div className="field-modal-footer">
+                <button className="btn-cancel" onClick={() => setShowActividadModal(false)}>Cancelar</button>
+                <button className="btn-save" onClick={handleCreateActividad}>Crear y Agregar</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showPublicacionModal && (
+          <div className="field-modal-overlay" onClick={() => setShowPublicacionModal(false)}>
+            <div className="field-modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+              <div className="field-modal-header">
+                <h3>Crear Publicación</h3>
+                <button className="field-modal-close" onClick={() => setShowPublicacionModal(false)}>×</button>
+              </div>
+              <div className="field-modal-body">
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                    <label>Título *</label>
+                    <input
+                      type="text"
+                      value={newPublicacionData.titulo}
+                      onChange={(e) => setNewPublicacionData({...newPublicacionData, titulo: e.target.value})}
+                      placeholder="Título de la publicación"
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>ISSN</label>
+                    <input
+                      type="text"
+                      value={newPublicacionData.ISSN}
+                      onChange={(e) => setNewPublicacionData({...newPublicacionData, ISSN: e.target.value})}
+                      placeholder="ISSN"
+                      maxLength="55"
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Editorial</label>
+                    <input
+                      type="text"
+                      value={newPublicacionData.editorial}
+                      onChange={(e) => setNewPublicacionData({...newPublicacionData, editorial: e.target.value})}
+                      placeholder="Nombre de la editorial"
+                      maxLength="255"
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Nombre de Revista</label>
+                    <input
+                      type="text"
+                      value={newPublicacionData.nombreRevista}
+                      onChange={(e) => setNewPublicacionData({...newPublicacionData, nombreRevista: e.target.value})}
+                      placeholder="Nombre de la revista"
+                      maxLength="255"
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>País</label>
+                    <input
+                      type="text"
+                      value={newPublicacionData.pais}
+                      onChange={(e) => setNewPublicacionData({...newPublicacionData, pais: e.target.value})}
+                      placeholder="País de publicación"
+                      maxLength="255"
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Tipo de Trabajo Publicado *</label>
+                    <select
+                      value={newPublicacionData.tipoTrabajoPublicado || ''}
+                      onChange={(e) => setNewPublicacionData({...newPublicacionData, tipoTrabajoPublicado: e.target.value ? parseInt(e.target.value) : null})}
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    >
+                      <option value="">Seleccionar tipo</option>
+                      {tiposTrabajoPublicado.map(tipo => (
+                        <option key={tipo.oidTipoDeTrabajoPublicado} value={tipo.oidTipoDeTrabajoPublicado}>
+                          {tipo.nombre}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Autor *</label>
+                    <select
+                      value={newPublicacionData.Autor || ''}
+                      onChange={(e) => setNewPublicacionData({...newPublicacionData, Autor: e.target.value ? parseInt(e.target.value) : null})}
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    >
+                      <option value="">Seleccionar autor</option>
+                      {autores.map(autor => (
+                        <option key={autor.oidAutor} value={autor.oidAutor}>
+                          {autor.nombre} {autor.apellido}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Grupo de Investigación *</label>
+                    <select
+                      value={newPublicacionData.GrupoInvestigacion || ''}
+                      onChange={(e) => setNewPublicacionData({...newPublicacionData, GrupoInvestigacion: e.target.value ? parseInt(e.target.value) : null})}
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    >
+                      <option value="">Seleccionar grupo</option>
+                      {grupos.map(grupo => (
+                        <option key={grupo.oidGrupoInvestigacion} value={grupo.oidGrupoInvestigacion}>
+                          {grupo.nombre}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div className="field-modal-footer">
+                <button className="btn-cancel" onClick={() => setShowPublicacionModal(false)}>Cancelar</button>
+                <button className="btn-save" onClick={handleCreatePublicacion}>Crear y Agregar</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showPatenteModal && (
+          <div className="field-modal-overlay" onClick={() => setShowPatenteModal(false)}>
+            <div className="field-modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+              <div className="field-modal-header">
+                <h3>Crear Patente</h3>
+                <button className="field-modal-close" onClick={() => setShowPatenteModal(false)}>×</button>
+              </div>
+              <div className="field-modal-body">
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                    <label>Descripción *</label>
+                    <textarea
+                      value={newPatenteData.descripcion}
+                      onChange={(e) => setNewPatenteData({...newPatenteData, descripcion: e.target.value})}
+                      placeholder="Descripción de la patente"
+                      rows="3"
+                      style={{ width: '100%', padding: '8px', fontSize: '14px', resize: 'vertical' }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Tipo</label>
+                    <select
+                      value={newPatenteData.tipo}
+                      onChange={(e) => setNewPatenteData({...newPatenteData, tipo: e.target.value})}
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    >
+                      <option value="">Seleccionar tipo</option>
+                      <option value="Patente Activa">Patente Activa</option>
+                      <option value="Patente en Trámite">Patente en Trámite</option>
+                      <option value="Patente Expirada">Patente Expirada</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Número</label>
+                    <input
+                      type="text"
+                      value={newPatenteData.numero}
+                      onChange={(e) => setNewPatenteData({...newPatenteData, numero: e.target.value})}
+                      placeholder="Número de patente"
+                      maxLength="100"
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Fecha</label>
+                    <input
+                      type="date"
+                      value={newPatenteData.fecha}
+                      onChange={(e) => setNewPatenteData({...newPatenteData, fecha: e.target.value})}
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Inventor</label>
+                    <input
+                      type="text"
+                      value={newPatenteData.inventor}
+                      onChange={(e) => setNewPatenteData({...newPatenteData, inventor: e.target.value})}
+                      placeholder="Nombre del inventor"
+                      maxLength="200"
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Grupo de Investigación *</label>
+                    <select
+                      value={newPatenteData.GrupoInvestigacion || ''}
+                      onChange={(e) => setNewPatenteData({...newPatenteData, GrupoInvestigacion: e.target.value ? parseInt(e.target.value) : null})}
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    >
+                      <option value="">Seleccionar grupo</option>
+                      {grupos.map(grupo => (
+                        <option key={grupo.oidGrupoInvestigacion} value={grupo.oidGrupoInvestigacion}>
+                          {grupo.nombre}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div className="field-modal-footer">
+                <button className="btn-cancel" onClick={() => setShowPatenteModal(false)}>Cancelar</button>
+                <button className="btn-save" onClick={handleCreatePatente}>Crear y Agregar</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showProyectoModal && (
+          <div className="field-modal-overlay" onClick={() => setShowProyectoModal(false)}>
+            <div className="field-modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '700px' }}>
+              <div className="field-modal-header">
+                <h3>{editingProyectoIndex !== null ? 'Editar Proyecto de Investigación' : 'Crear Proyecto de Investigación'}</h3>
+                <button className="field-modal-close" onClick={() => setShowProyectoModal(false)}>×</button>
+              </div>
+              <div className="field-modal-body">
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div className="form-group">
+                    <label>Nombre del Proyecto *</label>
+                    <input
+                      type="text"
+                      value={newProyectoData.nombre}
+                      onChange={(e) => setNewProyectoData({...newProyectoData, nombre: e.target.value})}
+                      placeholder="Nombre del proyecto"
+                      maxLength="45"
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Código del Proyecto *</label>
+                    <input
+                      type="text"
+                      value={newProyectoData.codigoProyecto}
+                      onChange={(e) => setNewProyectoData({...newProyectoData, codigoProyecto: e.target.value})}
+                      placeholder="Código único"
+                      maxLength="50"
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    />
+                  </div>
+                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                    <label>Descripción</label>
+                    <textarea
+                      value={newProyectoData.descripcion}
+                      onChange={(e) => setNewProyectoData({...newProyectoData, descripcion: e.target.value})}
+                      placeholder="Descripción del proyecto"
+                      rows="3"
+                      maxLength="50"
+                      style={{ width: '100%', padding: '8px', fontSize: '14px', resize: 'vertical' }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Tipo de Proyecto</label>
+                    <select
+                      value={newProyectoData.tipoProyecto}
+                      onChange={(e) => setNewProyectoData({...newProyectoData, tipoProyecto: e.target.value})}
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    >
+                      <option value="">Seleccionar tipo</option>
+                      <option value="Investigación Básica">Investigación Básica</option>
+                      <option value="Investigación Aplicada">Investigación Aplicada</option>
+                      <option value="Desarrollo Tecnológico">Desarrollo Tecnológico</option>
+                      <option value="Transferencia Tecnológica">Transferencia Tecnológica</option>
+                      <option value="Extensión">Extensión</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Fuente de Financiamiento</label>
+                    <input
+                      type="text"
+                      value={newProyectoData.fuenteFinanciamiento}
+                      onChange={(e) => setNewProyectoData({...newProyectoData, fuenteFinanciamiento: e.target.value})}
+                      placeholder="Fuente de financiamiento"
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Fecha de Inicio</label>
+                    <input
+                      type="date"
+                      value={newProyectoData.fechaInicio}
+                      onChange={(e) => setNewProyectoData({...newProyectoData, fechaInicio: e.target.value})}
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Fecha de Finalización</label>
+                    <input
+                      type="date"
+                      value={newProyectoData.fechaFinalizacion}
+                      onChange={(e) => setNewProyectoData({...newProyectoData, fechaFinalizacion: e.target.value})}
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    />
+                  </div>
+                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                    <label>Logros Obtenidos</label>
+                    <textarea
+                      value={newProyectoData.logrosObtenidos}
+                      onChange={(e) => setNewProyectoData({...newProyectoData, logrosObtenidos: e.target.value})}
+                      placeholder="Logros y resultados obtenidos"
+                      rows="2"
+                      maxLength="50"
+                      style={{ width: '100%', padding: '8px', fontSize: '14px', resize: 'vertical' }}
+                    />
+                  </div>
+                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                    <label>Grupo de Investigación *</label>
+                    <select
+                      value={newProyectoData.GrupoInvestigacion || ''}
+                      onChange={(e) => setNewProyectoData({...newProyectoData, GrupoInvestigacion: e.target.value ? parseInt(e.target.value) : null})}
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+                    >
+                      <option value="">Seleccionar grupo</option>
+                      {grupos.map(grupo => (
+                        <option key={grupo.oidGrupoInvestigacion} value={grupo.oidGrupoInvestigacion}>
+                          {grupo.nombre}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div className="field-modal-footer">
+                <button className="btn-cancel" onClick={() => setShowProyectoModal(false)}>Cancelar</button>
+                <button className="btn-save" onClick={handleCreateProyecto}>
+                  {editingProyectoIndex !== null ? 'Guardar Cambios' : 'Crear y Agregar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {modalField.show && (
           <div className="field-modal-overlay" onClick={closeFieldModal}>

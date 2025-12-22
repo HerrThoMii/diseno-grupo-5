@@ -6,7 +6,7 @@ function MainContent({ userName = 'nombre del usuario', activeSection = 'home' }
     <main className="main-content">
       {activeSection === 'home' ? (
         <div className="welcome-section">
-          <h1>Bienvenido, <span className="username">*{userName}*</span></h1>
+          <h1>Bienvenido, <span className="username"><b>{userName}</b></span></h1>
         </div>
       ) : (
         <div>{/* Aquí irán otros componentes según la sección */}</div>

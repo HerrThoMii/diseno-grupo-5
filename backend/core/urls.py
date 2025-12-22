@@ -11,11 +11,11 @@ from app.views import (
     TrabajoPublicadoViewSet, ActividadTransferenciaViewSet,
     ParteExternaViewSet, EquipamientoInfraestructuraViewSet,
     TrabajoPresentadoViewSet, ActividadXPersonaViewSet,
-    login, register, perfil, actualizar_perfil, eliminar_persona, listar_personas,
-    MemoriaAnualViewSet, IntegranteMemoriaViewSet, TrabajoMemoriaViewSet,
-    ActividadMemoriaViewSet, PublicacionMemoriaViewSet, PatenteMemoriaViewSet,
-    ProyectoMemoriaViewSet
+    login, perfil, actualizar_perfil, eliminar_persona, listar_personas, refresh_token, get_opciones_perfil, RegistroViewSet, PatenteViewSet, AutorViewSet, TipoTrabajoPublicadoViewSet, TipoDeRegistroViewSet,
+    IntegranteMemoriaViewSet, ActividadMemoriaViewSet, PublicacionMemoriaViewSet, PatenteMemoriaViewSet, ProyectoMemoriaViewSet
 )
+from app.memoria_views import MemoriaAnualViewSet
+
 
 router = DefaultRouter()
 
@@ -38,23 +38,28 @@ router.register(r'partes-externas', ParteExternaViewSet)
 router.register(r'equipamiento', EquipamientoInfraestructuraViewSet)
 router.register(r'trabajos-presentados', TrabajoPresentadoViewSet)
 router.register(r'actividades-persona', ActividadXPersonaViewSet)
-
-# Rutas para Memoria Anual
-router.register(r'memorias', MemoriaAnualViewSet)
-router.register(r'memorias-integrantes', IntegranteMemoriaViewSet)
-router.register(r'memorias-trabajos', TrabajoMemoriaViewSet)
-router.register(r'memorias-actividades', ActividadMemoriaViewSet)
-router.register(r'memorias-publicaciones', PublicacionMemoriaViewSet)
-router.register(r'memorias-patentes', PatenteMemoriaViewSet)
-router.register(r'memorias-proyectos', ProyectoMemoriaViewSet)
+router.register(r'patentes', PatenteViewSet)
+router.register(r'autores', AutorViewSet)
+router.register(r'tipo-trabajos-publicados', TipoTrabajoPublicadoViewSet)
+router.register(r'tipo-registros', TipoDeRegistroViewSet)
+router.register(r'registros', RegistroViewSet)
+router.register(r'memorias-anuales', MemoriaAnualViewSet)
+router.register(r'integrantes-memoria', IntegranteMemoriaViewSet)
+router.register(r'actividades-memoria', ActividadMemoriaViewSet)
+router.register(r'publicaciones-memoria', PublicacionMemoriaViewSet)
+router.register(r'patentes-memoria', PatenteMemoriaViewSet)
+router.register(r'proyectos-memoria', ProyectoMemoriaViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
     path('api/auth/login/', login, name='login'),
-    path('api/auth/register/', register, name='register'),
     path('api/auth/personas/', listar_personas, name='listar_personas'),
     path('api/auth/perfil/<int:oidpersona>/', perfil, name='perfil'),
     path('api/auth/perfil/<int:oidpersona>/actualizar/', actualizar_perfil, name='actualizar_perfil'),
     path('api/auth/persona/<int:oidpersona>/eliminar/', eliminar_persona, name='eliminar_persona'),
+    path('api/auth/refresh/', refresh_token, name='refresh_token'),
+    path('api/auth/opciones-perfil/', get_opciones_perfil, name='opciones_perfil'),
 ]
+
+# media serving removed (file uploads disabled)

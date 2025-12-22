@@ -1,15 +1,8 @@
 import React from 'react';
-import './Page.css';
+import TrabajoRegistrosPatentes from '../components/TrabajoRegistrosPatentes';
 
 function RegistrosPage() {
-  return (
-    <div className="page-container">
-      <div className="page-content">
-        <h1>Trabajos, Registros y Patentes</h1>
-        <p>Sección en desarrollo</p>
-      </div>
-    </div>
-  );
+  return <TrabajoRegistrosPatentes />;
 }
 
 export default RegistrosPage;

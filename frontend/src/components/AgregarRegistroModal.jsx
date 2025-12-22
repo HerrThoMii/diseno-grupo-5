@@ -1,18 +1,53 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import './AgregarRegistroModal.css';
+import { crearRegistro, listarPatentes, listarTipoRegistros } from '../services/api';
 
-export default function AgregarRegistroModal({ isOpen, onClose, onAdd }) {
+export default function AgregarRegistroModal({ isOpen, onClose, onRegistroCreado }) {
   const [formData, setFormData] = useState({
-    nombre: '',
-    tipo: 'Patente Nacional',
-    fecha: '',
-    descripcion: ''
+    descripcion: '',
+    TipoDeRegistro: '',
+    Patente: ''
   });
 
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [patentes, setPatentes] = useState([]);
+  const [tipoRegistros, setTipoRegistros] = useState([]);
 
-  const tiposRegistro = ['Patente Nacional', 'Patente Internacional', 'Registro Marcario'];
+  useEffect(() => {
+    if (!isOpen) return; // Solo cargar cuando el modal está abierto
+    
+    let mounted = true;
+    console.log('Cargando datos del modal...');
+    
+    listarPatentes()
+      .then(data => {
+        if (!mounted) return;
+        console.log('Patentes recibidas:', data);
+        setPatentes(Array.isArray(data) ? data : []);
+      })
+      .catch((err) => {
+        if (!mounted) return;
+        console.error('Error al cargar patentes:', err);
+        setPatentes([]);
+      });
+
+    listarTipoRegistros()
+      .then(data => {
+        if (!mounted) return;
+        console.log('Tipos de registro recibidos:', data);
+        setTipoRegistros(Array.isArray(data) ? data : []);
+      })
+      .catch((err) => {
+        if (!mounted) return;
+        console.error('Error al cargar tipos de registro:', err);
+        setTipoRegistros([]);
+      });
+
+    return () => { mounted = false };
+  }, [isOpen]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -31,36 +66,95 @@ export default function AgregarRegistroModal({ isOpen, onClose, onAdd }) {
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.nombre.trim()) {
-      newErrors.nombre = 'El nombre es requerido';
+    if (!formData.descripcion.trim()) {
+      newErrors.descripcion = 'La descripción es requerida';
     }
 
-    if (!formData.fecha) {
-      newErrors.fecha = 'La fecha es requerida';
+    if (!formData.Patente) {
+      newErrors.Patente = 'Seleccione una patente';
+    }
+
+    if (!formData.TipoDeRegistro) {
+      newErrors.TipoDeRegistro = 'Seleccione un tipo de registro';
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!validateForm()) {
       return;
     }
 
-    onAdd({
-      id: Date.now(),
-      ...formData
-    });
+    setLoading(true);
+    setSubmitError('');
+    try {
+      // Build payload matching backend model: { descripcion, TipoDeRegistro, Patente }
+      const payload = {
+        descripcion: formData.descripcion,
+        TipoDeRegistro: parseInt(formData.TipoDeRegistro, 10),
+        Patente: parseInt(formData.Patente, 10)
+      };
 
-    setFormData({
-      nombre: '',
-      tipo: 'Patente Nacional',
-      fecha: '',
-      descripcion: ''
-    });
+      console.log('Payload a enviar:', payload);
+      console.log('FormData:', formData);
+      console.log('Patentes disponibles:', patentes);
+
+      const created = await crearRegistro(payload);
+
+      // API uses model fields; primary key may be `oidRegistro` or `id`
+      const createdId = created?.oidRegistro ?? created?.id;
+      if (!created || createdId === undefined) {
+        setSubmitError('No se pudo crear el registro');
+      } else {
+        // Map backend object to UI-friendly shape expected by parent
+        // Resolve display names for tipo and patente if possible
+        const tipoId = created?.TipoDeRegistro ?? created?.TipoDeRegistro ?? null;
+        const tipoObj = tipoRegistros.find(t => (t.id === tipoId) || (t.oidTipoDeRegistro === tipoId));
+        const patenteId = created?.Patente ?? created?.Patente ?? null;
+        const patenteObj = patentes.find(p => (p.id === patenteId) || (p.oidPatente === patenteId));
+
+        const uiRegistro = {
+          id: createdId,
+          nombre: created.descripcion || '',
+          tipo: tipoObj ? (tipoObj.nombre || tipoObj.tipo || '') : (created.tipoRegistro || ''),
+          fecha: new Date().toISOString().slice(0, 10),
+          raw: created
+        };
+
+        onRegistroCreado && onRegistroCreado(uiRegistro);
+        setFormData({
+          descripcion: '',
+          TipoDeRegistro: '',
+          Patente: ''
+        });
+      }
+    } catch (err) {
+      // Try to parse backend validation errors if present
+      let msg = err.message || 'Error al crear registro';
+      try {
+        const parsed = JSON.parse(msg);
+        // parsed could be object of field->list or {detail: '...'}
+        if (parsed.detail) {
+          msg = parsed.detail;
+        } else if (typeof parsed === 'object') {
+          const parts = [];
+          for (const [k, v] of Object.entries(parsed)) {
+            if (Array.isArray(v)) parts.push(`${k}: ${v.join(', ')}`);
+            else parts.push(`${k}: ${v}`);
+          }
+          msg = parts.join(' | ');
+        }
+      } catch (e) {
+        // not JSON, keep original message
+      }
+      setSubmitError(msg);
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -77,48 +171,44 @@ export default function AgregarRegistroModal({ isOpen, onClose, onAdd }) {
 
         <form onSubmit={handleSubmit} className="arm-form">
           <div className="arm-form-group">
-            <label htmlFor="nombre">Nombre del Registro</label>
-            <input
-              type="text"
-              id="nombre"
-              name="nombre"
-              value={formData.nombre}
-              onChange={handleChange}
-              placeholder="Ej: Patente de Invención 2024"
-              className={errors.nombre ? 'error' : ''}
-            />
-            {errors.nombre && <span className="arm-error">{errors.nombre}</span>}
-          </div>
-
-          <div className="arm-form-group">
-            <label htmlFor="tipo">Tipo de Registro</label>
+            <label htmlFor="TipoDeRegistro">Tipo de Registro</label>
             <select
-              id="tipo"
-              name="tipo"
-              value={formData.tipo}
+              id="TipoDeRegistro"
+              name="TipoDeRegistro"
+              value={formData.TipoDeRegistro}
               onChange={handleChange}
+              className={errors.TipoDeRegistro ? 'error' : ''}
             >
-              {tiposRegistro.map(tipo => (
-                <option key={tipo} value={tipo}>{tipo}</option>
-              ))}
+              <option value="">-- Seleccione --</option>
+              {tipoRegistros.map(t => {
+                const pk = t.oidTipoDeRegistro ?? t.id;
+                return <option key={pk} value={pk}>{t.nombre ?? t.tipo ?? `#${pk}`}</option>;
+              })}
             </select>
+            {errors.TipoDeRegistro && <span className="arm-error">{errors.TipoDeRegistro}</span>}
           </div>
 
           <div className="arm-form-group">
-            <label htmlFor="fecha">Fecha de Registro</label>
-            <input
-              type="date"
-              id="fecha"
-              name="fecha"
-              value={formData.fecha}
+            <label htmlFor="Patente">Patente asociada</label>
+            <select
+              id="Patente"
+              name="Patente"
+              value={formData.Patente}
               onChange={handleChange}
-              className={errors.fecha ? 'error' : ''}
-            />
-            {errors.fecha && <span className="arm-error">{errors.fecha}</span>}
+              className={errors.Patente ? 'error' : ''}
+            >
+              <option value="">-- Seleccione --</option>
+              {patentes.map(p => {
+                const pk = p.oidPatente ?? p.id;
+                // Mostrar el número de la patente como etiqueta de selección; usar descripción como fallback
+                return <option key={pk} value={pk}>{p.numero ?? p.descripcion ?? `#${pk}`}</option>;
+              })}
+            </select>
+            {errors.Patente && <span className="arm-error">{errors.Patente}</span>}
           </div>
 
           <div className="arm-form-group">
-            <label htmlFor="descripcion">Descripción (Opcional)</label>
+            <label htmlFor="descripcion">Descripción</label>
             <textarea
               id="descripcion"
               name="descripcion"
@@ -127,16 +217,18 @@ export default function AgregarRegistroModal({ isOpen, onClose, onAdd }) {
               placeholder="Detalles adicionales sobre el registro"
               rows="4"
             />
+            {errors.descripcion && <span className="arm-error">{errors.descripcion}</span>}
           </div>
 
           <div className="arm-buttons">
-            <button type="button" className="arm-btn-cancel" onClick={onClose}>
+            <button type="button" className="arm-btn-cancel" onClick={onClose} disabled={loading}>
               Cancelar
             </button>
-            <button type="submit" className="arm-btn-submit">
-              Agregar Registro
+            <button type="submit" className="arm-btn-submit" disabled={loading}>
+              {loading ? 'Creando...' : 'Agregar Registro'}
             </button>
           </div>
+          {submitError && <div className="arm-submit-error">{submitError}</div>}
         </form>
       </div>
     </div>
