@@ -14,7 +14,7 @@ from .models import (
     BecarioPersonalFormacion, Investigador, DocumentacionBiblioteca,
     Autor, TipoTrabajoPublicado, TrabajoPublicado, ActividadTransferencia, ParteExterna,
     EquipamientoInfraestructura, TrabajoPresentado, ActividadXPersona, Patente, TipoDeRegistro, Registro,
-    IntegranteMemoria, ActividadMemoria, PublicacionMemoria, PatenteMemoria, ProyectoMemoria
+    IntegranteMemoria, ActividadMemoria, PublicacionMemoria, PatenteMemoria, ProyectoMemoria, TipoDePersonal
 )
 
 from .serializers import (
@@ -97,6 +97,98 @@ def refresh_token(request):
         return Response({'access': access}, status=status.HTTP_200_OK)
     except Exception:
         return Response({'error': 'Invalid refresh token'}, status=status.HTTP_401_UNAUTHORIZED)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def register(request):
+    """
+    Endpoint para registrar un nuevo usuario.
+    """
+    nombre = request.data.get('nombre')
+    apellido = request.data.get('apellido')
+    correo = request.data.get('correo')
+    contrasena = request.data.get('contrasena')
+    horas_semanales = request.data.get('horasSemanales')
+    tipo_personal_id = request.data.get('tipoDePersonal')
+    
+    # Validar que todos los campos estén presentes
+    if not all([nombre, apellido, correo, contrasena, horas_semanales]):
+        return Response(
+            {'error': 'Todos los campos son requeridos'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Validar que el correo no exista
+    if Persona.objects.filter(correo=correo).exists():
+        return Response(
+            {'error': 'El correo ya está registrado'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Validar longitud de contraseña
+    if len(contrasena) < 6:
+        return Response(
+            {'error': 'La contraseña debe tener al menos 6 caracteres'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Validar horas semanales
+    try:
+        horas_semanales = int(horas_semanales)
+        if horas_semanales < 1 or horas_semanales > 168:
+            raise ValueError()
+    except (ValueError, TypeError):
+        return Response(
+            {'error': 'Las horas semanales deben ser un número entre 1 y 168'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Obtener TipoDePersonal si se proporciona
+    tipo_personal = None
+    if tipo_personal_id:
+        try:
+            tipo_personal = TipoDePersonal.objects.get(pk=tipo_personal_id)
+        except TipoDePersonal.DoesNotExist:
+            return Response(
+                {'error': 'Tipo de personal inválido'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    
+    # Crear el usuario
+    try:
+        persona = Persona.objects.create(
+            nombre=nombre,
+            apellido=apellido,
+            correo=correo,
+            contrasena=make_password(contrasena),
+            horasSemanales=horas_semanales,
+            tipoDePersonal=tipo_personal
+        )
+        
+        serializer = PersonaSerializer(persona)
+        
+        return Response({
+            'mensaje': 'Usuario registrado exitosamente',
+            'persona': serializer.data
+        }, status=status.HTTP_201_CREATED)
+        
+    except Exception as e:
+        return Response(
+            {'error': f'Error al crear el usuario: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_tipos_personal(request):
+    """
+    Endpoint para obtener los tipos de personal disponibles.
+    """
+    tipos = TipoDePersonal.objects.all()
+    tipos_list = [{'id': tipo.id, 'nombre': tipo.nombre} for tipo in tipos]
+    return Response(tipos_list, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])

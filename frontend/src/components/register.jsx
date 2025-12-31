@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import './register.css';
@@ -6,23 +6,47 @@ import './register.css';
 export default function Register({ onRegister = () => {} }) {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    fullName: '',
+    nombre: '',
+    apellido: '',
     email: '',
-    phone: '',
+    horasSemanales: '',
+    tipoDePersonal: '',
     password: '',
     confirmPassword: '',
   });
 
+  const [tiposPersonal, setTiposPersonal] = useState([]);
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [generalError, setGeneralError] = useState('');
 
+  // Cargar tipos de personal al montar el componente
+  useEffect(() => {
+    const fetchTiposPersonal = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/api/auth/tipos-personal/');
+        if (response.ok) {
+          const data = await response.json();
+          setTiposPersonal(data);
+        }
+      } catch (error) {
+        console.error('Error al cargar tipos de personal:', error);
+      }
+    };
+
+    fetchTiposPersonal();
+  }, []);
+
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.fullName.trim()) {
-      newErrors.fullName = 'El nombre completo es requerido';
+    if (!formData.nombre.trim()) {
+      newErrors.nombre = 'El nombre es requerido';
+    }
+
+    if (!formData.apellido.trim()) {
+      newErrors.apellido = 'El apellido es requerido';
     }
 
     if (!formData.email.trim()) {
@@ -31,16 +55,16 @@ export default function Register({ onRegister = () => {} }) {
       newErrors.email = 'Email inválido';
     }
 
-    if (!formData.phone.trim()) {
-      newErrors.phone = 'El teléfono es requerido';
-    } else if (!/^\d{10,}$/.test(formData.phone.replace(/\D/g, ''))) {
-      newErrors.phone = 'Teléfono inválido (mínimo 10 dígitos)';
+    if (!formData.horasSemanales) {
+      newErrors.horasSemanales = 'Las horas semanales son requeridas';
+    } else if (isNaN(formData.horasSemanales) || formData.horasSemanales < 1 || formData.horasSemanales > 168) {
+      newErrors.horasSemanales = 'Ingrese un número válido entre 1 y 168';
     }
 
     if (!formData.password) {
       newErrors.password = 'La contraseña es requerida';
-    } else if (formData.password.length < 8) {
-      newErrors.password = 'La contraseña debe tener al menos 8 caracteres';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'La contraseña debe tener al menos 6 caracteres';
     }
 
     if (!formData.confirmPassword) {
@@ -77,24 +101,36 @@ export default function Register({ onRegister = () => {} }) {
     }
 
     try {
-      // TODO: Integrar con API del backend
-      console.log('Registrando usuario:', formData);
-      // const response = await fetch('/api/auth/register', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(formData)
-      // });
-      // const data = await response.json();
-      // if (response.ok) {
-      //   navigate('/');
-      // } else {
-      //   setGeneralError(data.message || 'Error en el registro');
-      // }
+      const requestBody = {
+        nombre: formData.nombre,
+        apellido: formData.apellido,
+        correo: formData.email,
+        contrasena: formData.password,
+        horasSemanales: parseInt(formData.horasSemanales)
+      };
+
+      // Solo agregar tipoDePersonal si se seleccionó uno
+      if (formData.tipoDePersonal) {
+        requestBody.tipoDePersonal = parseInt(formData.tipoDePersonal);
+      }
+
+      const response = await fetch('http://localhost:8000/api/auth/register/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody)
+      });
       
-      // Por ahora, registro exitoso y redirige a login
-      navigate('/');
+      const data = await response.json();
+      
+      if (response.ok) {
+        alert('Registro exitoso. Por favor inicia sesión.');
+        navigate('/');
+      } else {
+        setGeneralError(data.error || 'Error en el registro');
+      }
     } catch (error) {
-      setGeneralError('Error al registrarse. Intenta de nuevo.');
+      console.error('Error al registrarse:', error);
+      setGeneralError('Error al conectar con el servidor. Intenta de nuevo.');
     }
   };
 
@@ -106,21 +142,35 @@ export default function Register({ onRegister = () => {} }) {
         {generalError && <div className="general-error">{generalError}</div>}
 
         <form className="register-form" onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="fullName">Nombre Completo</label>
+          <div className="register-form-group">
+            <label htmlFor="nombre">Nombre</label>
             <input
               type="text"
-              id="fullName"
-              name="fullName"
-              value={formData.fullName}
+              id="nombre"
+              name="nombre"
+              value={formData.nombre}
               onChange={handleChange}
-              placeholder="Juan Pérez García"
-              className={errors.fullName ? 'error' : ''}
+              placeholder="Juan"
+              className={errors.nombre ? 'error' : ''}
             />
-            {errors.fullName && <span className="error-message">{errors.fullName}</span>}
+            {errors.nombre && <span className="error-message">{errors.nombre}</span>}
           </div>
 
-          <div className="form-group">
+          <div className="register-form-group">
+            <label htmlFor="apellido">Apellido</label>
+            <input
+              type="text"
+              id="apellido"
+              name="apellido"
+              value={formData.apellido}
+              onChange={handleChange}
+              placeholder="Pérez"
+              className={errors.apellido ? 'error' : ''}
+            />
+            {errors.apellido && <span className="error-message">{errors.apellido}</span>}
+          </div>
+
+          <div className="register-form-group">
             <label htmlFor="email">Email</label>
             <input
               type="email"
@@ -134,21 +184,42 @@ export default function Register({ onRegister = () => {} }) {
             {errors.email && <span className="error-message">{errors.email}</span>}
           </div>
 
-          <div className="form-group">
-            <label htmlFor="phone">Teléfono</label>
+          <div className="register-form-group">
+            <label htmlFor="horasSemanales">Horas Semanales de Dedicación</label>
             <input
-              type="tel"
-              id="phone"
-              name="phone"
-              value={formData.phone}
+              type="number"
+              id="horasSemanales"
+              name="horasSemanales"
+              value={formData.horasSemanales}
               onChange={handleChange}
-              placeholder="+54 11 2345-6789"
-              className={errors.phone ? 'error' : ''}
+              placeholder="40"
+              min="1"
+              max="168"
+              className={errors.horasSemanales ? 'error' : ''}
             />
-            {errors.phone && <span className="error-message">{errors.phone}</span>}
+            {errors.horasSemanales && <span className="error-message">{errors.horasSemanales}</span>}
           </div>
 
-          <div className="form-group">
+          <div className="register-form-group">
+            <label htmlFor="tipoDePersonal">Tipo de Personal</label>
+            <select
+              id="tipoDePersonal"
+              name="tipoDePersonal"
+              value={formData.tipoDePersonal}
+              onChange={handleChange}
+              className={errors.tipoDePersonal ? 'error' : ''}
+            >
+              <option value="">Seleccione un tipo (opcional)</option>
+              {tiposPersonal.map((tipo) => (
+                <option key={tipo.id} value={tipo.id}>
+                  {tipo.nombre}
+                </option>
+              ))}
+            </select>
+            {errors.tipoDePersonal && <span className="error-message">{errors.tipoDePersonal}</span>}
+          </div>
+
+          <div className="register-form-group">
             <label htmlFor="password">Contraseña</label>
             <div className="password-input-container">
               <input
@@ -172,7 +243,7 @@ export default function Register({ onRegister = () => {} }) {
             {errors.password && <span className="error-message">{errors.password}</span>}
           </div>
 
-          <div className="form-group">
+          <div className="register-form-group">
             <label htmlFor="confirmPassword">Confirmar Contraseña</label>
             <div className="password-input-container">
               <input

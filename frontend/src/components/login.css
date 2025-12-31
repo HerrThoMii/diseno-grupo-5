@@ -209,6 +209,30 @@
   text-decoration: underline;
 }
 
+.register-section {
+  margin-top: 2rem;
+  text-align: center;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e5e5;
+}
+
+.register-section p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.register-section a {
+  color: #7c3aed;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.register-section a:hover {
+  color: #6d28d9;
+}
+
 @media (max-width: 480px) {
   .login-container {
     padding: 10px;

@@ -11,9 +11,9 @@ from app.views import (
     TrabajoPublicadoViewSet, ActividadTransferenciaViewSet,
     ParteExternaViewSet, EquipamientoInfraestructuraViewSet,
     TrabajoPresentadoViewSet, ActividadXPersonaViewSet,
-    login, perfil, actualizar_perfil, eliminar_persona, listar_personas, refresh_token, get_opciones_perfil, RegistroViewSet, PatenteViewSet, AutorViewSet, TipoTrabajoPublicadoViewSet, TipoDeRegistroViewSet,
+    login, register, perfil, actualizar_perfil, eliminar_persona, listar_personas, refresh_token, get_opciones_perfil, RegistroViewSet, PatenteViewSet, AutorViewSet, TipoTrabajoPublicadoViewSet, TipoDeRegistroViewSet,
     IntegranteMemoriaViewSet, ActividadMemoriaViewSet, PublicacionMemoriaViewSet, PatenteMemoriaViewSet, ProyectoMemoriaViewSet,
-    recuperar_password, restablecer_password
+    recuperar_password, restablecer_password, get_tipos_personal
 )
 from app.memoria_views import MemoriaAnualViewSet
 
@@ -55,6 +55,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
     path('api/auth/login/', login, name='login'),
+    path('api/auth/register/', register, name='register'),
     path('api/auth/personas/', listar_personas, name='listar_personas'),
     path('api/auth/perfil/<int:oidpersona>/', perfil, name='perfil'),
     path('api/auth/perfil/<int:oidpersona>/actualizar/', actualizar_perfil, name='actualizar_perfil'),
@@ -63,6 +64,7 @@ urlpatterns = [
     path('api/auth/opciones-perfil/', get_opciones_perfil, name='opciones_perfil'),
     path('api/auth/recuperar-password/', recuperar_password, name='recuperar_password'),
     path('api/auth/restablecer-password/', restablecer_password, name='restablecer_password'),
+    path('api/auth/tipos-personal/', get_tipos_personal, name='tipos_personal'),
 ]
 
 # media serving removed (file uploads disabled)

@@ -89,7 +89,7 @@ const Login = ({ onLogin = () => {} }) => {
     return (
         <div className="login-container">
             <div className="login-card">
-                <h2>Iniciar Sesion</h2>
+                <h2>SGMI</h2>
 
                 <form onSubmit={handleSubmit} className='login-form'>
                 {errors.general && (
@@ -155,6 +155,21 @@ const Login = ({ onLogin = () => {} }) => {
                             }}
                         >
                             ¿Olvidaste tu contraseña?
+                        </a>
+                    </p>
+                </div>
+
+                <div className="register-section">
+                    <p>
+                        ¿No tienes cuenta?{' '}
+                        <a 
+                            href="#"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                navigate('/register');
+                            }}
+                        >
+                            Regístrate
                         </a>
                     </p>
                 </div>
