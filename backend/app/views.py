@@ -506,6 +506,14 @@ def restablecer_password(request):
             persona = Persona.objects.get(oidpersona=oidpersona)
             print(f"✓ Persona encontrada: {persona.nombre} {persona.apellido}")
             
+            # Verificar que la nueva contraseña no sea igual a la actual
+            if check_password(nueva_password, persona.contrasena):
+                print("✗ Error: La nueva contraseña es idéntica a la actual")
+                return Response(
+                    {'error': 'La nueva contraseña no puede ser igual a la contraseña actual'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
             # Actualizar la contraseña
             persona.contrasena = make_password(nueva_password)
             persona.save()

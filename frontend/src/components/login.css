@@ -31,19 +31,19 @@
   gap: 1.5rem;
 }
 
-.form-group {
+.login-form-group {
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
 }
 
-.form-group label {
+.login-form-group label {
   color: #666;
   font-weight: 500;
   font-size: 0.95rem;
 }
 
-.form-group input {
+.login-form-group input {
   padding: 0.9rem 1rem;
   border: 2px solid #ddd;
   border-radius: 10px;
@@ -52,13 +52,13 @@
   font-family: inherit;
 }
 
-.form-group input:focus {
+.login-form-group input:focus {
   outline: none;
   border-color: #7c3aed;
   box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
 }
 
-.form-group input.error {
+.login-form-group input.error {
   border-color: #ef4444;
 }
 
@@ -66,11 +66,13 @@
   position: relative;
   display: flex;
   align-items: center;
+  width: 100%;
 }
 
 .password-input-container input {
   flex: 1;
   padding-right: 2.5rem;
+  width: 100%;
 }
 
 .password-toggle {
@@ -192,7 +194,6 @@
 
 .login-footer p {
   margin: 0;
-  color: #666;
   font-size: 0.9rem;
 }
 

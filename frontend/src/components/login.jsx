@@ -98,7 +98,7 @@ const Login = ({ onLogin = () => {} }) => {
                     </div>
                 )}
 
-                <div className="form-group">
+                <div className="login-form-group">
                     <label htmlFor='email'>Email</label>
                     <input 
                         type='email' 
@@ -113,7 +113,7 @@ const Login = ({ onLogin = () => {} }) => {
                     <span className='error-message'>{errors.email}</span>
                     )}
                 </div>
-                <div className="form-group">
+                <div className="login-form-group">
                     <label htmlFor="password">Contraseña</label>
                     <div className="password-input-container">
                         <input
