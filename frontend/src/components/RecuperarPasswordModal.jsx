@@ -26,14 +26,24 @@ const RecuperarPasswordModal = ({ isOpen, onClose }) => {
     setIsLoading(true);
 
     try {
-      // Aquí iría la llamada a la API para enviar el email de recuperación
-      console.log('Enviando email de recuperación a:', email);
-      
-      // Simular llamada a API
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
+      const response = await fetch('http://localhost:8000/api/auth/recuperar-password/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ correo: email }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al enviar el email');
+      }
+
+      console.log('Email de recuperación enviado:', data);
       setEmailSent(true);
     } catch (err) {
+      console.error('Error:', err);
       setError('Error al enviar el email. Intenta nuevamente.');
     } finally {
       setIsLoading(false);

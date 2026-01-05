@@ -69,8 +69,11 @@ const Login = ({ onLogin = () => {} }) => {
             console.log('Login exitoso!');
             console.log('Usuario:', response.persona);
             
+            // Disparar evento para que HomePage actualice el nombre
+            window.dispatchEvent(new Event('userDataUpdated'));
+            
             // Login exitoso - llamar al callback con el nombre del usuario
-            const userName = response.persona.nombre || formData.email.split('@')[0];
+            const userName = response.persona.nombre || response.persona.name || formData.email.split('@')[0];
             onLogin(userName);
             
         } catch (error) {
@@ -86,7 +89,7 @@ const Login = ({ onLogin = () => {} }) => {
     return (
         <div className="login-container">
             <div className="login-card">
-                <h2>Iniciar Sesion</h2>
+                <h2>SGMI</h2>
 
                 <form onSubmit={handleSubmit} className='login-form'>
                 {errors.general && (
@@ -95,7 +98,7 @@ const Login = ({ onLogin = () => {} }) => {
                     </div>
                 )}
 
-                <div className="form-group">
+                <div className="login-form-group">
                     <label htmlFor='email'>Email</label>
                     <input 
                         type='email' 
@@ -110,7 +113,7 @@ const Login = ({ onLogin = () => {} }) => {
                     <span className='error-message'>{errors.email}</span>
                     )}
                 </div>
-                <div className="form-group">
+                <div className="login-form-group">
                     <label htmlFor="password">Contraseña</label>
                     <div className="password-input-container">
                         <input
@@ -152,6 +155,21 @@ const Login = ({ onLogin = () => {} }) => {
                             }}
                         >
                             ¿Olvidaste tu contraseña?
+                        </a>
+                    </p>
+                </div>
+
+                <div className="register-section">
+                    <p>
+                        ¿No tienes cuenta?{' '}
+                        <a 
+                            href="#"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                navigate('/register');
+                            }}
+                        >
+                            Regístrate
                         </a>
                     </p>
                 </div>
