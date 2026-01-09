@@ -4,6 +4,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import { login } from '../utils/auth';
 import './login.css';
 import RecuperarPasswordModal from './RecuperarPasswordModal';
+import Alert from './Alert';
 import { login as apiLogin } from '../services/api';
 
 const Login = ({ onLogin = () => {} }) => {
@@ -16,6 +17,7 @@ const Login = ({ onLogin = () => {} }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showRecuperarModal, setShowRecuperarModal] = useState(false);
+    const [alert, setAlert] = useState(null);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -78,8 +80,9 @@ const Login = ({ onLogin = () => {} }) => {
             
         } catch (error) {
             console.error('Error en login:', error);
-            setErrors({ 
-                general: error.message || 'Error al iniciar sesión. Verifica tus credenciales.'
+            setAlert({
+                type: 'error',
+                message: error.message || 'Error al iniciar sesión. Verifica tus credenciales e intenta nuevamente.'
             });
         } finally {
             setIsLoading(false);
@@ -92,10 +95,12 @@ const Login = ({ onLogin = () => {} }) => {
                 <h2>SGMI</h2>
 
                 <form onSubmit={handleSubmit} className='login-form'>
-                {errors.general && (
-                    <div className="error-message general-error">
-                    {errors.general}
-                    </div>
+                {alert && (
+                    <Alert 
+                        type={alert.type}
+                        message={alert.message}
+                        onClose={() => setAlert(null)}
+                    />
                 )}
 
                 <div className="login-form-group">

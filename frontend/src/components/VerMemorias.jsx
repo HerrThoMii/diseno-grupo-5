@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Eye, Download, Trash2, Calendar, Users as UsersIcon, FileText } from 'lucide-react';
 import './VerMemorias.css';
+import ConfirmModal from './ConfirmModal';
+import Alert from './Alert';
 
 const API_BASE_URL = 'http://127.0.0.1:8000';
 
@@ -9,6 +11,8 @@ function VerMemorias() {
   const [selectedMemoria, setSelectedMemoria] = useState(null);
   const [loading, setLoading] = useState(true);
   const [grupos, setGrupos] = useState([]);
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, id: null });
+  const [alert, setAlert] = useState(null);
 
   useEffect(() => {
     loadMemorias();
@@ -23,7 +27,7 @@ function VerMemorias() {
       setMemorias(data);
     } catch (error) {
       console.error('Error cargando memorias:', error);
-      alert('Error al cargar las memorias anuales');
+      setAlert({ type: 'error', message: 'Error al cargar las memorias anuales' });
     } finally {
       setLoading(false);
     }
@@ -72,12 +76,17 @@ function VerMemorias() {
       });
     } catch (error) {
       console.error('Error cargando detalles:', error);
-      alert('Error al cargar los detalles de la memoria');
+      setAlert({ type: 'error', message: 'Error al cargar los detalles de la memoria' });
     }
   };
 
-  const handleDelete = async (oidMemoriaAnual) => {
-    if (!window.confirm('¿Está seguro que desea eliminar esta memoria anual?')) return;
+  const handleDelete = (oidMemoriaAnual) => {
+    setConfirmModal({ isOpen: true, id: oidMemoriaAnual });
+  };
+
+  const confirmDelete = async () => {
+    const oidMemoriaAnual = confirmModal.id;
+    setConfirmModal({ isOpen: false, id: null });
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/memorias-anuales/${oidMemoriaAnual}/`, {
@@ -85,7 +94,7 @@ function VerMemorias() {
       });
 
       if (response.ok) {
-        alert('Memoria eliminada exitosamente');
+        setAlert({ type: 'success', message: 'Memoria eliminada exitosamente' });
         loadMemorias();
         setSelectedMemoria(null);
       } else {
@@ -93,7 +102,7 @@ function VerMemorias() {
       }
     } catch (error) {
       console.error('Error eliminando memoria:', error);
-      alert('Error al eliminar la memoria');
+      setAlert({ type: 'error', message: 'Error al eliminar la memoria' });
     }
   };
 
@@ -120,6 +129,25 @@ function VerMemorias() {
 
   return (
     <div className="ver-memorias-container">
+      {alert && (
+        <Alert 
+          type={alert.type}
+          message={alert.message}
+          onClose={() => setAlert(null)}
+        />
+      )}
+
+      <ConfirmModal 
+        isOpen={confirmModal.isOpen}
+        title="Eliminar Memoria Anual"
+        message="¿Está seguro que desea eliminar esta memoria anual? Esta acción no se puede deshacer."
+        type="danger"
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        onConfirm={confirmDelete}
+        onCancel={() => setConfirmModal({ isOpen: false, id: null })}
+      />
+
       <div className="memorias-header">
         <h1>Memorias Anuales</h1>
         <div className="memorias-stats">

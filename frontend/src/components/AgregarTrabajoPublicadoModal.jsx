@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import './AgregarTrabajoPublicadoModal.css';
 import { X } from 'lucide-react';
+import Alert from './Alert';
 
 const AgregarTrabajoPublicadoModal = ({ isOpen, onClose, onAdd }) => {
   const [formData, setFormData] = useState({
@@ -12,6 +13,7 @@ const AgregarTrabajoPublicadoModal = ({ isOpen, onClose, onAdd }) => {
   });
 
   const [errors, setErrors] = useState({});
+  const [alert, setAlert] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -56,6 +58,7 @@ const AgregarTrabajoPublicadoModal = ({ isOpen, onClose, onAdd }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setAlert(null);
     
     if (validate()) {
       const nuevoTrabajo = {
@@ -73,6 +76,18 @@ const AgregarTrabajoPublicadoModal = ({ isOpen, onClose, onAdd }) => {
         pais: ''
       });
       setErrors({});
+      setAlert({
+        type: 'success',
+        message: '¡Trabajo publicado agregado exitosamente!'
+      });
+      setTimeout(() => {
+        onClose();
+      }, 1500);
+    } else {
+      setAlert({
+        type: 'warning',
+        message: 'Por favor completa todos los campos requeridos correctamente.'
+      });
     }
   };
 
@@ -99,6 +114,15 @@ const AgregarTrabajoPublicadoModal = ({ isOpen, onClose, onAdd }) => {
             <X size={24} />
           </button>
         </div>
+
+        {alert && (
+          <Alert 
+            type={alert.type}
+            message={alert.message}
+            onClose={() => setAlert(null)}
+            autoClose={alert.type === 'success'}
+          />
+        )}
 
         <form onSubmit={handleSubmit} className="atpm-form">
           <div className="atpm-form-group">

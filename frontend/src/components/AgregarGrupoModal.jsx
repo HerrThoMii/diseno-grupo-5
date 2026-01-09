@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
+import Alert from './Alert';
 import './AgregarGrupoModal.css';
 
 const AgregarGrupoModal = ({ isOpen, onClose, onSubmit, grupoToEdit = null }) => {
@@ -36,6 +37,7 @@ const AgregarGrupoModal = ({ isOpen, onClose, onSubmit, grupoToEdit = null }) =>
   }, [grupoToEdit, isOpen]);
 
   const [errors, setErrors] = useState({});
+  const [alert, setAlert] = useState(null);
 
   const facultades = [
     'Facultad de Ingeniería',
@@ -99,30 +101,50 @@ const AgregarGrupoModal = ({ isOpen, onClose, onSubmit, grupoToEdit = null }) =>
     return newErrors;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setAlert(null);
     
     const newErrors = validateForm();
     
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
+      setAlert({
+        type: 'warning',
+        message: 'Por favor completa todos los campos requeridos correctamente.'
+      });
       return;
     }
 
-    if (onSubmit) {
-      onSubmit(formData);
-    }
+    try {
+      if (onSubmit) {
+        await onSubmit(formData);
+      }
 
-    setFormData({
-      correo: '',
-      nombreGrupo: '',
-      siglasGrupo: '',
-      facultad: '',
-      financiamiento: '',
-      objetivos: '',
-    });
-    setErrors({});
-    onClose();
+      setAlert({
+        type: 'success',
+        message: grupoToEdit ? '¡Grupo actualizado exitosamente!' : '¡Grupo agregado exitosamente!'
+      });
+
+      setTimeout(() => {
+        setFormData({
+          correo: '',
+          nombreGrupo: '',
+          siglasGrupo: '',
+          facultad: '',
+          financiamiento: '',
+          objetivos: '',
+        });
+        setErrors({});
+        setAlert(null);
+        onClose();
+      }, 1500);
+    } catch (error) {
+      setAlert({
+        type: 'error',
+        message: error.message || 'Error al guardar el grupo. Por favor intenta nuevamente.'
+      });
+    }
   };
 
   const handleCancel = () => {
@@ -135,6 +157,7 @@ const AgregarGrupoModal = ({ isOpen, onClose, onSubmit, grupoToEdit = null }) =>
       objetivos: '',
     });
     setErrors({});
+    setAlert(null);
     onClose();
   };
 
@@ -153,6 +176,15 @@ const AgregarGrupoModal = ({ isOpen, onClose, onSubmit, grupoToEdit = null }) =>
             <X size={24} />
           </button>
         </div>
+
+        {alert && (
+          <Alert 
+            type={alert.type}
+            message={alert.message}
+            onClose={() => setAlert(null)}
+            autoClose={alert.type === 'success'}
+          />
+        )}
 
         <form onSubmit={handleSubmit} className="modal-form">
           <div className="form-column">

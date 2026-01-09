@@ -4,6 +4,8 @@ import './TrabajosList.css';
 import AgregarTrabajoRealizado from './AgregarTrabajoRealizado';
 import EditarTrabajoModal from './EditarTrabajoModal';
 import { listarTrabajosPublicados, eliminarTrabajoPublicado, actualizarTrabajoPublicado } from '../services/api';
+import ConfirmModal from './ConfirmModal';
+import Alert from './Alert';
 
 function TrabajosList() {
   const [activeTab, setActiveTab] = useState('realizados');
@@ -15,6 +17,8 @@ function TrabajosList() {
   const [trabajosPublicados, setTrabajosPublicados] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, trabajo: null, action: null });
+  const [alert, setAlert] = useState(null);
 
   // Cargar trabajos desde el backend
   useEffect(() => {
@@ -56,36 +60,43 @@ function TrabajosList() {
   };
 
   const handleEdit = (trabajo) => {
-    console.log('Editar trabajo:', trabajo);
     setTrabajoAEditar(trabajo);
     setShowEditarModal(true);
   };
 
   const handleUpdate = (trabajoActualizado) => {
-    console.log('Trabajo actualizado:', trabajoActualizado);
     loadTrabajos();
     setShowEditarModal(false);
     setTrabajoAEditar(null);
   };
 
-  const handleDelete = async (trabajo) => {
-    const confirmDelete = window.confirm(`¿Está seguro que desea eliminar el trabajo "${trabajo.titulo}"?`);
-    if (!confirmDelete) return;
+  const handleDelete = (trabajo) => {
+    setConfirmModal({ isOpen: true, trabajo, action: 'delete' });
+  };
+
+  const confirmDelete = async () => {
+    const trabajo = confirmModal.trabajo;
+    setConfirmModal({ isOpen: false, trabajo: null, action: null });
 
     try {
       const trabajoId = trabajo.oidTrabajoPublicado || trabajo.id;
       await eliminarTrabajoPublicado(trabajoId);
       console.log('Trabajo eliminado exitosamente');
-      loadTrabajos(); // Recargar la lista
+      setAlert({ type: 'success', message: 'Trabajo eliminado exitosamente' });
+      loadTrabajos();
     } catch (err) {
       console.error('Error al eliminar trabajo:', err);
-      alert('Error al eliminar el trabajo');
+      setAlert({ type: 'error', message: 'Error al eliminar el trabajo' });
     }
   };
 
-  const handlePublish = async (trabajo) => {
-    const confirmPublish = window.confirm(`¿Está seguro que desea publicar el trabajo "${trabajo.titulo}"?`);
-    if (!confirmPublish) return;
+  const handlePublish = (trabajo) => {
+    setConfirmModal({ isOpen: true, trabajo, action: 'publish' });
+  };
+
+  const confirmPublish = async () => {
+    const trabajo = confirmModal.trabajo;
+    setConfirmModal({ isOpen: false, trabajo: null, action: null });
 
     try {
       const trabajoId = trabajo.oidTrabajoPublicado || trabajo.id;
@@ -103,15 +114,49 @@ function TrabajosList() {
       
       await actualizarTrabajoPublicado(trabajoId, payload);
       console.log('Trabajo publicado exitosamente');
-      loadTrabajos(); // Recargar la lista
+      setAlert({ type: 'success', message: 'Trabajo publicado exitosamente' });
+      loadTrabajos();
     } catch (err) {
       console.error('Error al publicar trabajo:', err);
-      alert('Error al publicar el trabajo');
+      setAlert({ type: 'error', message: 'Error al publicar el trabajo' });
     }
   };
 
-  return (<>
-    <div className="trabajos-container">
+  const handleConfirm = () => {
+    if (confirmModal.action === 'delete') {
+      confirmDelete();
+    } else if (confirmModal.action === 'publish') {
+      confirmPublish();
+    }
+  };
+
+  return (
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+      {alert && (
+        <div style={{ position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%)', zIndex: 10000, width: '90%', maxWidth: '500px' }}>
+          <Alert 
+            type={alert.type}
+            message={alert.message}
+            onClose={() => setAlert(null)}
+          />
+        </div>
+      )}
+
+      <ConfirmModal 
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.action === 'delete' ? 'Eliminar Trabajo' : 'Publicar Trabajo'}
+        message={confirmModal.action === 'delete' 
+          ? `¿Está seguro que desea eliminar el trabajo "${confirmModal.trabajo?.titulo}"? Esta acción no se puede deshacer.`
+          : `¿Está seguro que desea publicar el trabajo "${confirmModal.trabajo?.titulo}"?`
+        }
+        type={confirmModal.action === 'delete' ? 'danger' : 'confirm'}
+        confirmText={confirmModal.action === 'delete' ? 'Eliminar' : 'Publicar'}
+        cancelText="Cancelar"
+        onConfirm={handleConfirm}
+        onCancel={() => setConfirmModal({ isOpen: false, trabajo: null, action: null })}
+      />
+
+      <div className="trabajos-container">
       <div className="trabajos-header">
         <h2>Trabajos Realizados y Publicados</h2>
       </div>
@@ -223,6 +268,7 @@ function TrabajosList() {
         </div>
       </div>
     </div>
+    
     <AgregarTrabajoRealizado
       isOpen={showAgregarRealizado}
       onClose={() => setShowAgregarRealizado(false)}
@@ -237,7 +283,8 @@ function TrabajosList() {
       onUpdate={handleUpdate}
       trabajo={trabajoAEditar}
     />
-  </>);
+  </div>
+  );
 }
 
 export default TrabajosList;

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
+import Alert from './Alert';
 import './AgregarPatenteModal.css';
 import { crearPatente, listarGrupos } from '../services/api';
 
@@ -13,7 +14,7 @@ export default function AgregarPatenteModal({ isOpen, onClose, onAdd }) {
   });
   const [grupos, setGrupos] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [submitError, setSubmitError] = useState('');
+  const [alert, setAlert] = useState(null);
 
   const [errors, setErrors] = useState({});
 
@@ -54,8 +55,13 @@ export default function AgregarPatenteModal({ isOpen, onClose, onAdd }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setAlert(null);
 
     if (!validateForm()) {
+      setAlert({
+        type: 'warning',
+        message: 'Por favor completa todos los campos requeridos correctamente.'
+      });
       return;
     }
     // Build payload for backend including new fields and optional file
@@ -73,7 +79,6 @@ export default function AgregarPatenteModal({ isOpen, onClose, onAdd }) {
     };
 
     setLoading(true);
-    setSubmitError('');
     crearPatente(payloadToSend)
       .then(created => {
         const createdId = created?.oidPatente ?? created?.id ?? Date.now();
@@ -87,6 +92,13 @@ export default function AgregarPatenteModal({ isOpen, onClose, onAdd }) {
         };
         onAdd && onAdd(uiPatente);
         setFormData({ numero: '', tipo: 'Patente Activa', fecha: '', inventor: '', descripcion: '' });
+        setAlert({
+          type: 'success',
+          message: '¡Patente creada exitosamente!'
+        });
+        setTimeout(() => {
+          onClose();
+        }, 1500);
       })
       .catch(err => {
         let msg = err.message || 'Error al crear patente';
@@ -97,7 +109,10 @@ export default function AgregarPatenteModal({ isOpen, onClose, onAdd }) {
             msg = Object.entries(parsed).map(([k,v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`).join(' | ');
           }
         } catch (e) {}
-        setSubmitError(msg);
+        setAlert({
+          type: 'error',
+          message: msg
+        });
       })
       .finally(() => setLoading(false));
   };
@@ -121,6 +136,15 @@ export default function AgregarPatenteModal({ isOpen, onClose, onAdd }) {
             <X size={24} />
           </button>
         </div>
+
+        {alert && (
+          <Alert 
+            type={alert.type}
+            message={alert.message}
+            onClose={() => setAlert(null)}
+            autoClose={alert.type === 'success'}
+          />
+        )}
 
         <form onSubmit={handleSubmit} className="apm-form">
           <div className="apm-form-group">
@@ -202,8 +226,6 @@ export default function AgregarPatenteModal({ isOpen, onClose, onAdd }) {
           </div>
 
           {/* File uploads removed — files are not saved in the backend */}
-
-          {submitError && <div className="apm-submit-error">{submitError}</div>}
 
           <div className="apm-buttons">
             <button type="button" className="apm-btn-cancel" onClick={onClose}>

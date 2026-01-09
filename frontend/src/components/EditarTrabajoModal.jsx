@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
+import Alert from './Alert';
 import './AgregarTrabajoRealizado.css';
 import { actualizarTrabajoPublicado, listarGrupos, listarAutores, listarTiposTrabajoPublicado, isAuthenticated } from '../services/api';
 
@@ -20,6 +21,7 @@ export default function EditarTrabajoModal({ isOpen, onClose, onUpdate, trabajo 
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
+  const [alert, setAlert] = useState(null);
   const [submitError, setSubmitError] = useState('');
 
   useEffect(() => {
@@ -33,7 +35,6 @@ export default function EditarTrabajoModal({ isOpen, onClose, onUpdate, trabajo 
 
     if (!isOpen) return () => { mounted = false };
 
-    console.log('Cargando datos del modal de edición...');
     setLoadingData(true);
     Promise.all([listarGrupos(), listarAutores(), listarTiposTrabajoPublicado()])
       .then(([gr, au, tp]) => {
@@ -58,6 +59,7 @@ export default function EditarTrabajoModal({ isOpen, onClose, onUpdate, trabajo 
   // Cargar datos del trabajo cuando se abre el modal
   useEffect(() => {
     if (trabajo && isOpen) {
+      console.log('Trabajo recibido para editar:', trabajo);
       setFormData({
         titulo: trabajo.titulo || '',
         ISSN: trabajo.ISSN || '',
@@ -68,6 +70,34 @@ export default function EditarTrabajoModal({ isOpen, onClose, onUpdate, trabajo 
         Autor: trabajo.Autor || '',
         GrupoInvestigacion: trabajo.GrupoInvestigacion || ''
       });
+      console.log('FormData cargado:', {
+        titulo: trabajo.titulo || '',
+        ISSN: trabajo.ISSN || '',
+        editorial: trabajo.editorial || '',
+        nombreRevista: trabajo.nombreRevista || '',
+        pais: trabajo.pais || '',
+        tipoTrabajoPublicado: trabajo.tipoTrabajoPublicado || '',
+        Autor: trabajo.Autor || '',
+        GrupoInvestigacion: trabajo.GrupoInvestigacion || ''
+      });
+      setErrors({});
+      setAlert(null);
+    }
+    
+    // Reset form when modal closes
+    if (!isOpen) {
+      setFormData({
+        titulo: '',
+        ISSN: '',
+        editorial: '',
+        nombreRevista: '',
+        pais: '',
+        tipoTrabajoPublicado: '',
+        Autor: '',
+        GrupoInvestigacion: ''
+      });
+      setErrors({});
+      setAlert(null);
     }
   }, [trabajo, isOpen]);
 
@@ -88,9 +118,15 @@ export default function EditarTrabajoModal({ isOpen, onClose, onUpdate, trabajo 
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!validate()) return;
+    setAlert(null);
+    if (!validate()) {
+      setAlert({
+        type: 'warning',
+        message: 'Por favor completa todos los campos requeridos correctamente.'
+      });
+      return;
+    }
     setLoading(true);
-    setSubmitError('');
 
     const payload = {
       titulo: formData.titulo,
@@ -107,8 +143,14 @@ export default function EditarTrabajoModal({ isOpen, onClose, onUpdate, trabajo 
     
     actualizarTrabajoPublicado(trabajoId, payload)
       .then(updated => {
-        if (onUpdate) onUpdate(updated);
-        onClose && onClose();
+        setAlert({
+          type: 'success',
+          message: '¡Trabajo actualizado exitosamente!'
+        });
+        setTimeout(() => {
+          if (onUpdate) onUpdate(updated);
+          onClose && onClose();
+        }, 1500);
       })
       .catch(err => {
         let msg = err.message || 'Error al actualizar trabajo';
@@ -117,12 +159,19 @@ export default function EditarTrabajoModal({ isOpen, onClose, onUpdate, trabajo 
           if (parsed.detail) msg = parsed.detail;
           else if (typeof parsed === 'object') msg = Object.entries(parsed).map(([k,v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`).join(' | ');
         } catch (e) {}
-        setSubmitError(msg);
+        setAlert({
+          type: 'error',
+          message: msg
+        });
       })
       .finally(() => setLoading(false));
   };
 
   if (!isOpen) return null;
+  
+  if (!trabajo) {
+    return null;
+  }
 
   return (
     <div className="atr-overlay">
@@ -132,16 +181,25 @@ export default function EditarTrabajoModal({ isOpen, onClose, onUpdate, trabajo 
           <button className="atr-close" onClick={onClose}><X size={24} /></button>
         </div>
 
+        {alert && (
+          <Alert 
+            type={alert.type}
+            message={alert.message}
+            onClose={() => setAlert(null)}
+            autoClose={alert.type === 'success'}
+          />
+        )}
+
         {loadingData && (
           <div style={{ padding: '10px', textAlign: 'center', color: '#666' }}>
-            Cargando datos...
+            Cargando datos del formulario...
           </div>
         )}
 
-        <form className="atr-form" onSubmit={handleSubmit}>
+        <form className="atr-form" onSubmit={handleSubmit} style={{ opacity: loadingData ? 0.5 : 1 }}>
           <div className="atr-form-group">
             <label htmlFor="Autor">Autor</label>
-            <select id="Autor" name="Autor" value={formData.Autor || ''} onChange={handleChange} className={errors.Autor ? 'error' : ''}>
+            <select id="Autor" name="Autor" value={formData.Autor || ''} onChange={handleChange} className={errors.Autor ? 'error' : ''} disabled={loadingData}>
               <option value="">-- Seleccione autor --</option>
               {autores.map(a => {
                 const pk = a.oidAutor ?? a.id;
@@ -153,7 +211,7 @@ export default function EditarTrabajoModal({ isOpen, onClose, onUpdate, trabajo 
 
           <div className="atr-form-group">
             <label htmlFor="titulo">Título del Trabajo</label>
-            <input id="titulo" name="titulo" value={formData.titulo} onChange={handleChange} className={errors.titulo ? 'error' : ''} />
+            <input id="titulo" name="titulo" value={formData.titulo} onChange={handleChange} className={errors.titulo ? 'error' : ''} disabled={loadingData} />
             {errors.titulo && <div className="atr-error">{errors.titulo}</div>}
           </div>
 

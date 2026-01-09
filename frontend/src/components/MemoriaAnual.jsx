@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import './MemoriaAnual.css';
 import { ChevronDown, Plus, Trash2, Edit, Search } from 'lucide-react';
 import { obtenerGrupos, obtenerPersonas, crearPersona, obtenerOpcionesPerfil, listarTrabajosPresentados, crearTrabajoPresentado, listarActividades, crearActividad, listarLineasInvestigacion, listarTrabajosPublicados, crearTrabajoPublicado, actualizarTrabajoPublicado, eliminarTrabajoPublicado, listarAutores, listarTiposTrabajoPublicado, listarPatentes, crearPatente, actualizarPatente, eliminarPatente, listarProyectos, crearProyecto, actualizarProyecto, eliminarProyecto } from '../services/api';
+import ConfirmModal from './ConfirmModal';
+import Alert from './Alert';
 
 const API_BASE_URL = 'http://127.0.0.1:8000/api';
 
@@ -55,6 +57,8 @@ const MemoriaAnual = () => {
   const [showPublicacionModal, setShowPublicacionModal] = useState(false);
   const [showPatenteModal, setShowPatenteModal] = useState(false);
   const [showProyectoModal, setShowProyectoModal] = useState(false);
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, item: null, type: null, index: null });
+  const [alert, setAlert] = useState(null);
   const [showPersonaDropdown, setShowPersonaDropdown] = useState(false);
   const [showIntegrantesSearchDropdown, setShowIntegrantesSearchDropdown] = useState(false);
   const [showTrabajosSearchDropdown, setShowTrabajosSearchDropdown] = useState(false);
@@ -680,8 +684,13 @@ const MemoriaAnual = () => {
     }
   };
 
-  const handleRemoveIntegrante = async (integrante) => {
-    if (!window.confirm('¿Estás seguro de eliminar este integrante?')) return;
+  const handleRemoveIntegrante = (integrante) => {
+    setConfirmModal({ isOpen: true, item: integrante, type: 'integrante', index: null });
+  };
+
+  const confirmRemoveIntegrante = async () => {
+    const integrante = confirmModal.item;
+    setConfirmModal({ isOpen: false, item: null, type: null, index: null });
 
     // Si es temporal (no guardado aún), solo remover de la lista local
     if (integrante.temp || !memoriaId) {
@@ -690,6 +699,7 @@ const MemoriaAnual = () => {
         integrantes: prev.integrantes.filter(i => i.persona !== integrante.persona)
       }));
       console.log('Integrante temporal eliminado');
+      setAlert({ type: 'success', message: 'Integrante eliminado' });
       return;
     }
 
@@ -700,8 +710,10 @@ const MemoriaAnual = () => {
       });
       await loadIntegrantes(memoriaId);
       console.log('Integrante eliminado');
+      setAlert({ type: 'success', message: 'Integrante eliminado exitosamente' });
     } catch (error) {
       console.error('Error eliminando integrante:', error);
+      setAlert({ type: 'error', message: 'Error al eliminar el integrante' });
     }
   };
 
@@ -789,7 +801,11 @@ const MemoriaAnual = () => {
     }
 
     // Si no es temporal, eliminar del backend
-    if (!window.confirm('¿Estás seguro de eliminar este trabajo?')) return;
+    setConfirmModal({ isOpen: true, item: trabajo, type: 'trabajo', index });
+  };
+
+  const confirmRemoveTrabajo = async () => {
+    const { item: trabajo, index } = confirmModal;
 
     try {
       await fetch(`${API_BASE_URL}/memorias-trabajos/${trabajo.oidTrabajoMemoria}/`, {
@@ -1744,8 +1760,52 @@ const MemoriaAnual = () => {
     closeFieldModal();
   };
 
+  const handleConfirmAction = async () => {
+    const { type, item, index } = confirmModal;
+    setConfirmModal({ isOpen: false, item: null, type: null, index: null });
+    
+    if (type === 'integrante') await confirmRemoveIntegrante();
+    else if (type === 'trabajo') await confirmRemoveTrabajo();
+    else if (type === 'actividad') await confirmRemoveActividad();
+    else if (type === 'publicacion') await confirmRemovePublicacion();
+    else if (type === 'patente') await confirmRemovePatente();
+    else if (type === 'proyecto') await confirmRemoveProyecto();
+    else if (type === 'guardar') await confirmGuardarMemoria();
+  };
+
+  const getConfirmMessage = () => {
+    const { type } = confirmModal;
+    if (type === 'integrante') return '¿Estás seguro de eliminar este integrante?';
+    if (type === 'trabajo') return '¿Estás seguro de eliminar este trabajo?';
+    if (type === 'actividad') return '¿Estás seguro de eliminar esta actividad?';
+    if (type === 'publicacion') return '¿Estás seguro de eliminar esta publicación?';
+    if (type === 'patente') return '¿Estás seguro de eliminar esta patente?';
+    if (type === 'proyecto') return '¿Estás seguro de eliminar este proyecto?';
+    if (type === 'guardar') return `¿Está seguro que desea guardar la Memoria Anual del año ${formData.ano}?\n\nEsta acción creará un registro permanente con todos los datos ingresados.`;
+    return '';
+  };
+
   return (
     <div className="memoria-anual-container">
+      {alert && (
+        <Alert 
+          type={alert.type}
+          message={alert.message}
+          onClose={() => setAlert(null)}
+        />
+      )}
+
+      <ConfirmModal 
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.type === 'guardar' ? 'Guardar Memoria Anual' : `Eliminar ${confirmModal.type || ''}`}
+        message={getConfirmMessage()}
+        type={confirmModal.type === 'guardar' ? 'confirm' : 'danger'}
+        confirmText={confirmModal.type === 'guardar' ? 'Guardar' : 'Eliminar'}
+        cancelText="Cancelar"
+        onConfirm={handleConfirmAction}
+        onCancel={() => setConfirmModal({ isOpen: false, item: null, type: null, index: null })}
+      />
+
       <div className="memoria-header">
         <h1>Crear Memoria Anual</h1>
       </div>

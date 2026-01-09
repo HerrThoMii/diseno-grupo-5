@@ -7,6 +7,8 @@ import AgregarTrabajoModal from './AgregarTrabajoModal';
 import EditarTrabajoPresentadoModal from './EditarTrabajoPresentadoModal';
 import EditarRegistroModal from './EditarRegistroModal';
 import EditarPatenteModal from './EditarPatenteModal';
+import ConfirmModal from './ConfirmModal';
+import Alert from './Alert';
 import { 
   listarRegistros, 
   listarPatentes, 
@@ -32,6 +34,10 @@ const TrabajoRegistrosPatentes = () => {
   const [selectedTrabajo, setSelectedTrabajo] = useState(null);
   const [selectedRegistro, setSelectedRegistro] = useState(null);
   const [selectedPatente, setSelectedPatente] = useState(null);
+  
+  // Estados para confirm modal y alert
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, item: null, type: null });
+  const [alert, setAlert] = useState(null);
   
   // Estados para búsqueda y filtros
   const [trabajoSearch, setTrabajoSearch] = useState('');
@@ -149,17 +155,22 @@ const TrabajoRegistrosPatentes = () => {
     setShowEditTrabajoModal(true);
   };
 
-  const handleDeleteTrabajo = async (trabajo) => {
-    const confirmDelete = window.confirm(`¿Está seguro que desea eliminar el trabajo "${trabajo.tituloTrabajo}"?`);
-    if (!confirmDelete) return;
+  const handleDeleteTrabajo = (trabajo) => {
+    setConfirmModal({ isOpen: true, item: trabajo, type: 'trabajo' });
+  };
+
+  const confirmDeleteTrabajo = async () => {
+    const trabajo = confirmModal.item;
+    setConfirmModal({ isOpen: false, item: null, type: null });
 
     try {
       await eliminarTrabajoPresentado(trabajo.id);
       console.log('Trabajo eliminado exitosamente');
-      recargarDatos(); // Recargar la lista
+      setAlert({ type: 'success', message: 'Trabajo eliminado exitosamente' });
+      recargarDatos();
     } catch (err) {
       console.error('Error al eliminar trabajo:', err);
-      alert('Error al eliminar el trabajo');
+      setAlert({ type: 'error', message: 'Error al eliminar el trabajo' });
     }
   };
 
@@ -168,17 +179,22 @@ const TrabajoRegistrosPatentes = () => {
     setShowEditRegistroModal(true);
   };
 
-  const handleDeleteRegistro = async (registro) => {
-    const confirmDelete = window.confirm(`¿Está seguro que desea eliminar el registro "${registro.nombre}"?`);
-    if (!confirmDelete) return;
+  const handleDeleteRegistro = (registro) => {
+    setConfirmModal({ isOpen: true, item: registro, type: 'registro' });
+  };
+
+  const confirmDeleteRegistro = async () => {
+    const registro = confirmModal.item;
+    setConfirmModal({ isOpen: false, item: null, type: null });
 
     try {
       await eliminarRegistro(registro.id);
       console.log('Registro eliminado exitosamente');
-      recargarDatos(); // Recargar la lista
+      setAlert({ type: 'success', message: 'Registro eliminado exitosamente' });
+      recargarDatos();
     } catch (err) {
       console.error('Error al eliminar registro:', err);
-      alert('Error al eliminar el registro');
+      setAlert({ type: 'error', message: 'Error al eliminar el registro' });
     }
   };
 
@@ -187,22 +203,67 @@ const TrabajoRegistrosPatentes = () => {
     setShowEditPatenteModal(true);
   };
 
-  const handleDeletePatente = async (patente) => {
-    const confirmDelete = window.confirm(`¿Está seguro que desea eliminar la patente "${patente.numero}"?`);
-    if (!confirmDelete) return;
+  const handleDeletePatente = (patente) => {
+    setConfirmModal({ isOpen: true, item: patente, type: 'patente' });
+  };
+
+  const confirmDeletePatente = async () => {
+    const patente = confirmModal.item;
+    setConfirmModal({ isOpen: false, item: null, type: null });
 
     try {
       await eliminarPatente(patente.id);
       console.log('Patente eliminada exitosamente');
-      recargarDatos(); // Recargar la lista
+      setAlert({ type: 'success', message: 'Patente eliminada exitosamente' });
+      recargarDatos();
     } catch (err) {
       console.error('Error al eliminar patente:', err);
-      alert('Error al eliminar la patente');
+      setAlert({ type: 'error', message: 'Error al eliminar la patente' });
     }
+  };
+
+  const handleConfirm = () => {
+    if (confirmModal.type === 'trabajo') {
+      confirmDeleteTrabajo();
+    } else if (confirmModal.type === 'registro') {
+      confirmDeleteRegistro();
+    } else if (confirmModal.type === 'patente') {
+      confirmDeletePatente();
+    }
+  };
+
+  const getConfirmMessage = () => {
+    if (confirmModal.type === 'trabajo') {
+      return `¿Está seguro que desea eliminar el trabajo "${confirmModal.item?.tituloTrabajo}"? Esta acción no se puede deshacer.`;
+    } else if (confirmModal.type === 'registro') {
+      return `¿Está seguro que desea eliminar el registro "${confirmModal.item?.nombre}"? Esta acción no se puede deshacer.`;
+    } else if (confirmModal.type === 'patente') {
+      return `¿Está seguro que desea eliminar la patente "${confirmModal.item?.numero}"? Esta acción no se puede deshacer.`;
+    }
+    return '';
   };
 
   return (
     <div className="trp-container">
+      {alert && (
+        <Alert 
+          type={alert.type}
+          message={alert.message}
+          onClose={() => setAlert(null)}
+        />
+      )}
+
+      <ConfirmModal 
+        isOpen={confirmModal.isOpen}
+        title={`Eliminar ${confirmModal.type === 'trabajo' ? 'Trabajo' : confirmModal.type === 'registro' ? 'Registro' : 'Patente'}`}
+        message={getConfirmMessage()}
+        type="danger"
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        onConfirm={handleConfirm}
+        onCancel={() => setConfirmModal({ isOpen: false, item: null, type: null })}
+      />
+
       {/* Sección de Trabajos */}
       <section className="trp-section">
         <div className="trp-header">

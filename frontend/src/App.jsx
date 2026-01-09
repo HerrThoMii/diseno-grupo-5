@@ -14,11 +14,13 @@ import AcercaDePage from './pages/AcercaDePage'
 import VerMemorias from './components/VerMemorias'
 import ResetPasswordPage from './pages/ResetPasswordPage'
 import { getUser } from './services/api';
+import Alert from './components/Alert';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userName, setUserName] = useState('nombre del usuario');
   const [userData, setUserData] = useState(null);
+  const [logoutAlert, setLogoutAlert] = useState(null);
 
   useEffect(() => {
     // Cargar datos del usuario desde localStorage al iniciar
@@ -50,6 +52,11 @@ function App() {
     setIsAuthenticated(false);
     setUserName('nombre del usuario');
     setUserData(null);
+    setLogoutAlert({ type: 'success', message: 'Sesión cerrada con éxito' });
+    // Limpiar la alerta después de 3 segundos
+    setTimeout(() => {
+      setLogoutAlert(null);
+    }, 3000);
   };
 
   const handleUpdateUserData = (newUserData) => {
@@ -68,6 +75,17 @@ function App() {
   if (!isAuthenticated) {
     return (
       <BrowserRouter>
+        {logoutAlert && (
+          <div style={{ position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%)', zIndex: 9999, width: '90%', maxWidth: '500px' }}>
+            <Alert 
+              type={logoutAlert.type}
+              message={logoutAlert.message}
+              onClose={() => setLogoutAlert(null)}
+              autoClose={true}
+              autoCloseDuration={3000}
+            />
+          </div>
+        )}
         <Routes>
           <Route path="/" element={<Login onLogin={handleLogin} />} />
           <Route path="/register" element={<Register onRegister={handleRegister} />} />
