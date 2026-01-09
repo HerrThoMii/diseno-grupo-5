@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Edit, Trash2 } from 'lucide-react';
 import AgregarGrupoModal from '../components/AgregarGrupoModal';
 import { crearGrupo, obtenerGrupos, actualizarGrupo, eliminarGrupo } from '../services/api';
+import ConfirmModal from '../components/ConfirmModal';
+import Alert from '../components/Alert';
 import './Page.css';
 import './GrupoPage.css';
 
@@ -10,6 +12,8 @@ function GrupoPage() {
   const [grupos, setGrupos] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [grupoToEdit, setGrupoToEdit] = useState(null);
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, id: null });
+  const [alert, setAlert] = useState(null);
 
   useEffect(() => {
     cargarGrupos();
@@ -46,32 +50,37 @@ function GrupoPage() {
             ? grupoActualizado
             : g
         ));
-        alert('Grupo actualizado exitosamente');
+        setAlert({ type: 'success', message: 'Grupo actualizado exitosamente' });
       } else {
         // Modo creación
         const nuevoGrupo = await crearGrupo(formData);
         console.log('Grupo creado exitosamente:', nuevoGrupo);
         setGrupos([...grupos, nuevoGrupo]);
-        alert('Grupo agregado exitosamente');
+        setAlert({ type: 'success', message: 'Grupo agregado exitosamente' });
       }
     } catch (error) {
       console.error('Error al guardar grupo:', error);
-      alert('Error al guardar el grupo: ' + (error.message || 'Error desconocido'));
+      setAlert({ type: 'error', message: 'Error al guardar el grupo: ' + (error.message || 'Error desconocido') });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleDeleteGrupo = async (id) => {
-    if (window.confirm('¿Está seguro de eliminar este grupo?')) {
-      try {
-        await eliminarGrupo(id);
-        setGrupos(grupos.filter(g => g.oidGrupoInvestigacion !== id));
-        alert('Grupo eliminado exitosamente');
-      } catch (error) {
-        console.error('Error al eliminar grupo:', error);
-        alert('Error al eliminar el grupo: ' + (error.message || 'Error desconocido'));
-      }
+  const handleDeleteGrupo = (id) => {
+    setConfirmModal({ isOpen: true, id });
+  };
+
+  const confirmDeleteGrupo = async () => {
+    const id = confirmModal.id;
+    setConfirmModal({ isOpen: false, id: null });
+    
+    try {
+      await eliminarGrupo(id);
+      setGrupos(grupos.filter(g => g.oidGrupoInvestigacion !== id));
+      setAlert({ type: 'success', message: 'Grupo eliminado exitosamente' });
+    } catch (error) {
+      console.error('Error al eliminar grupo:', error);
+      setAlert({ type: 'error', message: 'Error al eliminar el grupo: ' + (error.message || 'Error desconocido') });
     }
   };
 
@@ -85,6 +94,25 @@ function GrupoPage() {
 
   return (
     <div className="page-container">
+      {alert && (
+        <Alert 
+          type={alert.type}
+          message={alert.message}
+          onClose={() => setAlert(null)}
+        />
+      )}
+
+      <ConfirmModal 
+        isOpen={confirmModal.isOpen}
+        title="Eliminar Grupo"
+        message="¿Está seguro que desea eliminar este grupo? Esta acción no se puede deshacer."
+        type="danger"
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        onConfirm={confirmDeleteGrupo}
+        onCancel={() => setConfirmModal({ isOpen: false, id: null })}
+      />
+
       <div className="page-content">
         <div className="grupo-header">
           <h1>Agregar Grupo</h1>

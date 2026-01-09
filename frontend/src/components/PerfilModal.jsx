@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { X, User, Lock } from 'lucide-react';
 import './PerfilModal.css';
 import { getPerfil, actualizarPerfil, getUser } from '../services/api';
+import Alert from './Alert';
 
 const PerfilModal = ({ isOpen, onClose, userData, onUpdateUserData = () => {} }) => {
   const [formData, setFormData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [alert, setAlert] = useState(null);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -22,7 +23,7 @@ const PerfilModal = ({ isOpen, onClose, userData, onUpdateUserData = () => {} })
 
   const loadPerfil = async () => {
     setIsLoading(true);
-    setError(null);
+    setAlert(null);
     try {
       const user = getUser();
       if (user && user.oidpersona) {
@@ -34,7 +35,7 @@ const PerfilModal = ({ isOpen, onClose, userData, onUpdateUserData = () => {} })
       }
     } catch (err) {
       console.error('Error cargando perfil:', err);
-      setError('Error al cargar el perfil');
+      setAlert({ type: 'error', message: 'Error al cargar el perfil' });
       // Usar datos del userData como fallback
       setFormData(userData);
     } finally {
@@ -64,22 +65,23 @@ const PerfilModal = ({ isOpen, onClose, userData, onUpdateUserData = () => {} })
 
   const handleSave = async () => {
     setIsLoading(true);
-    setError(null);
+    setAlert(null);
     try {
       const user = getUser();
       if (user && user.oidpersona) {
         const response = await actualizarPerfil(user.oidpersona, formData);
         // Actualizar los datos del usuario en toda la aplicación
         onUpdateUserData(formData);
-        alert('Perfil actualizado correctamente');
-        onClose();
+        setAlert({ type: 'success', message: 'Perfil actualizado correctamente' });
+        setTimeout(() => {
+          onClose();
+        }, 1500);
       } else {
         throw new Error('No se encontró el ID del usuario');
       }
     } catch (err) {
       console.error('Error guardando perfil:', err);
-      setError(err.message || 'Error al guardar el perfil');
-      alert('Error al guardar el perfil: ' + (err.message || 'Error desconocido'));
+      setAlert({ type: 'error', message: err.message || 'Error al guardar el perfil' });
     } finally {
       setIsLoading(false);
     }
@@ -87,12 +89,12 @@ const PerfilModal = ({ isOpen, onClose, userData, onUpdateUserData = () => {} })
 
   const handlePasswordChange = () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      alert('Las contraseñas no coinciden');
+      setAlert({ type: 'error', message: 'Las contraseñas no coinciden' });
       return;
     }
     // TODO: Implementar cambio de contraseña en el backend
     console.log('Cambiando contraseña');
-    alert('Funcionalidad de cambio de contraseña en desarrollo');
+    setAlert({ type: 'info', message: 'Funcionalidad de cambio de contraseña en desarrollo' });
     setShowChangePassword(false);
     setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
   };
@@ -106,6 +108,14 @@ const PerfilModal = ({ isOpen, onClose, userData, onUpdateUserData = () => {} })
             <X size={24} />
           </button>
         </div>
+
+        {alert && (
+          <Alert 
+            type={alert.type}
+            message={alert.message}
+            onClose={() => setAlert(null)}
+          />
+        )}
 
         <div className="perfil-modal-body">
           {/* Información Personal */}

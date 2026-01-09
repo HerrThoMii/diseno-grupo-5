@@ -1,25 +1,32 @@
 import React, { useState } from 'react';
 import { X, Mail, AlertCircle, CheckCircle } from 'lucide-react';
+import Alert from './Alert';
 import './RecuperarPasswordModal.css';
 
 const RecuperarPasswordModal = ({ isOpen, onClose }) => {
   const [email, setEmail] = useState('');
-  const [error, setError] = useState('');
+  const [alert, setAlert] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setAlert(null);
 
     // Validar email
     if (!email) {
-      setError('El email es requerido');
+      setAlert({
+        type: 'warning',
+        message: 'El email es requerido'
+      });
       return;
     }
 
     if (!/\S+@\S+\.\S+/.test(email)) {
-      setError('El email no es válido');
+      setAlert({
+        type: 'warning',
+        message: 'Por favor ingresa un email válido'
+      });
       return;
     }
 
@@ -41,10 +48,17 @@ const RecuperarPasswordModal = ({ isOpen, onClose }) => {
       }
 
       console.log('Email de recuperación enviado:', data);
+      setAlert({
+        type: 'success',
+        message: '¡Email enviado exitosamente! Revisa tu bandeja de entrada.'
+      });
       setEmailSent(true);
     } catch (err) {
       console.error('Error:', err);
-      setError('Error al enviar el email. Intenta nuevamente.');
+      setAlert({
+        type: 'error',
+        message: err.message || 'Error al enviar el email. Por favor verifica que el correo esté registrado e intenta nuevamente.'
+      });
     } finally {
       setIsLoading(false);
     }
@@ -52,7 +66,7 @@ const RecuperarPasswordModal = ({ isOpen, onClose }) => {
 
   const handleClose = () => {
     setEmail('');
-    setError('');
+    setAlert(null);
     setEmailSent(false);
     onClose();
   };
@@ -74,6 +88,15 @@ const RecuperarPasswordModal = ({ isOpen, onClose }) => {
               <p>Ingresa tu email y te enviaremos un enlace para restablecer tu contraseña</p>
             </div>
 
+            {alert && !emailSent && (
+              <Alert 
+                type={alert.type}
+                message={alert.message}
+                onClose={() => setAlert(null)}
+                autoClose={false}
+              />
+            )}
+
             <form onSubmit={handleSubmit} className="rp-form">
               <div className="rp-form-group">
                 <label htmlFor="email">Email</label>
@@ -82,16 +105,10 @@ const RecuperarPasswordModal = ({ isOpen, onClose }) => {
                   id="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className={error ? 'error' : ''}
-                  placeholder="tu@email.com"
+                  className={alert && alert.type === 'warning' ? 'error' : ''}
+                  placeholder=""
                   disabled={isLoading}
                 />
-                {error && (
-                  <span className="rp-error">
-                    <AlertCircle size={16} />
-                    {error}
-                  </span>
-                )}
               </div>
 
               <div className="rp-modal-actions">

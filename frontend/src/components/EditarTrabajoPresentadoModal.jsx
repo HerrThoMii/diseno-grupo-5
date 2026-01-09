@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
+import Alert from './Alert';
 import './AgregarTrabajoModal.css';
 import { actualizarTrabajoPresentado, listarGrupos } from '../services/api';
 
@@ -16,7 +17,7 @@ export default function EditarTrabajoPresentadoModal({ isOpen, onClose, onUpdate
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
-  const [submitError, setSubmitError] = useState('');
+  const [alert, setAlert] = useState(null);
 
   useEffect(() => {
     let mounted = true;
@@ -70,9 +71,14 @@ export default function EditarTrabajoPresentadoModal({ isOpen, onClose, onUpdate
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!validate()) return;
+    setAlert(null);
+
+    if (!validate()) {
+      setAlert({ type: 'warning', message: 'Por favor complete todos los campos requeridos correctamente' });
+      return;
+    }
+
     setLoading(true);
-    setSubmitError('');
 
     const payload = {
       ciudad: formData.ciudad,
@@ -86,8 +92,11 @@ export default function EditarTrabajoPresentadoModal({ isOpen, onClose, onUpdate
 
     actualizarTrabajoPresentado(trabajoId, payload)
       .then(updated => {
-        if (onUpdate) onUpdate(updated);
-        onClose && onClose();
+        setAlert({ type: 'success', message: 'Trabajo actualizado correctamente' });
+        setTimeout(() => {
+          if (onUpdate) onUpdate(updated);
+          onClose && onClose();
+        }, 1500);
       })
       .catch(err => {
         let msg = err.message || 'Error al actualizar trabajo';
@@ -96,7 +105,7 @@ export default function EditarTrabajoPresentadoModal({ isOpen, onClose, onUpdate
           if (parsed.detail) msg = parsed.detail;
           else if (typeof parsed === 'object') msg = Object.entries(parsed).map(([k,v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`).join(' | ');
         } catch (e) {}
-        setSubmitError(msg);
+        setAlert({ type: 'error', message: msg });
       })
       .finally(() => setLoading(false));
   };
@@ -110,6 +119,14 @@ export default function EditarTrabajoPresentadoModal({ isOpen, onClose, onUpdate
           <h2>Editar Trabajo Presentado</h2>
           <button className="atm-close" onClick={onClose}><X size={24} /></button>
         </div>
+
+        {alert && (
+          <Alert 
+            type={alert.type}
+            message={alert.message}
+            onClose={() => setAlert(null)}
+          />
+        )}
 
         {loadingData && (
           <div style={{ padding: '10px', textAlign: 'center', color: '#666' }}>
@@ -182,8 +199,6 @@ export default function EditarTrabajoPresentadoModal({ isOpen, onClose, onUpdate
             </select>
             {errors.GrupoInvestigacion && <div className="atm-error">{errors.GrupoInvestigacion}</div>}
           </div>
-
-          {submitError && <div className="atm-submit-error">{submitError}</div>}
 
           <div className="atm-buttons">
             <button type="button" className="atm-btn-cancel" onClick={onClose} disabled={loading}>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
+import Alert from './Alert';
 import './AgregarTrabajoModal.css';
 import { crearTrabajoPresentado, listarGrupos } from '../services/api';
 
@@ -15,7 +16,7 @@ export default function AgregarTrabajoModal({ isOpen, onClose, onAdd }) {
   const [grupos, setGrupos] = useState([]);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const [submitError, setSubmitError] = useState('');
+  const [alert, setAlert] = useState(null);
 
   useEffect(() => {
     let mounted = true;
@@ -43,9 +44,15 @@ export default function AgregarTrabajoModal({ isOpen, onClose, onAdd }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!validate()) return;
+    setAlert(null);
+    if (!validate()) {
+      setAlert({
+        type: 'warning',
+        message: 'Por favor completa todos los campos requeridos correctamente.'
+      });
+      return;
+    }
     setLoading(true);
-    setSubmitError('');
 
     const payload = {
       ciudad: formData.ciudad,
@@ -68,6 +75,11 @@ export default function AgregarTrabajoModal({ isOpen, onClose, onAdd }) {
         };
         onAdd && onAdd(uiTrabajo);
         setFormData({ ciudad: '', fechaInicio: '', nombreReunion: '', tituloTrabajo: '', GrupoInvestigacion: '' });
+        setAlert({
+          type: 'success',
+          message: '¡Trabajo creado exitosamente!'
+        });
+        setTimeout(() => onClose(), 1500);
       })
       .catch(err => {
         let msg = err.message || 'Error al crear trabajo';
@@ -76,7 +88,10 @@ export default function AgregarTrabajoModal({ isOpen, onClose, onAdd }) {
           if (parsed.detail) msg = parsed.detail;
           else if (typeof parsed === 'object') msg = Object.entries(parsed).map(([k,v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`).join(' | ');
         } catch (e) {}
-        setSubmitError(msg);
+        setAlert({
+          type: 'error',
+          message: msg
+        });
       })
       .finally(() => setLoading(false));
   };
@@ -90,6 +105,15 @@ export default function AgregarTrabajoModal({ isOpen, onClose, onAdd }) {
           <h2>Agregar Trabajo Presentado</h2>
           <button className="atm-close" onClick={onClose}><X size={24} /></button>
         </div>
+
+        {alert && (
+          <Alert 
+            type={alert.type}
+            message={alert.message}
+            onClose={() => setAlert(null)}
+            autoClose={alert.type === 'success'}
+          />
+        )}
 
         <form className="atm-form" onSubmit={handleSubmit}>
           <div className="atm-form-group">
@@ -126,8 +150,6 @@ export default function AgregarTrabajoModal({ isOpen, onClose, onAdd }) {
             </select>
             {errors.GrupoInvestigacion && <div className="atm-error">{errors.GrupoInvestigacion}</div>}
           </div>
-
-          {submitError && <div className="atm-submit-error">{submitError}</div>}
 
           <div className="atm-buttons">
             <button type="button" className="atm-btn-cancel" onClick={onClose} disabled={loading}>Cancelar</button>

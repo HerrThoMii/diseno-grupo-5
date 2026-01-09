@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import './ContactoModal.css';
+import Alert from './Alert';
 
 function ContactoModal({ isOpen, onClose }) {
   const [formData, setFormData] = useState({
@@ -10,6 +11,7 @@ function ContactoModal({ isOpen, onClose }) {
     mensaje: ''
   });
   const [errors, setErrors] = useState({});
+  const [alert, setAlert] = useState(null);
 
   if (!isOpen) return null;
 
@@ -54,26 +56,32 @@ function ContactoModal({ isOpen, onClose }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setAlert(null);
     
     const newErrors = validate();
     
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
+      setAlert({ type: 'warning', message: 'Por favor complete todos los campos correctamente' });
       return;
     }
     
     // Aquí iría la lógica para enviar el formulario
     console.log('Enviando mensaje:', formData);
     
-    // Resetear formulario y cerrar modal
-    setFormData({
-      nombre: '',
-      email: '',
-      asunto: '',
-      mensaje: ''
-    });
-    setErrors({});
-    onClose();
+    setAlert({ type: 'success', message: 'Mensaje enviado correctamente' });
+    
+    // Resetear formulario y cerrar modal después de mostrar el mensaje
+    setTimeout(() => {
+      setFormData({
+        nombre: '',
+        email: '',
+        asunto: '',
+        mensaje: ''
+      });
+      setErrors({});
+      onClose();
+    }, 1500);
   };
 
   const handleCancel = () => {
@@ -97,6 +105,14 @@ function ContactoModal({ isOpen, onClose }) {
           </button>
         </div>
         
+        {alert && (
+          <Alert 
+            type={alert.type}
+            message={alert.message}
+            onClose={() => setAlert(null)}
+          />
+        )}
+
         <form className="contacto-form" onSubmit={handleSubmit}>
           <div className="contacto-form-group">
             <label htmlFor="nombre">Nombre *</label>

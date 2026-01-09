@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
+import Alert from './Alert';
 import './register.css';
 
 export default function Register({ onRegister = () => {} }) {
@@ -19,7 +20,7 @@ export default function Register({ onRegister = () => {} }) {
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [generalError, setGeneralError] = useState('');
+  const [alert, setAlert] = useState(null);
 
   // Cargar tipos de personal al montar el componente
   useEffect(() => {
@@ -94,12 +95,16 @@ export default function Register({ onRegister = () => {} }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setGeneralError('');
+    setAlert(null);
 
     console.log('Iniciando proceso de registro...');
 
     if (!validateForm()) {
       console.log('Validación del formulario falló');
+      setAlert({
+        type: 'warning',
+        message: 'Por favor completa todos los campos requeridos correctamente.'
+      });
       return;
     }
 
@@ -133,9 +138,13 @@ export default function Register({ onRegister = () => {} }) {
       console.log('Datos de respuesta:', data);
       
       if (response.ok) {
-        // Registro exitoso - guardar datos en localStorage si es necesario
+        // Registro exitoso
         console.log('Registro exitoso');
-        alert('¡Registro exitoso! Por favor inicia sesión con tu correo y contraseña.');
+        setAlert({
+          type: 'success',
+          message: '¡Registro exitoso! Serás redirigido al inicio de sesión...'
+        });
+        
         // Limpiar el formulario
         setFormData({
           nombre: '',
@@ -146,22 +155,33 @@ export default function Register({ onRegister = () => {} }) {
           password: '',
           confirmPassword: '',
         });
-        // Navegar al login
-        navigate('/');
+        
+        // Navegar al login después de 2 segundos
+        setTimeout(() => {
+          navigate('/');
+        }, 2000);
       } else {
         // Manejar diferentes tipos de errores del backend
         console.error('Error en el registro:', data);
+        let errorMessage = 'Error en el registro. Por favor intenta de nuevo.';
+        
         if (data.error) {
-          setGeneralError(data.error);
+          errorMessage = data.error;
         } else if (data.detail) {
-          setGeneralError(data.detail);
-        } else {
-          setGeneralError('Error en el registro. Por favor intenta de nuevo.');
+          errorMessage = data.detail;
         }
+        
+        setAlert({
+          type: 'error',
+          message: errorMessage
+        });
       }
     } catch (error) {
       console.error('Error al registrarse:', error);
-      setGeneralError('Error al conectar con el servidor. Verifica que el backend esté corriendo en http://localhost:8000');
+      setAlert({
+        type: 'error',
+        message: 'Error al conectar con el servidor. Verifica que el backend esté corriendo en http://localhost:8000'
+      });
     }
   };
 
@@ -170,7 +190,13 @@ export default function Register({ onRegister = () => {} }) {
       <div className="register-card">
         <h2>Registrarse</h2>
         
-        {generalError && <div className="general-error">{generalError}</div>}
+        {alert && (
+          <Alert 
+            type={alert.type}
+            message={alert.message}
+            onClose={() => setAlert(null)}
+          />
+        )}
 
         <form className="register-form" onSubmit={handleSubmit}>
           <div className="register-form-group">

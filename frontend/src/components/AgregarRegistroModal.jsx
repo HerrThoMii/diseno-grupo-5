@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
+import Alert from './Alert';
 import './AgregarRegistroModal.css';
 import { crearRegistro, listarPatentes, listarTipoRegistros } from '../services/api';
 
@@ -12,7 +13,7 @@ export default function AgregarRegistroModal({ isOpen, onClose, onRegistroCreado
 
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const [submitError, setSubmitError] = useState('');
+  const [alert, setAlert] = useState(null);
   const [patentes, setPatentes] = useState([]);
   const [tipoRegistros, setTipoRegistros] = useState([]);
 
@@ -84,13 +85,17 @@ export default function AgregarRegistroModal({ isOpen, onClose, onRegistroCreado
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setAlert(null);
 
     if (!validateForm()) {
+      setAlert({
+        type: 'warning',
+        message: 'Por favor completa todos los campos requeridos correctamente.'
+      });
       return;
     }
 
     setLoading(true);
-    setSubmitError('');
     try {
       // Build payload matching backend model: { descripcion, TipoDeRegistro, Patente }
       const payload = {
@@ -108,7 +113,10 @@ export default function AgregarRegistroModal({ isOpen, onClose, onRegistroCreado
       // API uses model fields; primary key may be `oidRegistro` or `id`
       const createdId = created?.oidRegistro ?? created?.id;
       if (!created || createdId === undefined) {
-        setSubmitError('No se pudo crear el registro');
+        setAlert({
+          type: 'error',
+          message: 'No se pudo crear el registro'
+        });
       } else {
         // Map backend object to UI-friendly shape expected by parent
         // Resolve display names for tipo and patente if possible
@@ -131,6 +139,13 @@ export default function AgregarRegistroModal({ isOpen, onClose, onRegistroCreado
           TipoDeRegistro: '',
           Patente: ''
         });
+        setAlert({
+          type: 'success',
+          message: '¡Registro creado exitosamente!'
+        });
+        setTimeout(() => {
+          onClose();
+        }, 1500);
       }
     } catch (err) {
       // Try to parse backend validation errors if present
@@ -151,7 +166,10 @@ export default function AgregarRegistroModal({ isOpen, onClose, onRegistroCreado
       } catch (e) {
         // not JSON, keep original message
       }
-      setSubmitError(msg);
+      setAlert({
+        type: 'error',
+        message: msg
+      });
     } finally {
       setLoading(false);
     }
@@ -168,6 +186,15 @@ export default function AgregarRegistroModal({ isOpen, onClose, onRegistroCreado
             <X size={24} />
           </button>
         </div>
+
+        {alert && (
+          <Alert 
+            type={alert.type}
+            message={alert.message}
+            onClose={() => setAlert(null)}
+            autoClose={alert.type === 'success'}
+          />
+        )}
 
         <form onSubmit={handleSubmit} className="arm-form">
           <div className="arm-form-group">
@@ -228,7 +255,6 @@ export default function AgregarRegistroModal({ isOpen, onClose, onRegistroCreado
               {loading ? 'Creando...' : 'Agregar Registro'}
             </button>
           </div>
-          {submitError && <div className="arm-submit-error">{submitError}</div>}
         </form>
       </div>
     </div>
