@@ -41,7 +41,7 @@ function AcercaDePage() {
             <div className="contact-info">
               <p><strong>Comisión:</strong> S32</p>
               <p><strong>Materia:</strong> Diseño de Sistemas de Información</p>
-              <p><strong>Contacto:</strong> equipo.s32@frlp.utn.edu.ar</p>
+              <p><strong>Contacto:</strong> grupo5disenioutn@gmail.com</p>
             </div>
           </section>
 

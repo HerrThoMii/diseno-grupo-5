@@ -57,8 +57,8 @@ export default function Register({ onRegister = () => {} }) {
 
     if (!formData.horasSemanales) {
       newErrors.horasSemanales = 'Las horas semanales son requeridas';
-    } else if (isNaN(formData.horasSemanales) || formData.horasSemanales < 1 || formData.horasSemanales > 168) {
-      newErrors.horasSemanales = 'Ingrese un número válido entre 1 y 168';
+    } else if (isNaN(formData.horasSemanales) || formData.horasSemanales < 1 || formData.horasSemanales > 48) {
+      newErrors.horasSemanales = 'Ingrese un número válido entre 1 y 48';
     }
 
     if (!formData.password) {
@@ -96,9 +96,14 @@ export default function Register({ onRegister = () => {} }) {
     e.preventDefault();
     setGeneralError('');
 
+    console.log('Iniciando proceso de registro...');
+
     if (!validateForm()) {
+      console.log('Validación del formulario falló');
       return;
     }
+
+    console.log('Formulario validado correctamente');
 
     try {
       const requestBody = {
@@ -114,23 +119,49 @@ export default function Register({ onRegister = () => {} }) {
         requestBody.tipoDePersonal = parseInt(formData.tipoDePersonal);
       }
 
+      console.log('Enviando solicitud al servidor:', requestBody);
+
       const response = await fetch('http://localhost:8000/api/auth/register/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestBody)
       });
       
+      console.log('Respuesta del servidor:', response.status);
+
       const data = await response.json();
+      console.log('Datos de respuesta:', data);
       
       if (response.ok) {
-        alert('Registro exitoso. Por favor inicia sesión.');
+        // Registro exitoso - guardar datos en localStorage si es necesario
+        console.log('Registro exitoso');
+        alert('¡Registro exitoso! Por favor inicia sesión con tu correo y contraseña.');
+        // Limpiar el formulario
+        setFormData({
+          nombre: '',
+          apellido: '',
+          email: '',
+          horasSemanales: '',
+          tipoDePersonal: '',
+          password: '',
+          confirmPassword: '',
+        });
+        // Navegar al login
         navigate('/');
       } else {
-        setGeneralError(data.error || 'Error en el registro');
+        // Manejar diferentes tipos de errores del backend
+        console.error('Error en el registro:', data);
+        if (data.error) {
+          setGeneralError(data.error);
+        } else if (data.detail) {
+          setGeneralError(data.detail);
+        } else {
+          setGeneralError('Error en el registro. Por favor intenta de nuevo.');
+        }
       }
     } catch (error) {
       console.error('Error al registrarse:', error);
-      setGeneralError('Error al conectar con el servidor. Intenta de nuevo.');
+      setGeneralError('Error al conectar con el servidor. Verifica que el backend esté corriendo en http://localhost:8000');
     }
   };
 
@@ -150,7 +181,7 @@ export default function Register({ onRegister = () => {} }) {
               name="nombre"
               value={formData.nombre}
               onChange={handleChange}
-              placeholder="Juan"
+              placeholder=""
               className={errors.nombre ? 'error' : ''}
             />
             {errors.nombre && <span className="error-message">{errors.nombre}</span>}
@@ -164,7 +195,7 @@ export default function Register({ onRegister = () => {} }) {
               name="apellido"
               value={formData.apellido}
               onChange={handleChange}
-              placeholder="Pérez"
+              placeholder=""
               className={errors.apellido ? 'error' : ''}
             />
             {errors.apellido && <span className="error-message">{errors.apellido}</span>}
@@ -178,23 +209,23 @@ export default function Register({ onRegister = () => {} }) {
               name="email"
               value={formData.email}
               onChange={handleChange}
-              placeholder="tu@email.com"
+              placeholder=""
               className={errors.email ? 'error' : ''}
             />
             {errors.email && <span className="error-message">{errors.email}</span>}
           </div>
 
           <div className="register-form-group">
-            <label htmlFor="horasSemanales">Horas Semanales de Dedicación</label>
+            <label htmlFor="horasSemanales">Horas Semanales de Dedicación (1-48)</label>
             <input
               type="number"
               id="horasSemanales"
               name="horasSemanales"
               value={formData.horasSemanales}
               onChange={handleChange}
-              placeholder="40"
+              placeholder=""
               min="1"
-              max="168"
+              max="48"
               className={errors.horasSemanales ? 'error' : ''}
             />
             {errors.horasSemanales && <span className="error-message">{errors.horasSemanales}</span>}
@@ -228,7 +259,7 @@ export default function Register({ onRegister = () => {} }) {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                placeholder="••••••••"
+                placeholder=""
                 className={errors.password ? 'error' : ''}
               />
               <button
@@ -252,7 +283,7 @@ export default function Register({ onRegister = () => {} }) {
                 name="confirmPassword"
                 value={formData.confirmPassword}
                 onChange={handleChange}
-                placeholder="••••••••"
+                placeholder=""
                 className={errors.confirmPassword ? 'error' : ''}
               />
               <button
