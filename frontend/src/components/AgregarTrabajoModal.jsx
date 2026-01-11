@@ -123,8 +123,8 @@ export default function AgregarTrabajoModal({ isOpen, onClose, onAdd }) {
           </div>
 
           <div className="atm-form-group">
-            <label htmlFor="fechaInicio">Fecha y hora inicio</label>
-            <input id="fechaInicio" name="fechaInicio" type="datetime-local" value={formData.fechaInicio} onChange={handleChange} className={errors.fechaInicio ? 'error' : ''} />
+            <label htmlFor="fechaInicio">Fecha de inicio</label>
+            <input id="fechaInicio" name="fechaInicio" type="date" value={formData.fechaInicio} onChange={handleChange} className={errors.fechaInicio ? 'error' : ''} />
             {errors.fechaInicio && <div className="atm-error">{errors.fechaInicio}</div>}
           </div>
 

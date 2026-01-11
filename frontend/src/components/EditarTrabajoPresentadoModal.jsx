@@ -45,11 +45,13 @@ export default function EditarTrabajoPresentadoModal({ isOpen, onClose, onUpdate
     if (trabajo && isOpen) {
       setFormData({
         ciudad: trabajo.ciudad || '',
-        fechaInicio: trabajo.fechaInicio ? trabajo.fechaInicio.slice(0, 16) : '',
+        fechaInicio: trabajo.fechaInicio ? trabajo.fechaInicio.slice(0, 10) : '',
         nombreReunion: trabajo.nombreReunion || '',
         tituloTrabajo: trabajo.tituloTrabajo || '',
         GrupoInvestigacion: trabajo.GrupoInvestigacion || ''
       });
+      setAlert(null); // Limpiar alertas al abrir el modal
+      setErrors({}); // Limpiar errores al abrir el modal
     }
   }, [trabajo, isOpen]);
 
@@ -162,7 +164,7 @@ export default function EditarTrabajoPresentadoModal({ isOpen, onClose, onUpdate
           <div className="atm-form-group">
             <label htmlFor="fechaInicio">Fecha de Inicio</label>
             <input 
-              type="datetime-local" 
+              type="date" 
               id="fechaInicio" 
               name="fechaInicio" 
               value={formData.fechaInicio} 

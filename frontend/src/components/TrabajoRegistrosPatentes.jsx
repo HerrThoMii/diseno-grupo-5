@@ -70,10 +70,20 @@ const TrabajoRegistrosPatentes = () => {
         const patentesArrRaw = Array.isArray(patentesData) ? patentesData : [];
         const tiposArr = Array.isArray(tiposData) ? tiposData : [];
 
+        // Función para formatear fecha al estilo argentino (DD/MM/AAAA)
+        const formatearFecha = (fechaISO) => {
+          if (!fechaISO) return '';
+          const fecha = new Date(fechaISO);
+          const dia = String(fecha.getDate()).padStart(2, '0');
+          const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+          const anio = fecha.getFullYear();
+          return `${dia}/${mes}/${anio}`;
+        };
+
         const trabajosMapped = trabajosArrRaw.map(t => ({
           id: t?.oidTrabajoPresentado ?? t?.id,
           ciudad: t?.ciudad ?? '',
-          fechaInicio: t?.fechaInicio ? String(t.fechaInicio).slice(0, 16) : '',
+          fechaInicio: formatearFecha(t?.fechaInicio),
           nombreReunion: t?.nombreReunion ?? '',
           tituloTrabajo: t?.tituloTrabajo ?? '',
           raw: t

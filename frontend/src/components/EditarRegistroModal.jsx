@@ -49,6 +49,8 @@ export default function EditarRegistroModal({ isOpen, onClose, onUpdate, registr
         TipoDeRegistro: registro.TipoDeRegistro || '',
         Patente: registro.Patente || ''
       });
+      setAlert(null); // Limpiar alertas al abrir el modal
+      setErrors({}); // Limpiar errores al abrir el modal
     }
   }, [registro, isOpen]);
 
@@ -188,8 +190,6 @@ export default function EditarRegistroModal({ isOpen, onClose, onUpdate, registr
             />
             {errors.descripcion && <span className="arm-error">{errors.descripcion}</span>}
           </div>
-
-          {submitError && <div className="arm-submit-error">{submitError}</div>}
 
           <div className="arm-buttons">
             <button type="button" className="arm-btn-cancel" onClick={onClose} disabled={loading}>

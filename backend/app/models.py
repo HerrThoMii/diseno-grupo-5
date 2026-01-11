@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.validators import MinValueValidator
 
 
 class ProgramaActividades(models.Model):
@@ -128,7 +129,7 @@ class Persona(models.Model):
     apellido = models.CharField(max_length=45)
     correo = models.EmailField(unique=True)
     contrasena = models.CharField(max_length=128)
-    horasSemanales = models.IntegerField()
+    horasSemanales = models.IntegerField(validators=[MinValueValidator(0, message="Las horas semanales no pueden ser negativas")])
     tipoDePersonal = models.ForeignKey(TipoDePersonal, on_delete=models.SET_NULL, null=True, blank=True)
     GrupoInvestigacion = models.ForeignKey(
         GrupoInvestigacion, on_delete=models.CASCADE, null=True, blank=True

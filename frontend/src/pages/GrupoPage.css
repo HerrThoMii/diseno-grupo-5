@@ -148,6 +148,65 @@
   color: #666;
 }
 
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 32px;
+  padding: 20px 0;
+}
+
+.pagination-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid #d4b5e0;
+  background-color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #666;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background-color: #e8d4f8;
+  border-color: #c9a0d8;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pagination-number {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid #d4b5e0;
+  background-color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #666;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.pagination-number:hover {
+  background-color: #e8d4f8;
+  border-color: #c9a0d8;
+}
+
+.pagination-number.active {
+  background-color: #e8d4f8;
+  border-color: #c9a0d8;
+  color: #333;
+  font-weight: 600;
+}
+
 @media (max-width: 768px) {
   .grupo-header {
     flex-direction: column;

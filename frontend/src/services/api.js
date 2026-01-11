@@ -146,6 +146,47 @@ export const actualizarPerfil = async (oidpersona, perfilData) => {
   }
 };
 
+// Función para cambiar contraseña
+export const cambiarContrasena = async (oidpersona, passwordData) => {
+  const token = getAccessToken();
+  
+  console.log('=== API: cambiarContrasena ===');
+  console.log('oidpersona:', oidpersona);
+  console.log('passwordData keys:', Object.keys(passwordData));
+  console.log('URL:', `${API_BASE_URL}/auth/perfil/${oidpersona}/cambiar-contrasena/`);
+  
+  if (!token) {
+    throw new Error('No hay sesión activa');
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/perfil/${oidpersona}/cambiar-contrasena/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(passwordData)
+    });
+
+    console.log('Response status:', response.status);
+    console.log('Response ok:', response.ok);
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Error response:', errorData);
+      throw new Error(errorData.error || 'Error al cambiar la contraseña');
+    }
+
+    const data = await response.json();
+    console.log('Success response:', data);
+    return data;
+  } catch (error) {
+    console.error('Error cambiando contraseña:', error);
+    throw error;
+  }
+};
+
 // Función para obtener opciones de perfil
 export const getOpcionesPerfil = async () => {
   try {

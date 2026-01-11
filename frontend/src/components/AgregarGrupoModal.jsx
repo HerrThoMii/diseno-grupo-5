@@ -140,9 +140,39 @@ const AgregarGrupoModal = ({ isOpen, onClose, onSubmit, grupoToEdit = null }) =>
         onClose();
       }, 1500);
     } catch (error) {
+      let errorMessage = 'Error al guardar el grupo. Por favor intenta nuevamente.';
+      const fieldErrors = {};
+      
+      // Intentar parsear el error del backend
+      if (error.message) {
+        try {
+          const errorData = JSON.parse(error.message);
+          
+          if (errorData.nombre) {
+            fieldErrors.nombreGrupo = 'El nombre del grupo ya está registrado';
+          }
+          if (errorData.correo) {
+            fieldErrors.correo = 'El correo electrónico ya está registrado';
+          }
+          if (errorData.sigla) {
+            fieldErrors.siglasGrupo = 'Las siglas del grupo ya están registradas';
+          }
+          
+          if (Object.keys(fieldErrors).length > 0) {
+            setErrors(fieldErrors);
+            errorMessage = 'Ya existe un grupo con estos datos';
+          } else if (errorData.detail) {
+            errorMessage = errorData.detail;
+          }
+        } catch (e) {
+          // Si no es JSON, usar el mensaje tal cual
+          errorMessage = error.message;
+        }
+      }
+      
       setAlert({
         type: 'error',
-        message: error.message || 'Error al guardar el grupo. Por favor intenta nuevamente.'
+        message: errorMessage
       });
     }
   };
@@ -201,7 +231,6 @@ const AgregarGrupoModal = ({ isOpen, onClose, onSubmit, grupoToEdit = null }) =>
               />
               {errors.correo && (
                 <span className="error-message">
-                  <span className="error-icon">ⓘ</span>
                   {errors.correo}
                 </span>
               )}
@@ -220,7 +249,6 @@ const AgregarGrupoModal = ({ isOpen, onClose, onSubmit, grupoToEdit = null }) =>
               />
               {errors.nombreGrupo && (
                 <span className="error-message">
-                  <span className="error-icon">ⓘ</span>
                   {errors.nombreGrupo}
                 </span>
               )}
@@ -239,7 +267,6 @@ const AgregarGrupoModal = ({ isOpen, onClose, onSubmit, grupoToEdit = null }) =>
               />
               {errors.siglasGrupo && (
                 <span className="error-message">
-                  <span className="error-icon">ⓘ</span>
                   {errors.siglasGrupo}
                 </span>
               )}
@@ -265,7 +292,6 @@ const AgregarGrupoModal = ({ isOpen, onClose, onSubmit, grupoToEdit = null }) =>
               </div>
               {errors.facultad && (
                 <span className="error-message">
-                  <span className="error-icon">ⓘ</span>
                   {errors.facultad}
                 </span>
               )}
@@ -289,7 +315,6 @@ const AgregarGrupoModal = ({ isOpen, onClose, onSubmit, grupoToEdit = null }) =>
               </div>
               {errors.financiamiento && (
                 <span className="error-message">
-                  <span className="error-icon">ⓘ</span>
                   {errors.financiamiento}
                 </span>
               )}
@@ -308,7 +333,6 @@ const AgregarGrupoModal = ({ isOpen, onClose, onSubmit, grupoToEdit = null }) =>
               />
               {errors.objetivos && (
                 <span className="error-message">
-                  <span className="error-icon">ⓘ</span>
                   {errors.objetivos}
                 </span>
               )}

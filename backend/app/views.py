@@ -242,6 +242,73 @@ def eliminar_persona(request, oidpersona):
             {'error': 'Persona no encontrada'},
             status=status.HTTP_404_NOT_FOUND
         )
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def cambiar_contrasena(request, oidpersona):
+    print(f"=== CAMBIAR CONTRASEÑA - Inicio ===")
+    print(f"oidpersona recibido: {oidpersona}")
+    print(f"Datos recibidos: {request.data}")
+    
+    try:
+        persona = Persona.objects.get(oidpersona=oidpersona)
+        print(f"Persona encontrada: {persona.correo}")
+        print(f"Contraseña actual hasheada: {persona.contrasena[:20]}...")
+    except Persona.DoesNotExist:
+        print(f"ERROR: Persona con oidpersona={oidpersona} no encontrada")
+        return Response(
+            {'error': 'Persona no encontrada'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    contrasena_actual = request.data.get('currentPassword')
+    contrasena_nueva = request.data.get('newPassword')
+    
+    print(f"Contraseña actual recibida: {'***' if contrasena_actual else 'None'}")
+    print(f"Contraseña nueva recibida: {'***' if contrasena_nueva else 'None'}")
+    
+    if not contrasena_actual or not contrasena_nueva:
+        print("ERROR: Faltan contraseñas")
+        return Response(
+            {'error': 'Contraseña actual y nueva contraseña son requeridas'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Verificar que la contraseña actual sea correcta
+    password_check = check_password(contrasena_actual, persona.contrasena)
+    print(f"Verificación de contraseña actual: {password_check}")
+    
+    if not password_check:
+        print("ERROR: La contraseña actual es incorrecta")
+        return Response(
+            {'error': 'La contraseña actual es incorrecta'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Validar longitud de la nueva contraseña
+    if len(contrasena_nueva) < 6:
+        print(f"ERROR: Contraseña nueva muy corta: {len(contrasena_nueva)} caracteres")
+        return Response(
+            {'error': 'La nueva contraseña debe tener al menos 6 caracteres'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Actualizar contraseña
+    print("Actualizando contraseña...")
+    nueva_contrasena_hasheada = make_password(contrasena_nueva)
+    print(f"Nueva contraseña hasheada: {nueva_contrasena_hasheada[:20]}...")
+    persona.contrasena = nueva_contrasena_hasheada
+    persona.save()
+    print("Contraseña guardada en base de datos")
+    
+    # Verificar que se guardó correctamente
+    persona.refresh_from_db()
+    print(f"Contraseña en BD después de guardar: {persona.contrasena[:20]}...")
+    
+    print("=== CAMBIAR CONTRASEÑA - Éxito ===")
+    return Response({
+        'mensaje': 'Contraseña actualizada exitosamente'
+    }, status=status.HTTP_200_OK)
     
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])

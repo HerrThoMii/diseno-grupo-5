@@ -18,6 +18,14 @@ export default function AgregarPatenteModal({ isOpen, onClose, onAdd }) {
 
   const [errors, setErrors] = useState({});
 
+  // Limpiar alertas y errores al abrir el modal
+  useEffect(() => {
+    if (isOpen) {
+      setAlert(null);
+      setErrors({});
+    }
+  }, [isOpen]);
+
   const tiposPatente = ['Patente Activa', 'Patente en Trámite', 'Patente Expirada'];
 
   const handleChange = (e) => {
@@ -47,6 +55,8 @@ export default function AgregarPatenteModal({ isOpen, onClose, onAdd }) {
 
     if (!formData.inventor.trim()) {
       newErrors.inventor = 'El nombre del inventor es requerido';
+    } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s.,-]+$/.test(formData.inventor)) {
+      newErrors.inventor = 'Solo se permiten letras, espacios y signos de puntuación básicos';
     }
 
     setErrors(newErrors);

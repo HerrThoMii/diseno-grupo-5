@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, User, Lock } from 'lucide-react';
+import { X, User, Lock, Eye, EyeOff } from 'lucide-react';
 import './PerfilModal.css';
-import { getPerfil, actualizarPerfil, getUser } from '../services/api';
+import { getPerfil, actualizarPerfil, getUser, cambiarContrasena } from '../services/api';
 import Alert from './Alert';
 
 const PerfilModal = ({ isOpen, onClose, userData, onUpdateUserData = () => {} }) => {
@@ -13,6 +13,11 @@ const PerfilModal = ({ isOpen, onClose, userData, onUpdateUserData = () => {} })
     currentPassword: '',
     newPassword: '',
     confirmPassword: ''
+  });
+  const [showPasswords, setShowPasswords] = useState({
+    current: false,
+    new: false,
+    confirm: false
   });
 
   useEffect(() => {
@@ -45,16 +50,6 @@ const PerfilModal = ({ isOpen, onClose, userData, onUpdateUserData = () => {} })
 
   if (!isOpen) return null;
   
-  if (isLoading) {
-    return (
-      <div className="perfil-modal-overlay" onClick={onClose}>
-        <div className="perfil-modal-content" onClick={(e) => e.stopPropagation()}>
-          <div className="perfil-loading">Cargando perfil...</div>
-        </div>
-      </div>
-    );
-  }
-
   if (!formData) return null;
 
   const user = formData;
@@ -73,9 +68,8 @@ const PerfilModal = ({ isOpen, onClose, userData, onUpdateUserData = () => {} })
         // Actualizar los datos del usuario en toda la aplicación
         onUpdateUserData(formData);
         setAlert({ type: 'success', message: 'Perfil actualizado correctamente' });
-        setTimeout(() => {
-          onClose();
-        }, 1500);
+        // Cerrar inmediatamente
+        onClose();
       } else {
         throw new Error('No se encontró el ID del usuario');
       }
@@ -87,16 +81,70 @@ const PerfilModal = ({ isOpen, onClose, userData, onUpdateUserData = () => {} })
     }
   };
 
-  const handlePasswordChange = () => {
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setAlert({ type: 'error', message: 'Las contraseñas no coinciden' });
+  const handlePasswordChange = async () => {
+    setAlert(null);
+    
+    console.log('=== CAMBIO DE CONTRASEÑA - Inicio ===');
+    console.log('Datos del formulario:', {
+      currentPasswordLength: passwordData.currentPassword.length,
+      newPasswordLength: passwordData.newPassword.length,
+      confirmPasswordLength: passwordData.confirmPassword.length
+    });
+    
+    if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
+      setAlert({ type: 'error', message: 'Todos los campos de contraseña son requeridos' });
       return;
     }
-    // TODO: Implementar cambio de contraseña en el backend
-    console.log('Cambiando contraseña');
-    setAlert({ type: 'info', message: 'Funcionalidad de cambio de contraseña en desarrollo' });
-    setShowChangePassword(false);
-    setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    
+    if (passwordData.currentPassword === passwordData.newPassword) {
+      setAlert({ type: 'error', message: 'La nueva contraseña debe ser diferente a la actual' });
+      return;
+    }
+    
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setAlert({ type: 'error', message: 'Las contraseñas nuevas no coinciden' });
+      return;
+    }
+    
+    if (passwordData.newPassword.length < 6) {
+      setAlert({ type: 'error', message: 'La nueva contraseña debe tener al menos 6 caracteres' });
+      return;
+    }
+    
+    setIsLoading(true);
+    
+    try {
+      const user = getUser();
+      if (!user || !user.oidpersona) {
+        throw new Error('No se encontró el ID del usuario');
+      }
+      
+      console.log('Cambiando contraseña para usuario:', user.oidpersona);
+      console.log('Enviando datos al backend...');
+      
+      const response = await cambiarContrasena(user.oidpersona, {
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword
+      });
+      
+      console.log('Respuesta del backend:', response);
+      console.log('=== CAMBIO DE CONTRASEÑA - Éxito ===');
+      
+      setAlert({ type: 'success', message: '¡Contraseña actualizada exitosamente!' });
+      setShowChangePassword(false);
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setShowPasswords({ current: false, new: false, confirm: false });
+      
+      setTimeout(() => {
+        setAlert(null);
+      }, 3000);
+    } catch (err) {
+      console.error('=== CAMBIO DE CONTRASEÑA - Error ===');
+      console.error('Error al cambiar contraseña:', err);
+      setAlert({ type: 'error', message: err.message || 'Error al cambiar la contraseña' });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -166,37 +214,74 @@ const PerfilModal = ({ isOpen, onClose, userData, onUpdateUserData = () => {} })
                   <div className="password-grid">
                     <div className="password-field">
                       <label>Contraseña Actual</label>
-                      <input
-                        type="password"
-                        value={passwordData.currentPassword}
-                        className="perfil-input"
-                        onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                      />
+                      <div className="password-input-wrapper">
+                        <input
+                          type={showPasswords.current ? "text" : "password"}
+                          value={passwordData.currentPassword}
+                          className="perfil-input"
+                          onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                        />
+                        <button
+                          type="button"
+                          className="password-toggle-btn"
+                          onClick={() => setShowPasswords({ ...showPasswords, current: !showPasswords.current })}
+                        >
+                          {showPasswords.current ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
+                      </div>
                     </div>
                     <div className="password-field">
                       <label>Nueva Contraseña</label>
-                      <input
-                        type="password"
-                        value={passwordData.newPassword}
-                        className="perfil-input"
-                        onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                      />
+                      <div className="password-input-wrapper">
+                        <input
+                          type={showPasswords.new ? "text" : "password"}
+                          value={passwordData.newPassword}
+                          className="perfil-input"
+                          onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                        />
+                        <button
+                          type="button"
+                          className="password-toggle-btn"
+                          onClick={() => setShowPasswords({ ...showPasswords, new: !showPasswords.new })}
+                        >
+                          {showPasswords.new ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
+                      </div>
                     </div>
                     <div className="password-field">
                       <label>Confirmar Contraseña</label>
-                      <input
-                        type="password"
-                        value={passwordData.confirmPassword}
-                        className="perfil-input"
-                        onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                      />
+                      <div className="password-input-wrapper">
+                        <input
+                          type={showPasswords.confirm ? "text" : "password"}
+                          value={passwordData.confirmPassword}
+                          className="perfil-input"
+                          onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                        />
+                        <button
+                          type="button"
+                          className="password-toggle-btn"
+                          onClick={() => setShowPasswords({ ...showPasswords, confirm: !showPasswords.confirm })}
+                        >
+                          {showPasswords.confirm ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
+                      </div>
                     </div>
                     <div className="password-actions">
-                      <button className="btn-password-cancel" onClick={() => setShowChangePassword(false)}>
+                      <button 
+                        type="button"
+                        className="btn-password-cancel" 
+                        onClick={() => setShowChangePassword(false)}
+                        disabled={isLoading}
+                      >
                         Cancelar
                       </button>
-                      <button className="btn-password-save" onClick={handlePasswordChange}>
-                        Guardar Contraseña
+                      <button 
+                        type="button"
+                        className="btn-password-save" 
+                        onClick={handlePasswordChange}
+                        disabled={isLoading}
+                      >
+                        {isLoading ? 'Guardando...' : 'Guardar Contraseña'}
                       </button>
                     </div>
                   </div>

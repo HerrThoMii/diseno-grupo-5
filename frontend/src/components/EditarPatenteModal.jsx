@@ -52,6 +52,8 @@ export default function EditarPatenteModal({ isOpen, onClose, onUpdate, patente 
         inventor: patente.inventor || '',
         GrupoInvestigacion: patente.GrupoInvestigacion || ''
       });
+      setAlert(null); // Limpiar alertas al abrir el modal
+      setErrors({}); // Limpiar errores al abrir el modal
     }
   }, [patente, isOpen]);
 
@@ -67,6 +69,9 @@ export default function EditarPatenteModal({ isOpen, onClose, onUpdate, patente 
     if (!formData.descripcion.trim()) newErrors.descripcion = 'La descripción es requerida';
     if (!formData.tipo) newErrors.tipo = 'Seleccione un tipo de patente';
     if (!formData.GrupoInvestigacion) newErrors.GrupoInvestigacion = 'Seleccione un grupo';
+    if (formData.inventor && formData.inventor.trim() && !/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s.,-]+$/.test(formData.inventor)) {
+      newErrors.inventor = 'Solo se permiten letras, espacios y signos de puntuación básicos';
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };

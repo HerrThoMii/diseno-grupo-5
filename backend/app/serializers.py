@@ -159,6 +159,13 @@ class PersonaSerializer(serializers.ModelSerializer):
             'tipoDePersonalNombre',
             'GrupoInvestigacion'
         ]
+        # La contraseña se incluye al leer pero nunca se actualiza via este serializer
+        read_only_fields = ['contrasena']
+    
+    def validate_horasSemanales(self, value):
+        if value < 0:
+            raise serializers.ValidationError("Las horas semanales no pueden ser negativas")
+        return value
 
 
 class ActividadDocenteSerializer(serializers.ModelSerializer):

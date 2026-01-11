@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import AgregarGrupoModal from '../components/AgregarGrupoModal';
 import { crearGrupo, obtenerGrupos, actualizarGrupo, eliminarGrupo } from '../services/api';
 import ConfirmModal from '../components/ConfirmModal';
@@ -14,6 +14,8 @@ function GrupoPage() {
   const [grupoToEdit, setGrupoToEdit] = useState(null);
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, id: null });
   const [alert, setAlert] = useState(null);
+  const [paginaActual, setPaginaActual] = useState(1);
+  const gruposPorPagina = 6;
 
   useEffect(() => {
     cargarGrupos();
@@ -50,17 +52,18 @@ function GrupoPage() {
             ? grupoActualizado
             : g
         ));
-        setAlert({ type: 'success', message: 'Grupo actualizado exitosamente' });
+        // No mostrar alerta aquí, se muestra dentro del modal
       } else {
         // Modo creación
         const nuevoGrupo = await crearGrupo(formData);
         console.log('Grupo creado exitosamente:', nuevoGrupo);
         setGrupos([...grupos, nuevoGrupo]);
-        setAlert({ type: 'success', message: 'Grupo agregado exitosamente' });
+        // No mostrar alerta aquí, se muestra dentro del modal
       }
     } catch (error) {
       console.error('Error al guardar grupo:', error);
-      setAlert({ type: 'error', message: 'Error al guardar el grupo: ' + (error.message || 'Error desconocido') });
+      // Re-lanzar el error para que el modal lo maneje
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -76,7 +79,17 @@ function GrupoPage() {
     
     try {
       await eliminarGrupo(id);
-      setGrupos(grupos.filter(g => g.oidGrupoInvestigacion !== id));
+      const gruposActualizados = grupos.filter(g => g.oidGrupoInvestigacion !== id);
+      setGrupos(gruposActualizados);
+      
+      // Ajustar la página actual si se quedó vacía después de eliminar
+      const totalPaginasNuevo = Math.ceil(gruposActualizados.length / gruposPorPagina);
+      if (paginaActual > totalPaginasNuevo && totalPaginasNuevo > 0) {
+        setPaginaActual(totalPaginasNuevo);
+      } else if (gruposActualizados.length === 0) {
+        setPaginaActual(1);
+      }
+      
       setAlert({ type: 'success', message: 'Grupo eliminado exitosamente' });
     } catch (error) {
       console.error('Error al eliminar grupo:', error);
@@ -90,6 +103,17 @@ function GrupoPage() {
       setGrupoToEdit(grupo);
       setModalOpen(true);
     }
+  };
+
+  // Cálculos de paginación
+  const indexUltimoGrupo = paginaActual * gruposPorPagina;
+  const indexPrimerGrupo = indexUltimoGrupo - gruposPorPagina;
+  const gruposActuales = grupos.slice(indexPrimerGrupo, indexUltimoGrupo);
+  const totalPaginas = Math.ceil(grupos.length / gruposPorPagina);
+
+  const cambiarPagina = (numeroPagina) => {
+    setPaginaActual(numeroPagina);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -128,7 +152,7 @@ function GrupoPage() {
           <div className="grupos-list">
             <h2>Grupos Registrados</h2>
             <div className="grupos-grid">
-              {grupos.map((grupo) => (
+              {gruposActuales.map((grupo) => (
                 <div key={grupo.oidGrupoInvestigacion} className="grupo-card">
                   <div className="grupo-card-header">
                     <h3>{grupo.nombre}</h3>
@@ -157,6 +181,36 @@ function GrupoPage() {
                 </div>
               ))}
             </div>
+            
+            {totalPaginas > 1 && (
+              <div className="pagination">
+                <button
+                  onClick={() => cambiarPagina(paginaActual - 1)}
+                  disabled={paginaActual === 1}
+                  className="pagination-btn"
+                >
+                  <ChevronLeft size={20} />
+                </button>
+                
+                {[...Array(totalPaginas)].map((_, index) => (
+                  <button
+                    key={index + 1}
+                    onClick={() => cambiarPagina(index + 1)}
+                    className={`pagination-number ${paginaActual === index + 1 ? 'active' : ''}`}
+                  >
+                    {index + 1}
+                  </button>
+                ))}
+                
+                <button
+                  onClick={() => cambiarPagina(paginaActual + 1)}
+                  disabled={paginaActual === totalPaginas}
+                  className="pagination-btn"
+                >
+                  <ChevronRight size={20} />
+                </button>
+              </div>
+            )}
           </div>
         )}
 

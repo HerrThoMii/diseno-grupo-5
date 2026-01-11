@@ -11,7 +11,7 @@ from app.views import (
     TrabajoPublicadoViewSet, ActividadTransferenciaViewSet,
     ParteExternaViewSet, EquipamientoInfraestructuraViewSet,
     TrabajoPresentadoViewSet, ActividadXPersonaViewSet,
-    login, register, perfil, actualizar_perfil, eliminar_persona, listar_personas, refresh_token, get_opciones_perfil, RegistroViewSet, PatenteViewSet, AutorViewSet, TipoTrabajoPublicadoViewSet, TipoDeRegistroViewSet,
+    login, register, perfil, actualizar_perfil, eliminar_persona, listar_personas, cambiar_contrasena, refresh_token, get_opciones_perfil, RegistroViewSet, PatenteViewSet, AutorViewSet, TipoTrabajoPublicadoViewSet, TipoDeRegistroViewSet,
     IntegranteMemoriaViewSet, ActividadMemoriaViewSet, PublicacionMemoriaViewSet, PatenteMemoriaViewSet, ProyectoMemoriaViewSet,
     recuperar_password, restablecer_password, get_tipos_personal
 )
@@ -59,6 +59,7 @@ urlpatterns = [
     path('api/auth/personas/', listar_personas, name='listar_personas'),
     path('api/auth/perfil/<int:oidpersona>/', perfil, name='perfil'),
     path('api/auth/perfil/<int:oidpersona>/actualizar/', actualizar_perfil, name='actualizar_perfil'),
+    path('api/auth/perfil/<int:oidpersona>/cambiar-contrasena/', cambiar_contrasena, name='cambiar_contrasena'),
     path('api/auth/persona/<int:oidpersona>/eliminar/', eliminar_persona, name='eliminar_persona'),
     path('api/auth/refresh/', refresh_token, name='refresh_token'),
     path('api/auth/opciones-perfil/', get_opciones_perfil, name='opciones_perfil'),

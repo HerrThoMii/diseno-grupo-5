@@ -20,6 +20,10 @@ export default function AgregarRegistroModal({ isOpen, onClose, onRegistroCreado
   useEffect(() => {
     if (!isOpen) return; // Solo cargar cuando el modal está abierto
     
+    // Limpiar alertas y errores al abrir el modal
+    setAlert(null);
+    setErrors({});
+    
     let mounted = true;
     console.log('Cargando datos del modal...');
     
