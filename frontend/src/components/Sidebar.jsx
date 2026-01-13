@@ -12,7 +12,7 @@ function Sidebar({ onNavigate, activeSection, isOpen = true }) {
   ];
 
   return (
-    <aside className={`sidebar ${!isOpen ? 'sidebar-collapsed' : ''}`}>
+    <aside className={`sidebar ${!isOpen ? 'sidebar-collapsed' : ''} ${isOpen ? 'open' : ''}`}>
       <nav className="sidebar-nav">
         {menuItems.map((item) => {
           const IconComponent = item.icon;

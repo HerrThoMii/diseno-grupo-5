@@ -142,6 +142,30 @@
   box-shadow: 0 8px 20px rgba(124, 58, 237, 0.3);
 }
 
+@media (max-width: 768px) {
+  .arm-modal {
+    width: 92%;
+    max-height: 85vh;
+  }
+  
+  .arm-header {
+    padding: 1.25rem 1.5rem;
+  }
+  
+  .arm-form {
+    padding: 1.25rem 1.5rem;
+  }
+  
+  .arm-buttons {
+    flex-direction: column;
+  }
+  
+  .arm-btn-cancel,
+  .arm-btn-submit {
+    width: 100%;
+  }
+}
+
 @media (max-width: 480px) {
   .arm-modal {
     width: 95%;

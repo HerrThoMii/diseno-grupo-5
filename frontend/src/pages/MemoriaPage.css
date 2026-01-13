@@ -50,3 +50,29 @@
   overflow-y: auto;
   flex: 1;
 }
+
+@media (max-width: 1024px) {
+  .memoria-page-container {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .memoria-page-container {
+    padding: 12px;
+  }
+  
+  .memoria-page-content {
+    border-radius: 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .memoria-page-container {
+    padding: 10px;
+  }
+  
+  .memoria-page-content {
+    border-radius: 4px;
+  }
+}

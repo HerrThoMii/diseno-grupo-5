@@ -43,8 +43,20 @@ function Dashboard({ userName = 'nombre del usuario', userData = null, onLogout 
         onUpdateUserData={onUpdateUserData}
       />
       <div className="dashboard-container">
+        {sidebarOpen && (
+          <div 
+            className="sidebar-overlay" 
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
         <Sidebar 
-          onNavigate={handleNavigate} 
+          onNavigate={(section) => {
+            handleNavigate(section);
+            // Cerrar sidebar en móvil después de navegar
+            if (window.innerWidth <= 768) {
+              setSidebarOpen(false);
+            }
+          }} 
           activeSection={getActiveSection()}
           isOpen={sidebarOpen}
         />

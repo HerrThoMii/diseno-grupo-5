@@ -95,6 +95,20 @@
   font-weight: 600;
 }
 
+@media (max-width: 1024px) {
+  .acerca-de-page {
+    padding: 30px 20px;
+  }
+  
+  .acerca-de-content {
+    padding: 35px 30px;
+  }
+  
+  .acerca-de-content h1 {
+    font-size: 28px;
+  }
+}
+
 @media (max-width: 768px) {
   .acerca-de-page {
     padding: 20px 15px;
@@ -123,5 +137,49 @@
   .back-button {
     padding: 8px 16px;
     font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .acerca-de-page {
+    padding: 15px 10px;
+  }
+  
+  .acerca-de-content {
+    padding: 20px 16px;
+    border-radius: 8px;
+  }
+  
+  .acerca-de-content h1 {
+    font-size: 22px;
+    margin-bottom: 20px;
+  }
+  
+  .acerca-de-content h2 {
+    font-size: 18px;
+    margin: 20px 0 12px 0;
+  }
+  
+  .acerca-de-content section {
+    margin-bottom: 20px;
+  }
+  
+  .about-project p {
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  
+  .contact-info {
+    padding: 16px;
+  }
+  
+  .contact-info p {
+    font-size: 13px;
+  }
+  
+  .back-button {
+    padding: 8px 14px;
+    font-size: 12px;
+    margin-bottom: 20px;
   }
 }

@@ -46,4 +46,63 @@
 .atm-btn-submit { background:linear-gradient(135deg,#7c3aed 0%,#6d28d9 100%); color:white; }
 .atm-submit-error { margin-top:0.5rem; color:#ef4444; }
 
-@media (max-width:480px) { .atm-modal { width:95%; } .atm-form { padding:1rem; } }
+@media (max-width: 768px) {
+  .atm-modal {
+    width: 92%;
+    max-height: 85vh;
+  }
+  
+  .atm-header {
+    padding: 1.25rem 1.5rem;
+  }
+  
+  .atm-header h2 {
+    font-size: 1.15rem;
+  }
+  
+  .atm-form {
+    padding: 1.25rem 1.5rem;
+  }
+  
+  .atm-buttons {
+    flex-direction: column;
+  }
+  
+  .atm-btn-cancel,
+  .atm-btn-submit {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .atm-modal {
+    width: 95%;
+    max-height: 90vh;
+  }
+  
+  .atm-header {
+    padding: 1rem 1.25rem;
+  }
+  
+  .atm-header h2 {
+    font-size: 1.1rem;
+  }
+  
+  .atm-form {
+    padding: 1rem;
+  }
+  
+  .atm-form-group {
+    margin-bottom: 0.85rem;
+  }
+  
+  .atm-form-group label {
+    font-size: 0.9rem;
+  }
+  
+  .atm-form-group input,
+  .atm-form-group select {
+    padding: 0.55rem;
+    font-size: 0.9rem;
+  }
+}

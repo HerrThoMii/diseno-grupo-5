@@ -98,6 +98,93 @@
   justify-content: center;
   width: 28px;
   height: 28px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  background-color: white;
+  cursor: pointer;
+  color: #666;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.btn-edit-grupo:hover {
+  background-color: #d9b3e3;
+  border-color: #c49acc;
+  color: white;
+  transform: scale(1.1);
+}
+
+.btn-delete-grupo:hover {
+  background-color: #d9b3e3;
+  border-color: #c49acc;
+  color: white;
+  transform: scale(1.1);
+}
+
+.btn-edit-grupo:active,
+.btn-delete-grupo:active {
+  transform: scale(0.95);
+}
+
+@media (max-width: 1024px) {
+  .grupo-header h1 {
+    font-size: 26px;
+  }
+  
+  .grupos-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+  }
+}
+
+@media (max-width: 768px) {
+  .grupo-header {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 24px;
+  }
+  
+  .grupo-header h1 {
+    font-size: 24px;
+  }
+  
+  .btn-agregar-grupo {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .grupos-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .grupos-list h2 {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .grupo-header {
+    margin-bottom: 20px;
+  }
+  
+  .grupo-header h1 {
+    font-size: 20px;
+  }
+  
+  .btn-agregar-grupo {
+    padding: 10px 20px;
+    font-size: 13px;
+  }
+  
+  .grupo-card {
+    padding: 14px;
+  }
+  
+  .grupo-card h3 {
+    font-size: 15px;
+  }
+}
   border-radius: 4px;
   border: none;
   cursor: pointer;

@@ -198,6 +198,116 @@
   color: white;
 }
 
+@media (max-width: 1024px) {
+  .trabajos-container {
+    padding: 15px;
+  }
+  
+  .trabajos-header h2 {
+    font-size: 22px;
+  }
+  
+  .tab-button {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 768px) {
+  .trabajos-container {
+    padding: 12px;
+  }
+  
+  .trabajos-header h2 {
+    font-size: 20px;
+  }
+  
+  .trabajos-tabs {
+    gap: 5px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .tab-button {
+    padding: 10px 14px;
+    font-size: 12px;
+  }
+  
+  .trabajos-section {
+    padding: 15px;
+    border-radius: 6px;
+  }
+  
+  .search-bar {
+    flex-wrap: wrap;
+  }
+  
+  .search-input {
+    min-width: 100%;
+    font-size: 14px;
+  }
+  
+  .search-button, .add-button {
+    flex: 1;
+    padding: 12px;
+  }
+  
+  .table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 0 -15px;
+    padding: 0 15px;
+  }
+  
+  .trabajos-table {
+    font-size: 12px;
+    min-width: 600px;
+  }
+  
+  .trabajos-table th,
+  .trabajos-table td {
+    padding: 10px 8px;
+    white-space: nowrap;
+  }
+  
+  .action-button {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .trabajos-container {
+    padding: 10px;
+  }
+  
+  .trabajos-header h2 {
+    font-size: 18px;
+  }
+  
+  .trabajos-section {
+    padding: 12px;
+  }
+  
+  .trabajos-section h3 {
+    font-size: 15px;
+  }
+  
+  .search-button, .add-button {
+    padding: 10px;
+    font-size: 13px;
+  }
+  
+  .trabajos-table {
+    font-size: 11px;
+  }
+  
+  .trabajos-table th,
+  .trabajos-table td {
+    padding: 8px 6px;
+  }
+}
+
 .publish-button {
   width: auto;
   padding: 6px 12px;

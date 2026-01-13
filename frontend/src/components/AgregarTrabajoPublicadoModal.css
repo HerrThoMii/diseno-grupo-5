@@ -137,6 +137,30 @@
   box-shadow: 0 8px 20px rgba(124, 58, 237, 0.3);
 }
 
+@media (max-width: 768px) {
+  .atpm-modal {
+    width: 92%;
+    max-height: 85vh;
+  }
+  
+  .atpm-header {
+    padding: 1.25rem 1.5rem;
+  }
+  
+  .atpm-form {
+    padding: 1.25rem 1.5rem;
+  }
+  
+  .atpm-buttons {
+    flex-direction: column;
+  }
+  
+  .atpm-btn-cancel,
+  .atpm-btn-submit {
+    width: 100%;
+  }
+}
+
 @media (max-width: 480px) {
   .atpm-modal {
     width: 95%;
